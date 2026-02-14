@@ -9,7 +9,8 @@ Interactieve moestuinplanner waarmee gebruikers hun tuin visueel kunnen ontwerpe
 - **Framework:** Next.js 14 (App Router)
 - **UI:** Tailwind CSS + shadcn/ui (Radix primitives)
 - **Canvas:** Konva.js + react-konva
-- **Data:** localStorage (migratie naar Supabase gepland)
+- **Data:** localStorage (gast) / Supabase (ingelogd)
+- **Auth:** Supabase Auth (email/wachtwoord)
 - **Hosting:** Vercel
 - **Taal:** TypeScript strict
 
@@ -27,15 +28,19 @@ Interactieve moestuinplanner waarmee gebruikers hun tuin visueel kunnen ontwerpe
 ```
 src/
   app/              → Pages (App Router)
+    login/          → Login/registreer pagina
   components/
     ui/             → shadcn/ui basiscomponenten
     canvas/         → Konva canvas componenten
     sidebar/        → Sidebar UI (picker, info, alerts)
     setup/          → Setup wizard
+    auth/           → AuthProvider, UserMenu, MigrationDialog
   lib/
     plants/         → Plant types, catalogus, companions
     garden/         → Garden types, storage, helpers
     hooks/          → Custom React hooks
+    storage/        → Storage abstractie (localStorage + Supabase)
+    supabase/       → Supabase client, migratie
   data/
     plants.json     → Plant catalogus (86+ gewassen)
 ```
@@ -45,7 +50,9 @@ src/
 - **Plant overrides:** Built-in planten kunnen door gebruiker aangepast worden via `savePlantOverride()`. Origineel blijft intact in `plants.json`, override in localStorage (`moestuin-plant-overrides`).
 - **Garden shape:** Polygoon-based (`corners: Point[]`). Punten toevoegen/verwijderen voor complexe vormen (L-vorm etc).
 - **Transformer:** Konva Transformer met Shift-snap naar 45 graden.
-- **Auto-save:** Via `useAutoSave` hook, slaat op naar localStorage.
+- **Auto-save:** Via `useAutoSave` hook, slaat op naar actieve storage backend.
+- **Storage abstractie:** `GardenStorage` en `PlantStorage` interfaces, met localStorage en Supabase implementaties. Factory in `src/lib/storage/index.ts`.
+- **Gastmodus:** Niet-ingelogde gebruikers gebruiken localStorage. Gewassen bewerken/toevoegen alleen zichtbaar voor ingelogde gebruikers.
 
 ## Commando's
 
@@ -55,6 +62,8 @@ npm run build     # Production build
 npm run lint      # ESLint
 ```
 
-## Geplande migratie
+## Supabase setup
 
-localStorage → Supabase (PostgreSQL) met gebruikersaccounts. Zie TODO.md voor details.
+- Schema: `supabase-schema.sql` in project root
+- Env: `.env.local` met `NEXT_PUBLIC_SUPABASE_URL` en `NEXT_PUBLIC_SUPABASE_ANON_KEY`
+- RLS: alle tabellen hebben row-level security per `auth.uid()`

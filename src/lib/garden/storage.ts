@@ -1,12 +1,11 @@
 import { Garden, CropZone } from "./types";
 import { getDefaultZoneSize } from "./helpers";
 import { getPlant } from "@/lib/plants/catalog";
+import { getGardenStorage } from "@/lib/storage";
 
 const STORAGE_KEY = "moestuin-plan-gardens";
 
-/** Migreer oude tuinen: plants[] → zones[] als zones ontbreekt */
 function migrateGarden(g: Garden): Garden {
-  // Al gemigreerd
   if (g.zones) {
     return {
       ...g,
@@ -24,7 +23,7 @@ function migrateGarden(g: Garden): Garden {
     return {
       id: p.id,
       plantId: p.plantId,
-      x: p.x - size.widthCm / 2,  // center → linkerboven
+      x: p.x - size.widthCm / 2,
       y: p.y - size.heightCm / 2,
       widthCm: size.widthCm,
       heightCm: size.heightCm,
@@ -41,11 +40,37 @@ function migrateGarden(g: Garden): Garden {
   };
 }
 
-export function saveGardens(gardens: Garden[]): void {
+// Synchrone localStorage functies voor directe toegang (vangnet bij beforeunload)
+export function saveGardenSync(garden: Garden): void {
   if (typeof window === "undefined") return;
+  const data = localStorage.getItem(STORAGE_KEY);
+  let gardens: Garden[] = [];
+  try {
+    gardens = data ? (JSON.parse(data) as Garden[]) : [];
+  } catch { /* noop */ }
+  const index = gardens.findIndex((g) => g.id === garden.id);
+  if (index >= 0) {
+    gardens[index] = { ...garden, updatedAt: new Date().toISOString() };
+  } else {
+    gardens.push(garden);
+  }
   localStorage.setItem(STORAGE_KEY, JSON.stringify(gardens));
 }
 
+// Async functies die delegeren naar de actieve storage backend
+export async function loadGardensAsync(): Promise<Garden[]> {
+  return getGardenStorage().loadGardens();
+}
+
+export async function saveGardenAsync(garden: Garden): Promise<void> {
+  return getGardenStorage().saveGarden(garden);
+}
+
+export async function deleteGardenAsync(id: string): Promise<void> {
+  return getGardenStorage().deleteGarden(id);
+}
+
+// Synchroon laden vanuit localStorage (voor initieel laden en fallback)
 export function loadGardens(): Garden[] {
   if (typeof window === "undefined") return [];
   const data = localStorage.getItem(STORAGE_KEY);
@@ -56,22 +81,6 @@ export function loadGardens(): Garden[] {
   } catch {
     return [];
   }
-}
-
-export function saveGarden(garden: Garden): void {
-  const gardens = loadGardens();
-  const index = gardens.findIndex((g) => g.id === garden.id);
-  if (index >= 0) {
-    gardens[index] = { ...garden, updatedAt: new Date().toISOString() };
-  } else {
-    gardens.push(garden);
-  }
-  saveGardens(gardens);
-}
-
-export function deleteGarden(id: string): void {
-  const gardens = loadGardens().filter((g) => g.id !== id);
-  saveGardens(gardens);
 }
 
 export function exportGarden(garden: Garden): string {

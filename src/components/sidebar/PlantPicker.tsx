@@ -5,6 +5,7 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { searchPlants, getPlantsByCategory, addCustomPlant, updateCustomPlant, isBuiltinPlant, savePlantOverride } from "@/lib/plants/catalog";
+import { isLoggedIn } from "@/lib/storage";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { PlantData, PlantCategory, SunNeed, WaterNeed, MonthRange } from "@/lib/plants/types";
 import { StructureType } from "@/lib/garden/types";
@@ -16,12 +17,12 @@ interface PlantPickerProps {
 }
 
 const STRUCTURES: { type: StructureType; icon: string; label: string }[] = [
-  { type: "kas", icon: "🏠", label: "Kas" },
-  { type: "grondbak", icon: "📦", label: "Grondbak" },
-  { type: "pad", icon: "🚶", label: "Pad" },
-  { type: "schuur", icon: "🏚️", label: "Schuur" },
-  { type: "hek", icon: "🪵", label: "Hek" },
-  { type: "boom", icon: "🌳", label: "Boom" },
+  { type: "kas", icon: "\u{1F3E0}", label: "Kas" },
+  { type: "grondbak", icon: "\u{1F4E6}", label: "Grondbak" },
+  { type: "pad", icon: "\u{1F6B6}", label: "Pad" },
+  { type: "schuur", icon: "\u{1F3DA}\u{FE0F}", label: "Schuur" },
+  { type: "hek", icon: "\u{1FAB5}", label: "Hek" },
+  { type: "boom", icon: "\u{1F333}", label: "Boom" },
 ];
 
 const CATEGORY_COLORS = [
@@ -34,22 +35,22 @@ const ICON_GROUPS: { label: string; icons: string[] }[] = [
   {
     label: "Groente",
     icons: [
-      "🍅", "🥕", "🥦", "🥬", "🥒", "🌽", "🫑", "🌶️", "🧅", "🧄",
-      "🥔", "🍆", "🫛", "🥜", "🫘", "🥗",
+      "\u{1F345}", "\u{1F955}", "\u{1F966}", "\u{1F96C}", "\u{1F952}", "\u{1F33D}", "\u{1FAD1}", "\u{1F336}\u{FE0F}", "\u{1F9C5}", "\u{1F9C4}",
+      "\u{1F954}", "\u{1F346}", "\u{1FAD4}", "\u{1F95C}", "\u{1FAD8}", "\u{1F957}",
     ],
   },
   {
     label: "Fruit",
     icons: [
-      "🍓", "🫐", "🍇", "🍎", "🍐", "🍑", "🍒", "🍊", "🍋", "🍌",
-      "🍈", "🍉", "🥝", "🥭", "🍍",
+      "\u{1F353}", "\u{1FAD0}", "\u{1F347}", "\u{1F34E}", "\u{1F350}", "\u{1F351}", "\u{1F352}", "\u{1F34A}", "\u{1F34B}", "\u{1F34C}",
+      "\u{1F348}", "\u{1F349}", "\u{1F95D}", "\u{1F96D}", "\u{1F34D}",
     ],
   },
   {
     label: "Kruiden & bloemen",
     icons: [
-      "🌱", "🌿", "🍃", "🍀", "🪴", "🌻", "🌸", "🌺", "🌹", "🌷",
-      "🌼", "🪻", "💐", "🪷", "🌾", "🌵",
+      "\u{1F331}", "\u{1F33F}", "\u{1F343}", "\u{1F340}", "\u{1FAB4}", "\u{1F33B}", "\u{1F338}", "\u{1F33A}", "\u{1F339}", "\u{1F337}",
+      "\u{1F33C}", "\u{1FAB7}", "\u{1F490}", "\u{1FAB7}", "\u{1F33E}", "\u{1F335}",
     ],
   },
 ];
@@ -155,7 +156,7 @@ function PlantForm({
   const [category, setCategory] = useState<PlantCategory>(editPlant?.category ?? "sier");
   const [spacingCm, setSpacingCm] = useState(editPlant?.spacingCm ?? 30);
   const [rowSpacingCm, setRowSpacingCm] = useState(editPlant?.rowSpacingCm ?? 40);
-  const [selectedIcon, setSelectedIcon] = useState(editPlant?.icon ?? "🌱");
+  const [selectedIcon, setSelectedIcon] = useState(editPlant?.icon ?? "\u{1F331}");
   const [selectedColor, setSelectedColor] = useState(editPlant?.color ?? "#4caf50");
   const [showMore, setShowMore] = useState(!!editPlant?.sowIndoor || !!editPlant?.sowOutdoor || !!editPlant?.harvest);
   const [sowIndoor, setSowIndoor] = useState<MonthRange | null>(editPlant?.sowIndoor ?? null);
@@ -169,7 +170,7 @@ function PlantForm({
 
   const isEdit = !!editPlant;
 
-  const handleSubmit = () => {
+  const handleSubmit = async () => {
     if (!name.trim()) return;
     const plant: PlantData = {
       id: editPlant?.id ?? `custom-${generateId()}`,
@@ -190,11 +191,11 @@ function PlantForm({
       },
     };
     if (isEdit && isBuiltinPlant(plant.id)) {
-      savePlantOverride(plant);
+      await savePlantOverride(plant);
     } else if (isEdit) {
-      updateCustomPlant(plant);
+      await updateCustomPlant(plant);
     } else {
-      addCustomPlant(plant);
+      await addCustomPlant(plant);
     }
     onDone();
   };
@@ -352,6 +353,8 @@ export default function PlantPicker({ onSelectPlant }: PlantPickerProps) {
   const [editingPlant, setEditingPlant] = useState<PlantData | null>(null);
   const [refreshKey, setRefreshKey] = useState(0);
 
+  const loggedIn = isLoggedIn();
+
   const categories: { key: PlantCategory; label: string }[] = [
     { key: "groente", label: "Groente" },
     { key: "fruit", label: "Fruit" },
@@ -426,14 +429,16 @@ export default function PlantPicker({ onSelectPlant }: PlantPickerProps) {
                 className="pl-9"
               />
             </div>
-            <Button
-              variant="outline"
-              size="icon"
-              onClick={() => { setShowAddForm(!showAddForm); setEditingPlant(null); }}
-              title="Eigen gewas toevoegen"
-            >
-              <Plus className="h-4 w-4" />
-            </Button>
+            {loggedIn && (
+              <Button
+                variant="outline"
+                size="icon"
+                onClick={() => { setShowAddForm(!showAddForm); setEditingPlant(null); }}
+                title="Eigen gewas toevoegen"
+              >
+                <Plus className="h-4 w-4" />
+              </Button>
+            )}
           </div>
 
           {filtered ? (
@@ -442,7 +447,7 @@ export default function PlantPicker({ onSelectPlant }: PlantPickerProps) {
                 <p className="text-sm text-muted-foreground p-2">Geen resultaten</p>
               )}
               {filtered.map((p) => (
-                <PlantCard key={p.id} plant={p} onSelect={onSelectPlant} onEdit={handleEdit} />
+                <PlantCard key={p.id} plant={p} onSelect={onSelectPlant} onEdit={loggedIn ? handleEdit : undefined} />
               ))}
             </div>
           ) : (
@@ -457,7 +462,7 @@ export default function PlantPicker({ onSelectPlant }: PlantPickerProps) {
               {categories.map((c) => (
                 <TabsContent key={c.key} value={c.key} className="flex flex-col gap-1 mt-2">
                   {getPlantsByCategory(c.key).map((p) => (
-                    <PlantCard key={p.id} plant={p} onSelect={onSelectPlant} onEdit={handleEdit} />
+                    <PlantCard key={p.id} plant={p} onSelect={onSelectPlant} onEdit={loggedIn ? handleEdit : undefined} />
                   ))}
                 </TabsContent>
               ))}

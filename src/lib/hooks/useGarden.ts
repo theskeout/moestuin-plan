@@ -3,7 +3,7 @@
 import { useState, useCallback, useEffect, useRef } from "react";
 import { Garden, CropZone, Structure, GardenShape, StructureType } from "@/lib/garden/types";
 import { generateId, createRectangleCorners, snapToGrid, getDefaultZoneSize, getStructureDefaults } from "@/lib/garden/helpers";
-import { saveGarden } from "@/lib/garden/storage";
+import { saveGardenAsync, saveGardenSync } from "@/lib/garden/storage";
 import { getPlant } from "@/lib/plants/catalog";
 
 export type SelectedType = "zone" | "structure";
@@ -265,8 +265,13 @@ export function useGarden(initialGarden?: Garden) {
     []
   );
 
-  const save = useCallback(() => {
-    saveGarden(garden);
+  const save = useCallback(async () => {
+    try {
+      await saveGardenAsync(garden);
+    } catch {
+      // Fallback naar localStorage bij Supabase-fout
+      saveGardenSync(garden);
+    }
     setHasChanges(false);
   }, [garden]);
 
@@ -290,7 +295,8 @@ export function useGarden(initialGarden?: Garden) {
   useEffect(() => {
     const handleBeforeUnload = () => {
       if (hasChangesRef.current) {
-        saveGarden(gardenRef.current);
+        // Altijd localStorage als synchroon vangnet bij paginaverlating
+        saveGardenSync(gardenRef.current);
       }
     };
     window.addEventListener("beforeunload", handleBeforeUnload);

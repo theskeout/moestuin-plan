@@ -1,5 +1,18 @@
 # Changelog — Moestuin Planner
 
+## 2026-02-14 (avond)
+
+### Supabase database & accounts
+- Supabase Auth: registreren/inloggen met email en wachtwoord
+- Storage abstractie: localStorage (gast) en Supabase (ingelogd) achter dezelfde interface
+- Gastmodus: tuinen maken/bewerken werkt zonder account (localStorage)
+- Ingelogde gebruikers: data opgeslagen in Supabase (gardens, custom_plants, plant_overrides)
+- Gewassen bewerken/toevoegen alleen zichtbaar als ingelogd
+- Auto-save werkt naar Supabase met localStorage als fallback
+- Migratie-dialog: lokale data importeren naar account na eerste login
+- UserMenu in header (inloggen/uitloggen + email)
+- Login pagina met toggle registreren/inloggen
+
 ## 2026-02-14
 
 ### Tuinformaat, gewassen kopje, fruitbomen

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useMemo, useCallback, Suspense } from "react";
+import { useState, useMemo, useCallback, useEffect, Suspense } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import dynamic from "next/dynamic";
 import { Button } from "@/components/ui/button";
@@ -9,14 +9,16 @@ import PlantPicker from "@/components/sidebar/PlantPicker";
 import PlantInfo from "@/components/sidebar/PlantInfo";
 import CompanionAlert from "@/components/sidebar/CompanionAlert";
 import CanvasToolbar from "@/components/canvas/CanvasToolbar";
+import UserMenu from "@/components/auth/UserMenu";
 import { useGarden } from "@/lib/hooks/useGarden";
 import { useAutoSave } from "@/lib/hooks/useAutoSave";
-import { loadGardens, exportGarden, importGarden } from "@/lib/garden/storage";
-import { getPlant } from "@/lib/plants/catalog";
+import { useAuth } from "@/components/auth/AuthProvider";
+import { loadGardensAsync, exportGarden, importGarden } from "@/lib/garden/storage";
+import { getPlant, refreshPlantCache } from "@/lib/plants/catalog";
+import { setStorageBackend } from "@/lib/storage";
 import { checkAllCompanions, CompanionCheck } from "@/lib/plants/companions";
 import { findNearbyZones, calculatePlantPositions } from "@/lib/garden/helpers";
 import { PlantData } from "@/lib/plants/types";
-import { Garden } from "@/lib/garden/types";
 import { createRectangleCorners, generateId } from "@/lib/garden/helpers";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ArrowLeft, Move, Lock, Unlock, Check, Download, Upload, Pencil } from "lucide-react";
@@ -33,6 +35,7 @@ const STRUCTURE_LABELS: Record<string, string> = {
 function TuinContent() {
   const searchParams = useSearchParams();
   const router = useRouter();
+  const { user, loading: authLoading } = useAuth();
   const [editingCorners, setEditingCorners] = useState(false);
   const [sidebarPlant, setSidebarPlant] = useState<PlantData | null>(null);
   const [saveLabel, setSaveLabel] = useState("Opslaan");
@@ -42,33 +45,53 @@ function TuinContent() {
   const [editName, setEditName] = useState("");
   const [editWidth, setEditWidth] = useState("");
   const [editHeight, setEditHeight] = useState("");
-
-  const initialGarden = useMemo((): Garden | undefined => {
-    const id = searchParams.get("id");
-    if (id) {
-      const gardens = loadGardens();
-      return gardens.find((g) => g.id === id);
-    }
-    const name = searchParams.get("name") || "Mijn Moestuin";
-    const w = Number(searchParams.get("w")) || 300;
-    const h = Number(searchParams.get("h")) || 1000;
-    return {
-      id: generateId(), name, widthCm: w, heightCm: h,
-      shape: { corners: createRectangleCorners(w, h) },
-      plants: [], zones: [], structures: [],
-      createdAt: new Date().toISOString(), updatedAt: new Date().toISOString(),
-    };
-  }, [searchParams]);
+  const [gardenLoading, setGardenLoading] = useState(true);
 
   const {
     garden, selectedId, selectedType, select, hasChanges,
     addZone, moveZone, transformZone, removeZone, toggleZoneLock, updateZoneInfo,
     addStructure, moveStructure, transformStructure, removeStructure, toggleStructureLock,
     updateShape, updateGardenSize, save, loadGarden,
-  } = useGarden(initialGarden);
+  } = useGarden();
 
-  const handleSave = useCallback(() => {
-    save();
+  // Async garden loading via storage backend
+  useEffect(() => {
+    if (authLoading) return;
+
+    async function init() {
+      if (user) {
+        setStorageBackend("supabase", user.id);
+      } else {
+        setStorageBackend("local");
+      }
+      await refreshPlantCache();
+
+      const id = searchParams.get("id");
+      if (id) {
+        const gardens = await loadGardensAsync();
+        const found = gardens.find((g) => g.id === id);
+        if (found) {
+          loadGarden(found);
+        }
+      } else {
+        const name = searchParams.get("name") || "Mijn Moestuin";
+        const w = Number(searchParams.get("w")) || 300;
+        const h = Number(searchParams.get("h")) || 1000;
+        loadGarden({
+          id: generateId(), name, widthCm: w, heightCm: h,
+          shape: { corners: createRectangleCorners(w, h) },
+          plants: [], zones: [], structures: [],
+          createdAt: new Date().toISOString(), updatedAt: new Date().toISOString(),
+        });
+      }
+      setGardenLoading(false);
+    }
+
+    init();
+  }, [authLoading, user, searchParams, loadGarden]);
+
+  const handleSave = useCallback(async () => {
+    await save();
     setSaveLabel("Opgeslagen!");
     setTimeout(() => setSaveLabel("Opslaan"), 2000);
   }, [save]);
@@ -140,6 +163,14 @@ function TuinContent() {
     return garden.structures.find((s) => s.id === selectedId) || null;
   }, [selectedId, selectedType, garden.structures]);
 
+  if (gardenLoading) {
+    return (
+      <div className="h-screen flex items-center justify-center">
+        <p className="text-muted-foreground">Tuin laden...</p>
+      </div>
+    );
+  }
+
   return (
     <div className="h-screen flex flex-col">
       {/* Header */}
@@ -202,6 +233,8 @@ function TuinContent() {
           )}
         </div>
         <div className="flex items-center gap-2">
+          <UserMenu />
+          <div className="w-px h-6 bg-border" />
           <Button
             variant={editingCorners ? "secondary" : "outline"}
             size="sm"

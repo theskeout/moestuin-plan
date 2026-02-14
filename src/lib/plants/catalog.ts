@@ -1,70 +1,48 @@
 import plantsData from "@/data/plants.json";
 import { PlantData } from "./types";
+import { getPlantStorage } from "@/lib/storage";
+
+export const builtinPlants: PlantData[] = plantsData as PlantData[];
+
+// In-memory cache
+let cachedCustomPlants: PlantData[] = [];
+let cachedOverrides: Record<string, PlantData> = {};
+let cacheInitialized = false;
 
 const CUSTOM_PLANTS_KEY = "moestuin-custom-plants";
 const PLANT_OVERRIDES_KEY = "moestuin-plant-overrides";
 
-export const builtinPlants: PlantData[] = plantsData as PlantData[];
-
-function loadCustomPlants(): PlantData[] {
-  if (typeof window === "undefined") return [];
+// Initialiseer cache vanuit localStorage (synchroon, voor app-start)
+function initCacheFromLocalStorage() {
+  if (cacheInitialized || typeof window === "undefined") return;
   try {
-    const data = localStorage.getItem(CUSTOM_PLANTS_KEY);
-    if (!data) return [];
-    return JSON.parse(data) as PlantData[];
+    const customData = localStorage.getItem(CUSTOM_PLANTS_KEY);
+    cachedCustomPlants = customData ? JSON.parse(customData) as PlantData[] : [];
   } catch {
-    return [];
+    cachedCustomPlants = [];
   }
-}
-
-function saveCustomPlants(plants: PlantData[]): void {
-  if (typeof window === "undefined") return;
-  localStorage.setItem(CUSTOM_PLANTS_KEY, JSON.stringify(plants));
-}
-
-// --- Plant overrides (aangepaste versies van built-in planten) ---
-
-function loadPlantOverrides(): Record<string, PlantData> {
-  if (typeof window === "undefined") return {};
   try {
-    const data = localStorage.getItem(PLANT_OVERRIDES_KEY);
-    if (!data) return {};
-    return JSON.parse(data) as Record<string, PlantData>;
+    const overrideData = localStorage.getItem(PLANT_OVERRIDES_KEY);
+    cachedOverrides = overrideData ? JSON.parse(overrideData) as Record<string, PlantData> : {};
   } catch {
-    return {};
+    cachedOverrides = {};
   }
+  cacheInitialized = true;
 }
 
-function savePlantOverrides(overrides: Record<string, PlantData>): void {
-  if (typeof window === "undefined") return;
-  localStorage.setItem(PLANT_OVERRIDES_KEY, JSON.stringify(overrides));
+// Ververs cache vanuit actieve storage backend (async, na login)
+export async function refreshPlantCache(): Promise<void> {
+  const storage = getPlantStorage();
+  cachedCustomPlants = await storage.loadCustomPlants();
+  cachedOverrides = await storage.loadPlantOverrides();
+  cacheInitialized = true;
 }
 
-export function savePlantOverride(plant: PlantData): void {
-  const overrides = loadPlantOverrides();
-  overrides[plant.id] = plant;
-  savePlantOverrides(overrides);
-}
-
-export function isBuiltinPlant(id: string): boolean {
-  return builtinPlants.some((p) => p.id === id);
-}
-
-export function hasOverride(id: string): boolean {
-  return id in loadPlantOverrides();
-}
-
-export function resetOverride(id: string): void {
-  const overrides = loadPlantOverrides();
-  delete overrides[id];
-  savePlantOverrides(overrides);
-}
-
-/** Alle planten: builtin (met overrides) + custom */
+// Read-functies: synchroon, lezen uit cache
 export function getAllPlants(): PlantData[] {
-  const overrides = loadPlantOverrides();
-  const plants = builtinPlants.map((p) => overrides[p.id] ?? p);
-  return [...plants, ...loadCustomPlants()];
+  initCacheFromLocalStorage();
+  const plants = builtinPlants.map((p) => cachedOverrides[p.id] ?? p);
+  return [...plants, ...cachedCustomPlants];
 }
 
 export function getPlant(id: string): PlantData | undefined {
@@ -80,26 +58,52 @@ export function searchPlants(query: string): PlantData[] {
   return getAllPlants().filter((p) => p.name.toLowerCase().includes(lower));
 }
 
-export function addCustomPlant(plant: PlantData): void {
-  const customs = loadCustomPlants();
-  customs.push(plant);
-  saveCustomPlants(customs);
+export function isBuiltinPlant(id: string): boolean {
+  return builtinPlants.some((p) => p.id === id);
 }
 
-export function updateCustomPlant(plant: PlantData): void {
-  const customs = loadCustomPlants();
-  const idx = customs.findIndex((p) => p.id === plant.id);
-  if (idx >= 0) {
-    customs[idx] = plant;
-    saveCustomPlants(customs);
-  }
-}
-
-export function removeCustomPlant(id: string): void {
-  const customs = loadCustomPlants().filter((p) => p.id !== id);
-  saveCustomPlants(customs);
+export function hasOverride(id: string): boolean {
+  initCacheFromLocalStorage();
+  return id in cachedOverrides;
 }
 
 export function isCustomPlant(id: string): boolean {
-  return loadCustomPlants().some((p) => p.id === id);
+  initCacheFromLocalStorage();
+  return cachedCustomPlants.some((p) => p.id === id);
+}
+
+// Write-functies: async, updaten cache + storage
+export async function addCustomPlant(plant: PlantData): Promise<void> {
+  initCacheFromLocalStorage();
+  cachedCustomPlants = [...cachedCustomPlants, plant];
+  await getPlantStorage().saveCustomPlant(plant);
+}
+
+export async function updateCustomPlant(plant: PlantData): Promise<void> {
+  initCacheFromLocalStorage();
+  const idx = cachedCustomPlants.findIndex((p) => p.id === plant.id);
+  if (idx >= 0) {
+    cachedCustomPlants = cachedCustomPlants.map((p, i) => i === idx ? plant : p);
+  }
+  await getPlantStorage().updateCustomPlant(plant);
+}
+
+export async function removeCustomPlant(id: string): Promise<void> {
+  initCacheFromLocalStorage();
+  cachedCustomPlants = cachedCustomPlants.filter((p) => p.id !== id);
+  await getPlantStorage().removeCustomPlant(id);
+}
+
+export async function savePlantOverride(plant: PlantData): Promise<void> {
+  initCacheFromLocalStorage();
+  cachedOverrides = { ...cachedOverrides, [plant.id]: plant };
+  await getPlantStorage().savePlantOverride(plant);
+}
+
+export async function resetOverride(id: string): Promise<void> {
+  initCacheFromLocalStorage();
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  const { [id]: _removed, ...rest } = cachedOverrides;
+  cachedOverrides = rest;
+  await getPlantStorage().resetOverride(id);
 }

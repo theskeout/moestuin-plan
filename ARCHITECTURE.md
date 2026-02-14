@@ -11,7 +11,8 @@ Single-page applicatie voor het visueel ontwerpen van moestuinen. De gebruiker s
 | Framework | Next.js 14 (App Router) |
 | UI | React 18, Tailwind CSS, shadcn/ui |
 | Canvas | Konva.js, react-konva |
-| Persistentie | localStorage (Supabase gepland) |
+| Persistentie | localStorage (gast) / Supabase (ingelogd) |
+| Auth | Supabase Auth (email/wachtwoord) |
 | Hosting | Vercel |
 | Types | TypeScript 5 (strict) |
 
@@ -21,6 +22,7 @@ Single-page applicatie voor het visueel ontwerpen van moestuinen. De gebruiker s
 |-------|-----------|---------|
 | `/` | `app/page.tsx` | Landing page, tuin aanmaken/openen |
 | `/tuin` | `app/tuin/page.tsx` | Hoofdpagina: canvas + sidebars |
+| `/login` | `app/login/page.tsx` | Inloggen/registreren |
 
 ## Componentenstructuur
 
@@ -111,13 +113,28 @@ Geen externe state library. Alles via React hooks:
 ```
 plants.json (86+ built-in gewassen)
      ↓
-catalog.ts → getAllPlants() → merged met overrides + custom planten
+catalog.ts → getAllPlants() → merged met overrides + custom planten (uit cache)
      ↓
-localStorage:
-  - moestuin-gardens        → opgeslagen tuinen
-  - moestuin-custom-plants  → door gebruiker toegevoegde planten
-  - moestuin-plant-overrides → aangepaste built-in planten
+Storage abstractie (src/lib/storage/)
+  ├── LocalStorage (gast)
+  │     - moestuin-plan-gardens
+  │     - moestuin-custom-plants
+  │     - moestuin-plant-overrides
+  └── Supabase (ingelogd)
+        - gardens tabel (RLS per user)
+        - custom_plants tabel (RLS per user)
+        - plant_overrides tabel (RLS per user)
 ```
+
+## Auth & Gastmodus
+
+| Feature | Gast | Ingelogd |
+|---------|------|----------|
+| Tuinen maken/bewerken | Ja (localStorage) | Ja (Supabase) |
+| Gewassen bekijken | Ja | Ja |
+| Gewassen bewerken/toevoegen | Nee | Ja |
+| Plant overrides | Nee | Ja |
+| Data migratie | - | Na eerste login |
 
 ## Canvas (Konva)
 
@@ -128,6 +145,4 @@ localStorage:
 
 ## Geplande architectuurwijzigingen
 
-1. **Database migratie:** localStorage → Supabase (PostgreSQL)
-2. **Authenticatie:** Supabase Auth (email/wachtwoord)
-3. **Planner module:** Zaai- en oogstkalender, reminders
+1. **Planner module:** Zaai- en oogstkalender, reminders
