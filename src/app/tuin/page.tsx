@@ -21,7 +21,7 @@ import { findNearbyZones, calculatePlantPositions } from "@/lib/garden/helpers";
 import { PlantData } from "@/lib/plants/types";
 import { createRectangleCorners, generateId } from "@/lib/garden/helpers";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { ArrowLeft, Move, Lock, Unlock, Check, Download, Upload, Pencil } from "lucide-react";
+import { ArrowLeft, Move, Lock, Unlock, Check, Download, Upload, Pencil, Search, X } from "lucide-react";
 
 const GardenCanvas = dynamic(
   () => import("@/components/canvas/GardenCanvas"),
@@ -46,6 +46,7 @@ function TuinContent() {
   const [editWidth, setEditWidth] = useState("");
   const [editHeight, setEditHeight] = useState("");
   const [gardenLoading, setGardenLoading] = useState(true);
+  const [canvasSearch, setCanvasSearch] = useState("");
   const initRef = useRef(false);
   const newGardenIdRef = useRef(generateId());
 
@@ -161,6 +162,14 @@ function TuinContent() {
     const positions = calculatePlantPositions(zone, plantData);
     return { zone, plantData, plantCount: positions.length };
   }, [selectedId, selectedType, garden.zones]);
+
+  const canvasSearchResults = useMemo(() => {
+    const q = canvasSearch.trim().toLowerCase();
+    if (!q) return [];
+    return garden.zones
+      .map((zone) => ({ zone, plant: getPlant(zone.plantId) }))
+      .filter(({ plant }) => plant?.name.toLowerCase().includes(q));
+  }, [canvasSearch, garden.zones]);
 
   const selectedStruct = useMemo(() => {
     if (!selectedId || selectedType !== "structure") return null;
@@ -279,7 +288,57 @@ function TuinContent() {
             />
           </div>
 
+          {/* Zoek gewas op canvas */}
+          <div className="px-3 pt-3 pb-0">
+            <div className="relative">
+              <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground" />
+              <Input
+                placeholder="Zoek gewas op canvas..."
+                value={canvasSearch}
+                onChange={(e) => setCanvasSearch(e.target.value)}
+                className="h-8 pl-8 pr-8 text-sm"
+              />
+              {canvasSearch && (
+                <button
+                  onClick={() => setCanvasSearch("")}
+                  className="absolute right-2 top-1/2 -translate-y-1/2 p-0.5 rounded hover:bg-accent transition-colors"
+                >
+                  <X className="h-3.5 w-3.5 text-muted-foreground" />
+                </button>
+              )}
+            </div>
+          </div>
+
           <div className="flex-1 overflow-y-auto p-4 space-y-4">
+            {/* Zoekresultaten */}
+            {canvasSearch.trim() ? (
+              canvasSearchResults.length > 0 ? (
+                <div className="space-y-1">
+                  <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
+                    {canvasSearchResults.length} resultaat{canvasSearchResults.length !== 1 ? "en" : ""}
+                  </p>
+                  {canvasSearchResults.map(({ zone, plant }) => (
+                    <button
+                      key={zone.id}
+                      onClick={() => {
+                        select(zone.id, "zone");
+                        setCanvasSearch("");
+                      }}
+                      className="w-full flex items-center gap-2 px-2 py-1.5 rounded-md text-left text-sm hover:bg-accent transition-colors"
+                    >
+                      <span className="text-base">{plant?.icon}</span>
+                      <span className="flex-1 truncate">{plant?.name}{zone.label ? ` — ${zone.label}` : ""}</span>
+                      <span className="text-xs text-muted-foreground whitespace-nowrap">
+                        {zone.widthCm}x{zone.heightCm}
+                      </span>
+                    </button>
+                  ))}
+                </div>
+              ) : (
+                <p className="text-sm text-muted-foreground">Geen resultaten</p>
+              )
+            ) : (
+            <>
             {/* Zone geselecteerd */}
             {selectedZoneData && (
               <>
@@ -469,6 +528,8 @@ function TuinContent() {
               <p className="text-sm text-muted-foreground">
                 Klik op een gewas of structuur om details te zien en aan te passen.
               </p>
+            )}
+            </>
             )}
           </div>
         </aside>
