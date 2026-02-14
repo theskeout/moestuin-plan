@@ -215,6 +215,18 @@ export default function GardenCanvas({
     onUpdateShape({ corners: newCorners });
   };
 
+  const handleAddCorner = (afterIndex: number, pos: Point) => {
+    const newCorners = [...garden.shape.corners];
+    newCorners.splice(afterIndex + 1, 0, pos);
+    onUpdateShape({ corners: newCorners });
+  };
+
+  const handleRemoveCorner = (index: number) => {
+    if (garden.shape.corners.length <= 3) return;
+    const newCorners = garden.shape.corners.filter((_, i) => i !== index);
+    onUpdateShape({ corners: newCorners });
+  };
+
   const handleStageDragEnd = (e: Konva.KonvaEventObject<DragEvent>) => {
     if (e.target === stageRef.current) {
       setPosition({ x: e.target.x(), y: e.target.y() });
@@ -425,6 +437,8 @@ export default function GardenCanvas({
             scale={scale}
             editable={editingCorners}
             onCornerDrag={handleCornerDrag}
+            onAddCorner={handleAddCorner}
+            onRemoveCorner={handleRemoveCorner}
           />
           {/* Structuren */}
           {garden.structures.map((structure) => (

@@ -377,12 +377,12 @@ export default function PlantPicker({ onSelectPlant }: PlantPickerProps) {
       <div>
         <button
           onClick={() => setStructuresOpen(!structuresOpen)}
-          className="flex items-center gap-1 text-xs font-medium text-muted-foreground hover:text-foreground transition-colors w-full"
+          className="flex items-center gap-1.5 text-sm font-medium text-foreground hover:text-foreground/80 transition-colors w-full py-1"
         >
           {structuresOpen ? (
-            <ChevronDown className="h-3.5 w-3.5" />
+            <ChevronDown className="h-4 w-4" />
           ) : (
-            <ChevronRight className="h-3.5 w-3.5" />
+            <ChevronRight className="h-4 w-4" />
           )}
           Structuren
         </button>
@@ -448,7 +448,7 @@ export default function PlantPicker({ onSelectPlant }: PlantPickerProps) {
         <Tabs defaultValue="groente">
           <TabsList className="w-full">
             {categories.map((c) => (
-              <TabsTrigger key={c.key} value={c.key} className="flex-1">
+              <TabsTrigger key={c.key} value={c.key} className="flex-1 text-xs px-2">
                 {c.label}
               </TabsTrigger>
             ))}
