@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useCallback } from "react";
+import { useState, useCallback, useEffect, useRef } from "react";
 import { Garden, CropZone, Structure, GardenShape, StructureType } from "@/lib/garden/types";
 import { generateId, createRectangleCorners, snapToGrid, getDefaultZoneSize, getStructureDefaults } from "@/lib/garden/helpers";
 import { saveGarden } from "@/lib/garden/storage";
@@ -50,6 +50,7 @@ export function useGarden(initialGarden?: Garden) {
         widthCm: size.widthCm,
         heightCm: size.heightCm,
         rotation: 0,
+        locked: false,
       };
       setGarden((prev) => ({
         ...prev,
@@ -65,33 +66,41 @@ export function useGarden(initialGarden?: Garden) {
   );
 
   const moveZone = useCallback((id: string, x: number, y: number) => {
-    setGarden((prev) => ({
-      ...prev,
-      zones: prev.zones.map((z) =>
-        z.id === id ? { ...z, x: snapToGrid(x), y: snapToGrid(y) } : z
-      ),
-      updatedAt: new Date().toISOString(),
-    }));
+    setGarden((prev) => {
+      const zone = prev.zones.find((z) => z.id === id);
+      if (zone?.locked) return prev;
+      return {
+        ...prev,
+        zones: prev.zones.map((z) =>
+          z.id === id ? { ...z, x: snapToGrid(x), y: snapToGrid(y) } : z
+        ),
+        updatedAt: new Date().toISOString(),
+      };
+    });
     setHasChanges(true);
   }, []);
 
   const transformZone = useCallback((id: string, x: number, y: number, widthCm: number, heightCm: number, rotation: number) => {
-    setGarden((prev) => ({
-      ...prev,
-      zones: prev.zones.map((z) =>
-        z.id === id
-          ? {
-              ...z,
-              x: snapToGrid(x),
-              y: snapToGrid(y),
-              widthCm: snapToGrid(Math.max(widthCm, 10)),
-              heightCm: snapToGrid(Math.max(heightCm, 10)),
-              rotation,
-            }
-          : z
-      ),
-      updatedAt: new Date().toISOString(),
-    }));
+    setGarden((prev) => {
+      const zone = prev.zones.find((z) => z.id === id);
+      if (zone?.locked) return prev;
+      return {
+        ...prev,
+        zones: prev.zones.map((z) =>
+          z.id === id
+            ? {
+                ...z,
+                x: snapToGrid(x),
+                y: snapToGrid(y),
+                widthCm: snapToGrid(Math.max(widthCm, 10)),
+                heightCm: snapToGrid(Math.max(heightCm, 10)),
+                rotation,
+              }
+            : z
+        ),
+        updatedAt: new Date().toISOString(),
+      };
+    });
     setHasChanges(true);
   }, []);
 
@@ -102,6 +111,17 @@ export function useGarden(initialGarden?: Garden) {
       updatedAt: new Date().toISOString(),
     }));
     setSelectedId((prev) => (prev === id ? null : prev));
+    setHasChanges(true);
+  }, []);
+
+  const toggleZoneLock = useCallback((id: string) => {
+    setGarden((prev) => ({
+      ...prev,
+      zones: prev.zones.map((z) =>
+        z.id === id ? { ...z, locked: !z.locked } : z
+      ),
+      updatedAt: new Date().toISOString(),
+    }));
     setHasChanges(true);
   }, []);
 
@@ -227,12 +247,31 @@ export function useGarden(initialGarden?: Garden) {
   const loadGarden = useCallback((g: Garden) => {
     setGarden({
       ...g,
-      zones: g.zones || [],
+      zones: (g.zones || []).map((z) => ({ ...z, locked: z.locked ?? false })),
       structures: (g.structures || []).map((s) => ({ ...s, locked: s.locked ?? false })),
       plants: g.plants || [],
     });
     setHasChanges(false);
     setSelectedId(null);
+  }, []);
+
+  // Save bij paginaverlating als er onopgeslagen wijzigingen zijn
+  const gardenRef = useRef(garden);
+  gardenRef.current = garden;
+  const hasChangesRef = useRef(hasChanges);
+  hasChangesRef.current = hasChanges;
+
+  useEffect(() => {
+    const handleBeforeUnload = () => {
+      if (hasChangesRef.current) {
+        saveGarden(gardenRef.current);
+      }
+    };
+    window.addEventListener("beforeunload", handleBeforeUnload);
+    return () => {
+      handleBeforeUnload();
+      window.removeEventListener("beforeunload", handleBeforeUnload);
+    };
   }, []);
 
   return {
@@ -245,6 +284,7 @@ export function useGarden(initialGarden?: Garden) {
     moveZone,
     transformZone,
     removeZone,
+    toggleZoneLock,
     addStructure,
     moveStructure,
     transformStructure,

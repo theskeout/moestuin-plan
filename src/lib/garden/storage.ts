@@ -11,6 +11,7 @@ function migrateGarden(g: Garden): Garden {
     return {
       ...g,
       plants: g.plants || [],
+      zones: g.zones.map((z) => ({ ...z, locked: z.locked ?? false })),
       structures: (g.structures || []).map((s) => ({ ...s, locked: s.locked ?? false })),
     };
   }
@@ -28,6 +29,7 @@ function migrateGarden(g: Garden): Garden {
       widthCm: size.widthCm,
       heightCm: size.heightCm,
       rotation: p.rotation,
+      locked: false,
     };
   });
 

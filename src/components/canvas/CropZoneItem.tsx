@@ -25,6 +25,7 @@ export default function CropZoneItem({
 }: CropZoneItemProps) {
   const w = zone.widthCm * scale;
   const h = zone.heightCm * scale;
+  const locked = zone.locked;
 
   const positions = useMemo(
     () => calculatePlantPositions(zone, plantData),
@@ -41,7 +42,7 @@ export default function CropZoneItem({
       rotation={zone.rotation}
       width={w}
       height={h}
-      draggable
+      draggable={!locked}
       onClick={() => onSelect(zone.id)}
       onTap={() => onSelect(zone.id)}
       onDragEnd={(e) => {
@@ -93,6 +94,15 @@ export default function CropZoneItem({
         fill="#6b7280"
         listening={false}
       />
+      {locked && (
+        <Text
+          text="🔒"
+          x={w - 18}
+          y={4}
+          fontSize={12}
+          listening={false}
+        />
+      )}
     </Group>
   );
 }

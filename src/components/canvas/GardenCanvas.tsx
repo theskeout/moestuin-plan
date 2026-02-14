@@ -92,9 +92,10 @@ export default function GardenCanvas({
       return;
     }
 
-    // Check of het een locked structuur is
+    // Check of het een locked element is
     const lockedStruct = garden.structures.find((s) => s.id === selectedId && s.locked);
-    if (lockedStruct) {
+    const lockedZone = garden.zones.find((z) => z.id === selectedId && z.locked);
+    if (lockedStruct || lockedZone) {
       tr.nodes([]);
       tr.getLayer()?.batchDraw();
       return;
@@ -171,7 +172,11 @@ export default function GardenCanvas({
 
   // Klik op lege ruimte = deselecteer
   const handleStageClick = (e: Konva.KonvaEventObject<MouseEvent>) => {
-    if (e.target === stageRef.current) {
+    // Deselecteer als je op de stage, layer, grid of outline klikt (alles behalve zones/structures)
+    const clicked = e.target;
+    const isStage = clicked === stageRef.current;
+    const isInteractive = clicked.getParent()?.id();
+    if (isStage || !isInteractive) {
       onSelect(null);
     }
   };

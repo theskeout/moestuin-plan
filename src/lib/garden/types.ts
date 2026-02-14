@@ -36,6 +36,7 @@ export interface CropZone {
   widthCm: number;
   heightCm: number;
   rotation: number;
+  locked: boolean;
 }
 
 export interface Garden {

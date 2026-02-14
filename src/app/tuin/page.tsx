@@ -66,6 +66,7 @@ function TuinContent() {
     moveZone,
     transformZone,
     removeZone,
+    toggleZoneLock,
     addStructure,
     moveStructure,
     transformStructure,
@@ -175,21 +176,30 @@ function TuinContent() {
                 <h3 className="text-sm font-medium">
                   {selectedZoneData.plantData.icon} {selectedZoneData.plantData.name}
                 </h3>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  className="text-destructive hover:text-destructive"
-                  onClick={() => {
-                    if (selectedId) removeZone(selectedId);
-                  }}
-                >
-                  Verwijder
-                </Button>
+                <div className="flex items-center gap-1">
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => { if (selectedId) toggleZoneLock(selectedId); }}
+                    title={selectedZoneData.zone.locked ? "Ontgrendel" : "Vergrendel"}
+                  >
+                    {selectedZoneData.zone.locked ? <Lock className="h-3.5 w-3.5" /> : <Unlock className="h-3.5 w-3.5" />}
+                  </Button>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="text-destructive hover:text-destructive"
+                    onClick={() => { if (selectedId) removeZone(selectedId); }}
+                  >
+                    Verwijder
+                  </Button>
+                </div>
               </div>
               <div className="text-sm text-muted-foreground">
                 {selectedZoneData.zone.widthCm} x {selectedZoneData.zone.heightCm}cm
                 {" — "}
                 {selectedZoneData.plantCount} planten
+                {selectedZoneData.zone.locked && " — Vergrendeld"}
               </div>
               <CompanionAlert checks={companionChecks} />
             </div>
