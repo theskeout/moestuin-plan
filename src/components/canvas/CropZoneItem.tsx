@@ -34,6 +34,11 @@ export default function CropZoneItem({
 
   const dotRadius = Math.max(2, Math.min(4, plantData.spacingCm * scale * 0.15));
 
+  // Bij kleine bedden: labels buiten (eraan hangen) als de box < 50px hoog of breed
+  const tooSmall = w < 50 || h < 40;
+  const labelFontSize = Math.max(10, Math.min(13, w * 0.1));
+  const bottomText = `${zone.widthCm}x${zone.heightCm}cm (${positions.length}x)`;
+
   return (
     <Group
       id={zone.id}
@@ -76,29 +81,54 @@ export default function CropZoneItem({
         />
       ))}
 
-      {/* Label: emoji + naam + aantal */}
-      <Text
-        text={`${plantData.icon} ${plantData.name}`}
-        x={4}
-        y={3}
-        fontSize={Math.max(11, Math.min(13, w * 0.1))}
-        fill="#1f2937"
-        width={w - 8}
-        listening={false}
-      />
-      <Text
-        text={`${positions.length} planten`}
-        x={4}
-        y={h - 16}
-        fontSize={10}
-        fill="#6b7280"
-        listening={false}
-      />
+      {tooSmall ? (
+        <>
+          {/* Klein bed: labels hangen eraan (onder het bed) */}
+          <Text
+            text={`${plantData.icon} ${plantData.name}`}
+            x={0}
+            y={h + 3}
+            fontSize={11}
+            fill="#1f2937"
+            listening={false}
+          />
+          <Text
+            text={bottomText}
+            x={0}
+            y={h + 16}
+            fontSize={9}
+            fill="#6b7280"
+            listening={false}
+          />
+        </>
+      ) : (
+        <>
+          {/* Normaal bed: labels binnenin */}
+          <Text
+            text={`${plantData.icon} ${plantData.name}`}
+            x={4}
+            y={3}
+            fontSize={labelFontSize}
+            fill="#1f2937"
+            width={w - 8}
+            listening={false}
+          />
+          <Text
+            text={bottomText}
+            x={4}
+            y={h - 16}
+            fontSize={10}
+            fill="#6b7280"
+            listening={false}
+          />
+        </>
+      )}
+
       {locked && (
         <Text
           text="🔒"
-          x={w - 18}
-          y={4}
+          x={tooSmall ? w + 2 : w - 18}
+          y={tooSmall ? 0 : 4}
           fontSize={12}
           listening={false}
         />

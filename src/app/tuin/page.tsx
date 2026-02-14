@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useMemo, Suspense } from "react";
+import { useState, useMemo, useCallback, Suspense } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import dynamic from "next/dynamic";
 import { Button } from "@/components/ui/button";
@@ -16,7 +16,8 @@ import { findNearbyZones, calculatePlantPositions } from "@/lib/garden/helpers";
 import { PlantData } from "@/lib/plants/types";
 import { Garden } from "@/lib/garden/types";
 import { createRectangleCorners, generateId } from "@/lib/garden/helpers";
-import { ArrowLeft, Move, Lock, Unlock } from "lucide-react";
+import { Input } from "@/components/ui/input";
+import { ArrowLeft, Move, Lock, Unlock, Check } from "lucide-react";
 
 // Dynamic import voor Konva (geen SSR)
 const GardenCanvas = dynamic(
@@ -29,6 +30,7 @@ function TuinContent() {
   const router = useRouter();
   const [editingCorners, setEditingCorners] = useState(false);
   const [sidebarPlant, setSidebarPlant] = useState<PlantData | null>(null);
+  const [saveLabel, setSaveLabel] = useState("Opslaan");
 
   // Bepaal initiële garden state
   const initialGarden = useMemo((): Garden | undefined => {
@@ -77,7 +79,13 @@ function TuinContent() {
     loadGarden,
   } = useGarden(initialGarden);
 
-  useAutoSave(hasChanges, save);
+  const handleSave = useCallback(() => {
+    save();
+    setSaveLabel("Opgeslagen!");
+    setTimeout(() => setSaveLabel("Opslaan"), 2000);
+  }, [save]);
+
+  useAutoSave(hasChanges, handleSave);
 
   // Kruisteelt-checks voor geselecteerde zone
   const companionChecks = useMemo((): CompanionCheck[] => {
@@ -126,8 +134,9 @@ function TuinContent() {
           {hasChanges && (
             <span className="text-xs text-muted-foreground">Niet opgeslagen</span>
           )}
-          <Button size="sm" onClick={save}>
-            Opslaan
+          <Button size="sm" onClick={handleSave} variant={saveLabel === "Opgeslagen!" ? "secondary" : "default"}>
+            {saveLabel === "Opgeslagen!" && <Check className="h-3.5 w-3.5 mr-1" />}
+            {saveLabel}
           </Button>
         </div>
       </header>
@@ -195,9 +204,37 @@ function TuinContent() {
                   </Button>
                 </div>
               </div>
+              <div className="grid grid-cols-2 gap-2">
+                <div>
+                  <p className="text-xs text-muted-foreground mb-1">Breedte (cm)</p>
+                  <Input
+                    type="number"
+                    min={10}
+                    step={10}
+                    value={selectedZoneData.zone.widthCm}
+                    onChange={(e) => {
+                      if (!selectedId) return;
+                      const val = Math.max(10, Number(e.target.value));
+                      transformZone(selectedId, selectedZoneData.zone.x, selectedZoneData.zone.y, val, selectedZoneData.zone.heightCm, selectedZoneData.zone.rotation);
+                    }}
+                  />
+                </div>
+                <div>
+                  <p className="text-xs text-muted-foreground mb-1">Hoogte (cm)</p>
+                  <Input
+                    type="number"
+                    min={10}
+                    step={10}
+                    value={selectedZoneData.zone.heightCm}
+                    onChange={(e) => {
+                      if (!selectedId) return;
+                      const val = Math.max(10, Number(e.target.value));
+                      transformZone(selectedId, selectedZoneData.zone.x, selectedZoneData.zone.y, selectedZoneData.zone.widthCm, val, selectedZoneData.zone.rotation);
+                    }}
+                  />
+                </div>
+              </div>
               <div className="text-sm text-muted-foreground">
-                {selectedZoneData.zone.widthCm} x {selectedZoneData.zone.heightCm}cm
-                {" — "}
                 {selectedZoneData.plantCount} planten
                 {selectedZoneData.zone.locked && " — Vergrendeld"}
               </div>
@@ -233,10 +270,37 @@ function TuinContent() {
                     </Button>
                   </div>
                 </div>
-                <div className="text-sm text-muted-foreground">
-                  {struct.widthCm} x {struct.heightCm}cm
-                  {struct.locked && " — Vergrendeld"}
+                <div className="grid grid-cols-2 gap-2">
+                  <div>
+                    <p className="text-xs text-muted-foreground mb-1">Breedte (cm)</p>
+                    <Input
+                      type="number"
+                      min={10}
+                      step={10}
+                      value={struct.widthCm}
+                      onChange={(e) => {
+                        const val = Math.max(10, Number(e.target.value));
+                        transformStructure(selectedId, struct.x, struct.y, val, struct.heightCm, struct.rotation);
+                      }}
+                    />
+                  </div>
+                  <div>
+                    <p className="text-xs text-muted-foreground mb-1">Hoogte (cm)</p>
+                    <Input
+                      type="number"
+                      min={10}
+                      step={10}
+                      value={struct.heightCm}
+                      onChange={(e) => {
+                        const val = Math.max(10, Number(e.target.value));
+                        transformStructure(selectedId, struct.x, struct.y, struct.widthCm, val, struct.rotation);
+                      }}
+                    />
+                  </div>
                 </div>
+                {struct.locked && (
+                  <p className="text-sm text-muted-foreground">Vergrendeld</p>
+                )}
               </div>
             );
           })()}

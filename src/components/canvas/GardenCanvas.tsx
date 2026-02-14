@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useRef, useCallback, useEffect } from "react";
+import { useState, useRef, useCallback, useEffect, useMemo } from "react";
 import { Stage, Layer, Transformer } from "react-konva";
 import type Konva from "konva";
 import GridLayer from "./GridLayer";
@@ -53,8 +53,9 @@ export default function GardenCanvas({
   const transformerRef = useRef<Konva.Transformer>(null);
   const [stageSize, setStageSize] = useState({ width: 800, height: 600 });
   const [zoom, setZoom] = useState(1);
-  const [position, setPosition] = useState({ x: 20, y: 20 });
+  const [position, setPosition] = useState<{ x: number; y: number } | null>(null);
   const [gridVisible, setGridVisible] = useState(true);
+  const initializedRef = useRef(false);
 
   // Bereken initiële schaal zodat de tuin in het scherm past
   const baseScale = Math.min(
@@ -64,22 +65,43 @@ export default function GardenCanvas({
   );
   const scale = baseScale * zoom;
 
-  // Resize observer
+  // Centreer de tuin bij eerste render
+  const centeredPosition = useMemo(() => ({
+    x: (stageSize.width - garden.widthCm * scale) / 2,
+    y: (stageSize.height - garden.heightCm * scale) / 2,
+  }), [stageSize.width, stageSize.height, garden.widthCm, scale]);
+  const pos = position || centeredPosition;
+
+  // Resize observer + initiële centrering
   useEffect(() => {
     const container = containerRef.current;
     if (!container) return;
 
     const observer = new ResizeObserver((entries) => {
       for (const entry of entries) {
-        setStageSize({
+        const newSize = {
           width: entry.contentRect.width,
           height: entry.contentRect.height,
-        });
+        };
+        setStageSize(newSize);
+        // Centreer bij allereerste meting
+        if (!initializedRef.current && newSize.width > 0) {
+          initializedRef.current = true;
+          const bs = Math.min(
+            (newSize.width - 40) / garden.widthCm,
+            (newSize.height - 40) / garden.heightCm,
+            2
+          );
+          setPosition({
+            x: (newSize.width - garden.widthCm * bs) / 2,
+            y: (newSize.height - garden.heightCm * bs) / 2,
+          });
+        }
       }
     });
     observer.observe(container);
     return () => observer.disconnect();
-  }, []);
+  }, [garden.widthCm, garden.heightCm]);
 
   // Koppel transformer aan geselecteerd element (niet bij locked structuren)
   useEffect(() => {
@@ -128,15 +150,15 @@ export default function GardenCanvas({
         const oldZoom = zoom;
         const newZoom =
           e.evt.deltaY < 0
-            ? Math.min(oldZoom * scaleBy, 5)
+            ? Math.min(oldZoom * scaleBy, 15)
             : Math.max(oldZoom / scaleBy, 0.1);
 
         const pointer = stage.getPointerPosition();
         if (!pointer) return;
 
         const mousePointTo = {
-          x: (pointer.x - position.x) / (baseScale * oldZoom),
-          y: (pointer.y - position.y) / (baseScale * oldZoom),
+          x: (pointer.x - pos.x) / (baseScale * oldZoom),
+          y: (pointer.y - pos.y) / (baseScale * oldZoom),
         };
 
         setZoom(newZoom);
@@ -146,16 +168,19 @@ export default function GardenCanvas({
         });
       } else {
         // Gewoon scrollen = pan
-        setPosition((prev) => ({
-          x: prev.x - e.evt.deltaX,
-          y: prev.y - e.evt.deltaY,
-        }));
+        setPosition((prev) => {
+          const p = prev || centeredPosition;
+          return {
+            x: p.x - e.evt.deltaX,
+            y: p.y - e.evt.deltaY,
+          };
+        });
       }
     },
-    [zoom, position, baseScale]
+    [zoom, pos, baseScale, centeredPosition]
   );
 
-  const handleZoomIn = () => setZoom((z) => Math.min(z * 1.2, 5));
+  const handleZoomIn = () => setZoom((z) => Math.min(z * 1.2, 15));
   const handleZoomOut = () => setZoom((z) => Math.max(z / 1.2, 0.1));
 
   const handleCornerDrag = (index: number, newPos: Point) => {
@@ -222,8 +247,8 @@ export default function GardenCanvas({
       const rect = containerRef.current?.getBoundingClientRect();
       if (!rect) return;
 
-      const x = (e.clientX - rect.left - position.x) / scale;
-      const y = (e.clientY - rect.top - position.y) / scale;
+      const x = (e.clientX - rect.left - pos.x) / scale;
+      const y = (e.clientY - rect.top - pos.y) / scale;
 
       if (plantId) {
         onAddZone(plantId, x, y);
@@ -231,7 +256,7 @@ export default function GardenCanvas({
         onAddStructure(structureType, x, y);
       }
     },
-    [position, scale, onAddZone, onAddStructure]
+    [pos, scale, onAddZone, onAddStructure]
   );
 
   const handleExport = () => {
@@ -288,6 +313,17 @@ export default function GardenCanvas({
     return () => window.removeEventListener("keydown", handleKeyDown);
   }, [selectedId, garden.zones, onRemoveZone, onRemoveStructure]);
 
+  // Scrollbar posities berekenen
+  const gardenPxW = garden.widthCm * scale;
+  const gardenPxH = garden.heightCm * scale;
+  // Hoeveel van de totale content is zichtbaar?
+  const hThumbRatio = Math.min(1, stageSize.width / (gardenPxW + 100));
+  const vThumbRatio = Math.min(1, stageSize.height / (gardenPxH + 100));
+  // Positie van de thumb (0..1)
+  const hThumbPos = Math.max(0, Math.min(1 - hThumbRatio, ((-pos.x + stageSize.width * 0.1) / (gardenPxW + 100))));
+  const vThumbPos = Math.max(0, Math.min(1 - vThumbRatio, ((-pos.y + stageSize.height * 0.1) / (gardenPxH + 100))));
+  const showScrollbars = zoom > 1.2;
+
   return (
     <div
       ref={containerRef}
@@ -295,6 +331,31 @@ export default function GardenCanvas({
       onDragOver={(e) => e.preventDefault()}
       onDrop={handleDrop}
     >
+      {/* Scrollbar indicators */}
+      {showScrollbars && (
+        <>
+          {/* Horizontale scrollbar */}
+          <div className="absolute bottom-1 left-0 right-4 h-2 z-10 pointer-events-none">
+            <div
+              className="absolute h-full rounded-full bg-foreground/20"
+              style={{
+                left: `${hThumbPos * 100}%`,
+                width: `${Math.max(hThumbRatio * 100, 8)}%`,
+              }}
+            />
+          </div>
+          {/* Verticale scrollbar */}
+          <div className="absolute top-0 right-1 bottom-4 w-2 z-10 pointer-events-none">
+            <div
+              className="absolute w-full rounded-full bg-foreground/20"
+              style={{
+                top: `${vThumbPos * 100}%`,
+                height: `${Math.max(vThumbRatio * 100, 8)}%`,
+              }}
+            />
+          </div>
+        </>
+      )}
       <CanvasToolbar
         zoom={zoom}
         onZoomIn={handleZoomIn}
@@ -308,8 +369,8 @@ export default function GardenCanvas({
         ref={stageRef}
         width={stageSize.width}
         height={stageSize.height}
-        x={position.x}
-        y={position.y}
+        x={pos.x}
+        y={pos.y}
         draggable
         onWheel={handleWheel}
         onDragEnd={handleStageDragEnd}

@@ -69,7 +69,8 @@ export function pixelsToCm(pixels: number, scale: number): number {
 
 // --- Nieuwe helpers voor zones en structuren ---
 
-/** Bereken individuele plantposities binnen een zone als stippengrid */
+/** Bereken individuele plantposities binnen een zone als stippengrid.
+ *  Planten starten direct bij de rand/hoek van het bed. */
 export function calculatePlantPositions(
   zone: CropZone,
   plant: PlantData
@@ -80,12 +81,11 @@ export function calculatePlantPositions(
 
   if (spacingX <= 0 || spacingY <= 0) return positions;
 
-  // Begin met halve spacing als marge, dan elke spacing een positie
-  const marginX = spacingX / 2;
-  const marginY = spacingY / 2;
+  // Kleine inset zodat stippen net binnen de rand vallen
+  const inset = Math.min(spacingX, spacingY) * 0.15;
 
-  for (let y = marginY; y <= zone.heightCm - marginY; y += spacingY) {
-    for (let x = marginX; x <= zone.widthCm - marginX; x += spacingX) {
+  for (let y = inset; y <= zone.heightCm - inset; y += spacingY) {
+    for (let x = inset; x <= zone.widthCm - inset; x += spacingX) {
       positions.push({ x, y });
     }
   }
