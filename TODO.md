@@ -3,14 +3,15 @@
 ## Actief / Korte termijn
 
 ### Database & Accounts
-- [ ] Supabase project opzetten
-- [ ] Database schema ontwerpen (gardens, plants, users)
-- [ ] Supabase Auth integreren (email/wachtwoord)
-- [ ] Storage migratie: localStorage → Supabase
-- [ ] Login/registratie pagina
-- [ ] Tuinen koppelen aan gebruikersaccount
-- [ ] Meerdere tuinen per gebruiker
-- [ ] Custom planten en overrides per gebruiker opslaan in DB
+- [x] Supabase project opzetten
+- [x] Database schema ontwerpen (gardens, plants, users)
+- [x] Supabase Auth integreren (email/wachtwoord)
+- [x] Storage migratie: localStorage → Supabase
+- [x] Login/registratie pagina
+- [x] Tuinen koppelen aan gebruikersaccount
+- [x] Meerdere tuinen per gebruiker
+- [x] Custom planten en overrides per gebruiker opslaan in DB
+- [ ] Supabase "Confirm email" weer aanzetten voor productie
 
 ---
 
