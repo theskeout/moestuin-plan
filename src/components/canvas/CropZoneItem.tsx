@@ -1,6 +1,6 @@
 "use client";
 
-import { Rect, Text, Group, Circle, Line } from "react-konva";
+import { Rect, Text, Group, Circle } from "react-konva";
 import { CropZone } from "@/lib/garden/types";
 import { PlantData } from "@/lib/plants/types";
 import { snapToGrid, calculatePlantPositions } from "@/lib/garden/helpers";
@@ -13,7 +13,6 @@ interface CropZoneItemProps {
   isSelected: boolean;
   onSelect: (id: string) => void;
   onDragEnd: (id: string, x: number, y: number) => void;
-  onDelete: (id: string) => void;
 }
 
 export default function CropZoneItem({
@@ -23,7 +22,6 @@ export default function CropZoneItem({
   isSelected,
   onSelect,
   onDragEnd,
-  onDelete,
 }: CropZoneItemProps) {
   const w = zone.widthCm * scale;
   const h = zone.heightCm * scale;
@@ -40,6 +38,7 @@ export default function CropZoneItem({
       id={zone.id}
       x={zone.x * scale}
       y={zone.y * scale}
+      rotation={zone.rotation}
       width={w}
       height={h}
       draggable
@@ -59,7 +58,7 @@ export default function CropZoneItem({
         height={h}
         fill={plantData.color + "25"}
         stroke={isSelected ? "#1d4ed8" : plantData.color}
-        strokeWidth={isSelected ? 3 : 1.5}
+        strokeWidth={isSelected ? 2 : 1.5}
         cornerRadius={3}
       />
 
@@ -72,6 +71,7 @@ export default function CropZoneItem({
           radius={dotRadius}
           fill={plantData.color}
           opacity={0.5}
+          listening={false}
         />
       ))}
 
@@ -93,33 +93,6 @@ export default function CropZoneItem({
         fill="#6b7280"
         listening={false}
       />
-
-      {/* Delete kruisje bij selectie — IN het vak rechtsboven */}
-      {isSelected && (
-        <Group
-          x={w - 14}
-          y={4}
-          onClick={(e) => {
-            e.cancelBubble = true;
-            onDelete(zone.id);
-          }}
-          onTap={(e) => {
-            e.cancelBubble = true;
-            onDelete(zone.id);
-          }}
-        >
-          <Rect
-            x={-10}
-            y={-10}
-            width={20}
-            height={20}
-            fill="#ef4444"
-            cornerRadius={10}
-          />
-          <Line points={[-5, -5, 5, 5]} stroke="#fff" strokeWidth={2} />
-          <Line points={[5, -5, -5, 5]} stroke="#fff" strokeWidth={2} />
-        </Group>
-      )}
     </Group>
   );
 }

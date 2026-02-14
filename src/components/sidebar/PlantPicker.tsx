@@ -27,7 +27,7 @@ function StructureCard({ type, icon, label }: { type: StructureType; icon: strin
       onDragStart={(e) => {
         e.dataTransfer.setData("structureType", type);
       }}
-      className="flex flex-col items-center justify-center p-2 rounded-lg hover:bg-accent cursor-grab active:cursor-grabbing transition-colors border border-dashed border-border hover:border-foreground/30 min-w-[60px]"
+      className="flex flex-col items-center justify-center p-2 rounded-lg hover:bg-accent cursor-grab active:cursor-grabbing transition-colors border border-dashed border-border hover:border-foreground/30"
     >
       <span className="text-lg">{icon}</span>
       <span className="text-xs text-muted-foreground">{label}</span>
@@ -83,7 +83,7 @@ export default function PlantPicker({ onSelectPlant }: PlantPickerProps) {
       {/* Structuren */}
       <div>
         <p className="text-xs font-medium text-muted-foreground mb-1.5">Structuren</p>
-        <div className="flex gap-2">
+        <div className="grid grid-cols-3 gap-2">
           {STRUCTURES.map((s) => (
             <StructureCard key={s.type} {...s} />
           ))}

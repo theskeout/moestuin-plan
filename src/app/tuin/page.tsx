@@ -16,7 +16,7 @@ import { findNearbyZones, calculatePlantPositions } from "@/lib/garden/helpers";
 import { PlantData } from "@/lib/plants/types";
 import { Garden } from "@/lib/garden/types";
 import { createRectangleCorners, generateId } from "@/lib/garden/helpers";
-import { ArrowLeft, Move } from "lucide-react";
+import { ArrowLeft, Move, Lock, Unlock } from "lucide-react";
 
 // Dynamic import voor Konva (geen SSR)
 const GardenCanvas = dynamic(
@@ -64,11 +64,11 @@ function TuinContent() {
     hasChanges,
     addZone,
     moveZone,
-    resizeZone,
+    transformZone,
     removeZone,
     addStructure,
     moveStructure,
-    resizeStructure,
+    transformStructure,
     removeStructure,
     toggleStructureLock,
     updateShape,
@@ -139,14 +139,13 @@ function TuinContent() {
           selectedType={selectedType}
           onSelect={select}
           onMoveZone={moveZone}
-          onResizeZone={resizeZone}
+          onTransformZone={transformZone}
           onAddZone={addZone}
           onRemoveZone={removeZone}
           onMoveStructure={moveStructure}
-          onResizeStructure={resizeStructure}
+          onTransformStructure={transformStructure}
           onAddStructure={addStructure}
           onRemoveStructure={removeStructure}
-          onToggleStructureLock={toggleStructureLock}
           onUpdateShape={updateShape}
           onLoadGarden={loadGarden}
           editingCorners={editingCorners}
@@ -196,25 +195,41 @@ function TuinContent() {
             </div>
           )}
 
-          {selectedId && selectedType === "structure" && (
-            <div className="space-y-3">
-              <div className="flex items-center justify-between">
-                <h3 className="text-sm font-medium">
-                  Structuur geselecteerd
-                </h3>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  className="text-destructive hover:text-destructive"
-                  onClick={() => {
-                    if (selectedId) removeStructure(selectedId);
-                  }}
-                >
-                  Verwijder
-                </Button>
+          {selectedId && selectedType === "structure" && (() => {
+            const struct = garden.structures.find((s) => s.id === selectedId);
+            if (!struct) return null;
+            return (
+              <div className="space-y-3">
+                <div className="flex items-center justify-between">
+                  <h3 className="text-sm font-medium">
+                    Structuur geselecteerd
+                  </h3>
+                  <div className="flex items-center gap-1">
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => toggleStructureLock(selectedId)}
+                      title={struct.locked ? "Ontgrendel" : "Vergrendel"}
+                    >
+                      {struct.locked ? <Lock className="h-3.5 w-3.5" /> : <Unlock className="h-3.5 w-3.5" />}
+                    </Button>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="text-destructive hover:text-destructive"
+                      onClick={() => removeStructure(selectedId)}
+                    >
+                      Verwijder
+                    </Button>
+                  </div>
+                </div>
+                <div className="text-sm text-muted-foreground">
+                  {struct.widthCm} x {struct.heightCm}cm
+                  {struct.locked && " — Vergrendeld"}
+                </div>
               </div>
-            </div>
-          )}
+            );
+          })()}
         </aside>
       </div>
     </div>

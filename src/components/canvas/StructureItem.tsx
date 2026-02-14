@@ -1,6 +1,6 @@
 "use client";
 
-import { Rect, Text, Group, Line } from "react-konva";
+import { Rect, Text, Group } from "react-konva";
 import { Structure } from "@/lib/garden/types";
 import { snapToGrid } from "@/lib/garden/helpers";
 
@@ -10,8 +10,6 @@ interface StructureItemProps {
   isSelected: boolean;
   onSelect: (id: string) => void;
   onDragEnd: (id: string, x: number, y: number) => void;
-  onDelete: (id: string) => void;
-  onToggleLock: (id: string) => void;
 }
 
 const STRUCTURE_STYLES: Record<
@@ -31,8 +29,6 @@ export default function StructureItem({
   isSelected,
   onSelect,
   onDragEnd,
-  onDelete,
-  onToggleLock,
 }: StructureItemProps) {
   const style = STRUCTURE_STYLES[structure.type];
   const w = structure.widthCm * scale;
@@ -44,6 +40,7 @@ export default function StructureItem({
       id={structure.id}
       x={structure.x * scale}
       y={structure.y * scale}
+      rotation={structure.rotation}
       width={w}
       height={h}
       draggable={!locked}
@@ -63,7 +60,7 @@ export default function StructureItem({
         height={h}
         fill={style.fill}
         stroke={isSelected ? "#1d4ed8" : style.stroke}
-        strokeWidth={isSelected ? 3 : 2}
+        strokeWidth={isSelected ? 2 : 2}
         dash={style.dash}
         cornerRadius={4}
       />
@@ -86,8 +83,8 @@ export default function StructureItem({
         fill="#6b7280"
         listening={false}
       />
-      {/* Locked indicator — altijd zichtbaar als locked */}
-      {locked && !isSelected && (
+      {/* Locked indicator */}
+      {locked && (
         <Text
           text="🔒"
           x={w - 18}
@@ -95,64 +92,6 @@ export default function StructureItem({
           fontSize={12}
           listening={false}
         />
-      )}
-      {/* Bij selectie: delete-kruisje en lock-toggle IN het vak */}
-      {isSelected && (
-        <>
-          {/* Delete kruisje — rechtsboven IN het vak */}
-          <Group
-            x={w - 14}
-            y={4}
-            onClick={(e) => {
-              e.cancelBubble = true;
-              onDelete(structure.id);
-            }}
-            onTap={(e) => {
-              e.cancelBubble = true;
-              onDelete(structure.id);
-            }}
-          >
-            <Rect
-              x={-10}
-              y={-10}
-              width={20}
-              height={20}
-              fill="#ef4444"
-              cornerRadius={10}
-            />
-            <Line points={[-5, -5, 5, 5]} stroke="#fff" strokeWidth={2} />
-            <Line points={[5, -5, -5, 5]} stroke="#fff" strokeWidth={2} />
-          </Group>
-          {/* Lock toggle — naast het kruisje */}
-          <Group
-            x={w - 38}
-            y={4}
-            onClick={(e) => {
-              e.cancelBubble = true;
-              onToggleLock(structure.id);
-            }}
-            onTap={(e) => {
-              e.cancelBubble = true;
-              onToggleLock(structure.id);
-            }}
-          >
-            <Rect
-              x={-10}
-              y={-10}
-              width={20}
-              height={20}
-              fill={locked ? "#f59e0b" : "#6b7280"}
-              cornerRadius={10}
-            />
-            <Text
-              text={locked ? "🔒" : "🔓"}
-              x={-7}
-              y={-7}
-              fontSize={13}
-              listening={false}
-            />
-          </Group>
-        </>
       )}
     </Group>
   );

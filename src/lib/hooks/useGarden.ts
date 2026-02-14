@@ -75,12 +75,19 @@ export function useGarden(initialGarden?: Garden) {
     setHasChanges(true);
   }, []);
 
-  const resizeZone = useCallback((id: string, widthCm: number, heightCm: number) => {
+  const transformZone = useCallback((id: string, x: number, y: number, widthCm: number, heightCm: number, rotation: number) => {
     setGarden((prev) => ({
       ...prev,
       zones: prev.zones.map((z) =>
         z.id === id
-          ? { ...z, widthCm: snapToGrid(Math.max(widthCm, 10)), heightCm: snapToGrid(Math.max(heightCm, 10)) }
+          ? {
+              ...z,
+              x: snapToGrid(x),
+              y: snapToGrid(y),
+              widthCm: snapToGrid(Math.max(widthCm, 10)),
+              heightCm: snapToGrid(Math.max(heightCm, 10)),
+              rotation,
+            }
           : z
       ),
       updatedAt: new Date().toISOString(),
@@ -141,7 +148,7 @@ export function useGarden(initialGarden?: Garden) {
     setHasChanges(true);
   }, []);
 
-  const resizeStructure = useCallback((id: string, widthCm: number, heightCm: number) => {
+  const transformStructure = useCallback((id: string, x: number, y: number, widthCm: number, heightCm: number, rotation: number) => {
     setGarden((prev) => {
       const struct = prev.structures.find((s) => s.id === id);
       if (struct?.locked) return prev;
@@ -149,7 +156,14 @@ export function useGarden(initialGarden?: Garden) {
         ...prev,
         structures: prev.structures.map((s) =>
           s.id === id
-            ? { ...s, widthCm: snapToGrid(Math.max(widthCm, 10)), heightCm: snapToGrid(Math.max(heightCm, 10)) }
+            ? {
+                ...s,
+                x: snapToGrid(x),
+                y: snapToGrid(y),
+                widthCm: snapToGrid(Math.max(widthCm, 10)),
+                heightCm: snapToGrid(Math.max(heightCm, 10)),
+                rotation,
+              }
             : s
         ),
         updatedAt: new Date().toISOString(),
@@ -229,11 +243,11 @@ export function useGarden(initialGarden?: Garden) {
     hasChanges,
     addZone,
     moveZone,
-    resizeZone,
+    transformZone,
     removeZone,
     addStructure,
     moveStructure,
-    resizeStructure,
+    transformStructure,
     removeStructure,
     toggleStructureLock,
     updateShape,

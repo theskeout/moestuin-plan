@@ -20,14 +20,13 @@ interface GardenCanvasProps {
   selectedType: SelectedType;
   onSelect: (id: string | null, type?: SelectedType) => void;
   onMoveZone: (id: string, x: number, y: number) => void;
-  onResizeZone: (id: string, widthCm: number, heightCm: number) => void;
+  onTransformZone: (id: string, x: number, y: number, w: number, h: number, rotation: number) => void;
   onAddZone: (plantId: string, x: number, y: number) => void;
   onRemoveZone: (id: string) => void;
   onMoveStructure: (id: string, x: number, y: number) => void;
-  onResizeStructure: (id: string, widthCm: number, heightCm: number) => void;
+  onTransformStructure: (id: string, x: number, y: number, w: number, h: number, rotation: number) => void;
   onAddStructure: (type: StructureType, x: number, y: number) => void;
   onRemoveStructure: (id: string) => void;
-  onToggleStructureLock: (id: string) => void;
   onUpdateShape: (shape: Garden["shape"]) => void;
   onLoadGarden: (garden: Garden) => void;
   editingCorners: boolean;
@@ -38,14 +37,13 @@ export default function GardenCanvas({
   selectedId,
   onSelect,
   onMoveZone,
-  onResizeZone,
+  onTransformZone,
   onAddZone,
   onRemoveZone,
   onMoveStructure,
-  onResizeStructure,
+  onTransformStructure,
   onAddStructure,
   onRemoveStructure,
-  onToggleStructureLock,
   onUpdateShape,
   onLoadGarden,
   editingCorners,
@@ -178,12 +176,13 @@ export default function GardenCanvas({
     }
   };
 
-  // Transform end: sla nieuwe afmetingen op
+  // Transform end: sla positie, afmetingen en rotatie op in 1 call
   const handleTransformEnd = (e: Konva.KonvaEventObject<Event>) => {
     const node = e.target;
     const id = node.id();
     const scaleX = node.scaleX();
     const scaleY = node.scaleY();
+    const rotation = node.rotation();
 
     // Reset scale, bereken nieuwe afmetingen
     node.scaleX(1);
@@ -202,11 +201,9 @@ export default function GardenCanvas({
     // Bepaal of het een zone of structure is
     const isZone = garden.zones.some((z) => z.id === id);
     if (isZone) {
-      onMoveZone(id, newX, newY);
-      onResizeZone(id, newWidthCm, newHeightCm);
+      onTransformZone(id, newX, newY, newWidthCm, newHeightCm, rotation);
     } else {
-      onMoveStructure(id, newX, newY);
-      onResizeStructure(id, newWidthCm, newHeightCm);
+      onTransformStructure(id, newX, newY, newWidthCm, newHeightCm, rotation);
     }
   };
 
@@ -266,6 +263,26 @@ export default function GardenCanvas({
     input.click();
   };
 
+  // Delete handler via keyboard
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (!selectedId) return;
+      if (e.key === "Delete" || e.key === "Backspace") {
+        // Niet verwijderen als een input gefocust is
+        if ((e.target as HTMLElement).tagName === "INPUT") return;
+        e.preventDefault();
+        const isZone = garden.zones.some((z) => z.id === selectedId);
+        if (isZone) {
+          onRemoveZone(selectedId);
+        } else {
+          onRemoveStructure(selectedId);
+        }
+      }
+    };
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [selectedId, garden.zones, onRemoveZone, onRemoveStructure]);
+
   return (
     <div
       ref={containerRef}
@@ -318,8 +335,6 @@ export default function GardenCanvas({
               isSelected={selectedId === structure.id}
               onSelect={(id) => onSelect(id, "structure")}
               onDragEnd={onMoveStructure}
-              onDelete={onRemoveStructure}
-              onToggleLock={onToggleStructureLock}
             />
           ))}
           {/* Gewaszones */}
@@ -335,15 +350,23 @@ export default function GardenCanvas({
                 isSelected={selectedId === zone.id}
                 onSelect={(id) => onSelect(id, "zone")}
                 onDragEnd={onMoveZone}
-                onDelete={onRemoveZone}
               />
             );
           })}
-          {/* Transformer voor resize */}
+          {/* Transformer voor resize + rotatie */}
           <Transformer
             ref={transformerRef}
-            rotateEnabled={false}
+            rotateEnabled={true}
             keepRatio={false}
+            borderStroke="#3b82f6"
+            borderStrokeWidth={1}
+            borderDash={[4, 4]}
+            anchorSize={8}
+            anchorStroke="#3b82f6"
+            anchorFill="#fff"
+            anchorCornerRadius={2}
+            rotateAnchorOffset={20}
+            padding={2}
             enabledAnchors={[
               "top-left",
               "top-right",
