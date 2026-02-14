@@ -21,6 +21,7 @@ const STRUCTURE_STYLES: Record<
   pad: { fill: "rgba(156, 163, 175, 0.4)", stroke: "#6b7280", label: "Pad", icon: "🚶" },
   schuur: { fill: "rgba(107, 114, 128, 0.4)", stroke: "#374151", label: "Schuur", icon: "🏚️" },
   hek: { fill: "rgba(139, 90, 43, 0.35)", stroke: "#78350f", label: "Hek", icon: "🪵", dash: [4, 3] },
+  boom: { fill: "rgba(76, 175, 80, 0.3)", stroke: "#2e7d32", label: "Boom", icon: "🌳" },
 };
 
 export default function StructureItem({

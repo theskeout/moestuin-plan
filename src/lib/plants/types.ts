@@ -1,4 +1,4 @@
-export type PlantCategory = "groente" | "fruit" | "kruiden";
+export type PlantCategory = "groente" | "fruit" | "kruiden" | "sier";
 export type SunNeed = "vol" | "halfschaduw" | "schaduw";
 export type WaterNeed = "laag" | "gemiddeld" | "hoog";
 
