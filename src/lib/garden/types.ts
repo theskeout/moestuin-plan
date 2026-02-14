@@ -47,6 +47,10 @@ export interface CropZone {
 
 // TODO: Tuin verwijderen — bevestigingsdialoog toevoegen, gaat nu te makkelijk per ongeluk
 
+// TODO: Structuur: compostbak toevoegen als nieuw StructureType
+
+// TODO: Copy-paste functie voor zones en structuren op canvas (Ctrl+C/V of dubbel-klik dupliceren)
+
 export interface Garden {
   id: string;
   name: string;
