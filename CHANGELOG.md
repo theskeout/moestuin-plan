@@ -1,5 +1,13 @@
 # Changelog — Moestuin Planner
 
+## 2026-02-14 (nacht)
+
+### Canvas zoeken & fruitbomen
+- Zoekbalk in linker sidebar om geplaatste gewassen op canvas te vinden en selecteren
+- Fruitbomen (appelboom, perenboom, kersenboom, pruimenboom, vijgenboom, vijg, kiwi) verschijnen als 1 plant in rond vak (net als Boom-structuur)
+- Verfijning placeholder verbeterd: "Type [plantnaam]"
+- Shift-rotatie fix: positiecorrectie zodat element niet meer wegschuift bij 45-graden snap
+
 ## 2026-02-14 (avond)
 
 ### Supabase database & accounts

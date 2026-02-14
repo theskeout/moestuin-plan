@@ -31,6 +31,7 @@ TuinPage
 ├── Header (naam, afmetingen, export/import, opslaan)
 ├── Linker Sidebar (aside)
 │   ├── CanvasToolbar (zoom, grid)
+│   ├── Zoekbalk (zoek gewas op canvas)
 │   └── Selectie-info
 │       ├── Zone details (afmetingen, rotatie, notities)
 │       ├── PlantInfo (compact)
@@ -140,9 +141,13 @@ Storage abstractie (src/lib/storage/)
 
 - **Coördinatensysteem:** Centimeters. Scale-factor berekend o.b.v. viewport.
 - **Interactie:** Drag & drop (planten vanuit sidebar), pan (scroll), zoom (ctrl+scroll/pinch)
-- **Transformer:** Resize + rotatie voor zones en structuren. Shift = snap naar 45 graden.
+- **Transformer:** Resize + rotatie voor zones en structuren. Shift = snap naar 45 graden (met positiecorrectie).
+- **Fruitbomen:** Zones met `isFruitTree()` check worden als cirkel gerenderd met 1 plant in het midden (vergelijkbaar met Boom-structuur).
 - **Tuinvorm:** Polygoon met versleepbare hoekpunten. Punten toevoegen (klik middenpunt segment) en verwijderen (dubbelklik).
 
 ## Geplande architectuurwijzigingen
 
-1. **Planner module:** Zaai- en oogstkalender, reminders
+1. **Planner module:** Zaai- en oogstkalender, reminders, geplant-datum per zone
+2. **Tuin delen:** Uitnodigingen per email, Supabase RLS voor gedeelde tuinen
+3. **Compostbak:** Nieuw structuurtype
+4. **Copy-paste:** Dupliceren van zones en structuren op canvas
