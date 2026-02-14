@@ -69,7 +69,7 @@ export default function GardenCanvas({
   const centeredPosition = useMemo(() => ({
     x: (stageSize.width - garden.widthCm * scale) / 2,
     y: (stageSize.height - garden.heightCm * scale) / 2,
-  }), [stageSize.width, stageSize.height, garden.widthCm, scale]);
+  }), [stageSize.width, stageSize.height, garden.widthCm, garden.heightCm, scale]);
   const pos = position || centeredPosition;
 
   // Resize observer + initiële centrering

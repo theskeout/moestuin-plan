@@ -4,6 +4,7 @@ import { useState, useMemo, useCallback, Suspense } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import dynamic from "next/dynamic";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import PlantPicker from "@/components/sidebar/PlantPicker";
 import PlantInfo from "@/components/sidebar/PlantInfo";
 import CompanionAlert from "@/components/sidebar/CompanionAlert";
@@ -16,14 +17,16 @@ import { findNearbyZones, calculatePlantPositions } from "@/lib/garden/helpers";
 import { PlantData } from "@/lib/plants/types";
 import { Garden } from "@/lib/garden/types";
 import { createRectangleCorners, generateId } from "@/lib/garden/helpers";
-import { Input } from "@/components/ui/input";
 import { ArrowLeft, Move, Lock, Unlock, Check } from "lucide-react";
 
-// Dynamic import voor Konva (geen SSR)
 const GardenCanvas = dynamic(
   () => import("@/components/canvas/GardenCanvas"),
   { ssr: false }
 );
+
+const STRUCTURE_LABELS: Record<string, string> = {
+  kas: "Kas", grondbak: "Grondbak", pad: "Pad", schuur: "Schuur", hek: "Hek", boom: "Boom",
+};
 
 function TuinContent() {
   const searchParams = useSearchParams();
@@ -32,51 +35,28 @@ function TuinContent() {
   const [sidebarPlant, setSidebarPlant] = useState<PlantData | null>(null);
   const [saveLabel, setSaveLabel] = useState("Opslaan");
 
-  // Bepaal initiële garden state
   const initialGarden = useMemo((): Garden | undefined => {
     const id = searchParams.get("id");
     if (id) {
       const gardens = loadGardens();
       return gardens.find((g) => g.id === id);
     }
-
     const name = searchParams.get("name") || "Mijn Moestuin";
     const w = Number(searchParams.get("w")) || 300;
     const h = Number(searchParams.get("h")) || 1000;
-
     return {
-      id: generateId(),
-      name,
-      widthCm: w,
-      heightCm: h,
+      id: generateId(), name, widthCm: w, heightCm: h,
       shape: { corners: createRectangleCorners(w, h) },
-      plants: [],
-      zones: [],
-      structures: [],
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString(),
+      plants: [], zones: [], structures: [],
+      createdAt: new Date().toISOString(), updatedAt: new Date().toISOString(),
     };
   }, [searchParams]);
 
   const {
-    garden,
-    selectedId,
-    selectedType,
-    select,
-    hasChanges,
-    addZone,
-    moveZone,
-    transformZone,
-    removeZone,
-    toggleZoneLock,
-    addStructure,
-    moveStructure,
-    transformStructure,
-    removeStructure,
-    toggleStructureLock,
-    updateShape,
-    save,
-    loadGarden,
+    garden, selectedId, selectedType, select, hasChanges,
+    addZone, moveZone, transformZone, removeZone, toggleZoneLock,
+    addStructure, moveStructure, transformStructure, removeStructure, toggleStructureLock,
+    updateShape, save, loadGarden,
   } = useGarden(initialGarden);
 
   const handleSave = useCallback(() => {
@@ -87,18 +67,14 @@ function TuinContent() {
 
   useAutoSave(hasChanges, handleSave);
 
-  // Kruisteelt-checks voor geselecteerde zone
   const companionChecks = useMemo((): CompanionCheck[] => {
     if (!selectedId || selectedType !== "zone") return [];
     const zone = garden.zones.find((z) => z.id === selectedId);
     if (!zone) return [];
-
     const nearby = findNearbyZones(zone, garden.zones, 50);
-    const neighborPlantIds = nearby.map((n) => n.plantId);
-    return checkAllCompanions(zone.plantId, neighborPlantIds);
+    return checkAllCompanions(zone.plantId, nearby.map((n) => n.plantId));
   }, [selectedId, selectedType, garden.zones]);
 
-  // Info van geselecteerde zone
   const selectedZoneData = useMemo(() => {
     if (!selectedId || selectedType !== "zone") return null;
     const zone = garden.zones.find((z) => z.id === selectedId);
@@ -108,6 +84,13 @@ function TuinContent() {
     const positions = calculatePlantPositions(zone, plantData);
     return { zone, plantData, plantCount: positions.length };
   }, [selectedId, selectedType, garden.zones]);
+
+  const selectedStruct = useMemo(() => {
+    if (!selectedId || selectedType !== "structure") return null;
+    return garden.structures.find((s) => s.id === selectedId) || null;
+  }, [selectedId, selectedType, garden.structures]);
+
+  const hasLeftPanel = !!(selectedZoneData || selectedStruct);
 
   return (
     <div className="h-screen flex flex-col">
@@ -142,6 +125,146 @@ function TuinContent() {
       </header>
 
       <div className="flex-1 flex overflow-hidden">
+        {/* Linkerpaneel: geselecteerd element */}
+        {hasLeftPanel && (
+          <aside className="w-72 border-r bg-white overflow-y-auto p-4 space-y-4 hidden md:block">
+            {/* Zone geselecteerd */}
+            {selectedZoneData && (
+              <>
+                <div className="flex items-center justify-between">
+                  <h3 className="font-semibold flex items-center gap-2">
+                    <span className="text-xl">{selectedZoneData.plantData.icon}</span>
+                    {selectedZoneData.plantData.name}
+                  </h3>
+                  <div className="flex items-center gap-1">
+                    <Button
+                      variant="ghost" size="icon"
+                      onClick={() => { if (selectedId) toggleZoneLock(selectedId); }}
+                      title={selectedZoneData.zone.locked ? "Ontgrendel" : "Vergrendel"}
+                    >
+                      {selectedZoneData.zone.locked ? <Lock className="h-4 w-4" /> : <Unlock className="h-4 w-4" />}
+                    </Button>
+                  </div>
+                </div>
+
+                {/* Afmetingen */}
+                <div className="space-y-2">
+                  <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide">Bed</p>
+                  <div className="grid grid-cols-2 gap-2">
+                    <div>
+                      <p className="text-xs text-muted-foreground mb-1">Breedte (cm)</p>
+                      <Input
+                        type="number" min={10} step={10}
+                        value={selectedZoneData.zone.widthCm}
+                        onChange={(e) => {
+                          if (!selectedId) return;
+                          const val = Math.max(10, Number(e.target.value));
+                          transformZone(selectedId, selectedZoneData.zone.x, selectedZoneData.zone.y, val, selectedZoneData.zone.heightCm, selectedZoneData.zone.rotation);
+                        }}
+                      />
+                    </div>
+                    <div>
+                      <p className="text-xs text-muted-foreground mb-1">Hoogte (cm)</p>
+                      <Input
+                        type="number" min={10} step={10}
+                        value={selectedZoneData.zone.heightCm}
+                        onChange={(e) => {
+                          if (!selectedId) return;
+                          const val = Math.max(10, Number(e.target.value));
+                          transformZone(selectedId, selectedZoneData.zone.x, selectedZoneData.zone.y, selectedZoneData.zone.widthCm, val, selectedZoneData.zone.rotation);
+                        }}
+                      />
+                    </div>
+                  </div>
+                  <p className="text-sm text-muted-foreground">
+                    {selectedZoneData.plantCount} planten
+                    {selectedZoneData.zone.locked && " — Vergrendeld"}
+                  </p>
+                </div>
+
+                <div className="h-px bg-border" />
+
+                {/* Gewasinfo */}
+                <PlantInfo plant={selectedZoneData.plantData} onClose={() => {}} compact />
+
+                <div className="h-px bg-border" />
+
+                {/* Kruisteelt */}
+                <CompanionAlert checks={companionChecks} />
+
+                <Button
+                  variant="ghost" size="sm"
+                  className="w-full text-destructive hover:text-destructive"
+                  onClick={() => { if (selectedId) removeZone(selectedId); }}
+                >
+                  Bed verwijderen
+                </Button>
+              </>
+            )}
+
+            {/* Structuur geselecteerd */}
+            {selectedStruct && (
+              <>
+                <div className="flex items-center justify-between">
+                  <h3 className="font-semibold">
+                    {STRUCTURE_LABELS[selectedStruct.type] || selectedStruct.type}
+                  </h3>
+                  <div className="flex items-center gap-1">
+                    <Button
+                      variant="ghost" size="icon"
+                      onClick={() => { if (selectedId) toggleStructureLock(selectedId); }}
+                      title={selectedStruct.locked ? "Ontgrendel" : "Vergrendel"}
+                    >
+                      {selectedStruct.locked ? <Lock className="h-4 w-4" /> : <Unlock className="h-4 w-4" />}
+                    </Button>
+                  </div>
+                </div>
+
+                <div className="space-y-2">
+                  <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide">Afmetingen</p>
+                  <div className="grid grid-cols-2 gap-2">
+                    <div>
+                      <p className="text-xs text-muted-foreground mb-1">Breedte (cm)</p>
+                      <Input
+                        type="number" min={10} step={10}
+                        value={selectedStruct.widthCm}
+                        onChange={(e) => {
+                          if (!selectedId) return;
+                          const val = Math.max(10, Number(e.target.value));
+                          transformStructure(selectedId, selectedStruct.x, selectedStruct.y, val, selectedStruct.heightCm, selectedStruct.rotation);
+                        }}
+                      />
+                    </div>
+                    <div>
+                      <p className="text-xs text-muted-foreground mb-1">Hoogte (cm)</p>
+                      <Input
+                        type="number" min={10} step={10}
+                        value={selectedStruct.heightCm}
+                        onChange={(e) => {
+                          if (!selectedId) return;
+                          const val = Math.max(10, Number(e.target.value));
+                          transformStructure(selectedId, selectedStruct.x, selectedStruct.y, selectedStruct.widthCm, val, selectedStruct.rotation);
+                        }}
+                      />
+                    </div>
+                  </div>
+                  {selectedStruct.locked && (
+                    <p className="text-sm text-muted-foreground">Vergrendeld</p>
+                  )}
+                </div>
+
+                <Button
+                  variant="ghost" size="sm"
+                  className="w-full text-destructive hover:text-destructive"
+                  onClick={() => { if (selectedId) removeStructure(selectedId); }}
+                >
+                  Structuur verwijderen
+                </Button>
+              </>
+            )}
+          </aside>
+        )}
+
         {/* Canvas */}
         <GardenCanvas
           garden={garden}
@@ -161,149 +284,16 @@ function TuinContent() {
           editingCorners={editingCorners}
         />
 
-        {/* Sidebar */}
-        <aside className="w-80 border-l bg-white overflow-y-auto p-4 space-y-4 hidden md:block">
+        {/* Rechterpaneel: picker */}
+        <aside className="w-72 border-l bg-white overflow-y-auto p-4 space-y-4 hidden md:block">
           <h2 className="font-semibold">Gewassen & Structuren</h2>
           <p className="text-xs text-muted-foreground">
-            Sleep een gewas of structuur naar het canvas
+            Sleep naar het canvas
           </p>
-
-          <PlantPicker
-            onSelectPlant={(plant) => setSidebarPlant(plant)}
-          />
-
+          <PlantPicker onSelectPlant={(plant) => setSidebarPlant(plant)} />
           {sidebarPlant && (
-            <PlantInfo
-              plant={sidebarPlant}
-              onClose={() => setSidebarPlant(null)}
-            />
+            <PlantInfo plant={sidebarPlant} onClose={() => setSidebarPlant(null)} />
           )}
-
-          {selectedZoneData && (
-            <div className="space-y-3">
-              <div className="flex items-center justify-between">
-                <h3 className="text-sm font-medium">
-                  {selectedZoneData.plantData.icon} {selectedZoneData.plantData.name}
-                </h3>
-                <div className="flex items-center gap-1">
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => { if (selectedId) toggleZoneLock(selectedId); }}
-                    title={selectedZoneData.zone.locked ? "Ontgrendel" : "Vergrendel"}
-                  >
-                    {selectedZoneData.zone.locked ? <Lock className="h-3.5 w-3.5" /> : <Unlock className="h-3.5 w-3.5" />}
-                  </Button>
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    className="text-destructive hover:text-destructive"
-                    onClick={() => { if (selectedId) removeZone(selectedId); }}
-                  >
-                    Verwijder
-                  </Button>
-                </div>
-              </div>
-              <div className="grid grid-cols-2 gap-2">
-                <div>
-                  <p className="text-xs text-muted-foreground mb-1">Breedte (cm)</p>
-                  <Input
-                    type="number"
-                    min={10}
-                    step={10}
-                    value={selectedZoneData.zone.widthCm}
-                    onChange={(e) => {
-                      if (!selectedId) return;
-                      const val = Math.max(10, Number(e.target.value));
-                      transformZone(selectedId, selectedZoneData.zone.x, selectedZoneData.zone.y, val, selectedZoneData.zone.heightCm, selectedZoneData.zone.rotation);
-                    }}
-                  />
-                </div>
-                <div>
-                  <p className="text-xs text-muted-foreground mb-1">Hoogte (cm)</p>
-                  <Input
-                    type="number"
-                    min={10}
-                    step={10}
-                    value={selectedZoneData.zone.heightCm}
-                    onChange={(e) => {
-                      if (!selectedId) return;
-                      const val = Math.max(10, Number(e.target.value));
-                      transformZone(selectedId, selectedZoneData.zone.x, selectedZoneData.zone.y, selectedZoneData.zone.widthCm, val, selectedZoneData.zone.rotation);
-                    }}
-                  />
-                </div>
-              </div>
-              <div className="text-sm text-muted-foreground">
-                {selectedZoneData.plantCount} planten
-                {selectedZoneData.zone.locked && " — Vergrendeld"}
-              </div>
-              <CompanionAlert checks={companionChecks} />
-            </div>
-          )}
-
-          {selectedId && selectedType === "structure" && (() => {
-            const struct = garden.structures.find((s) => s.id === selectedId);
-            if (!struct) return null;
-            return (
-              <div className="space-y-3">
-                <div className="flex items-center justify-between">
-                  <h3 className="text-sm font-medium">
-                    Structuur geselecteerd
-                  </h3>
-                  <div className="flex items-center gap-1">
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => toggleStructureLock(selectedId)}
-                      title={struct.locked ? "Ontgrendel" : "Vergrendel"}
-                    >
-                      {struct.locked ? <Lock className="h-3.5 w-3.5" /> : <Unlock className="h-3.5 w-3.5" />}
-                    </Button>
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      className="text-destructive hover:text-destructive"
-                      onClick={() => removeStructure(selectedId)}
-                    >
-                      Verwijder
-                    </Button>
-                  </div>
-                </div>
-                <div className="grid grid-cols-2 gap-2">
-                  <div>
-                    <p className="text-xs text-muted-foreground mb-1">Breedte (cm)</p>
-                    <Input
-                      type="number"
-                      min={10}
-                      step={10}
-                      value={struct.widthCm}
-                      onChange={(e) => {
-                        const val = Math.max(10, Number(e.target.value));
-                        transformStructure(selectedId, struct.x, struct.y, val, struct.heightCm, struct.rotation);
-                      }}
-                    />
-                  </div>
-                  <div>
-                    <p className="text-xs text-muted-foreground mb-1">Hoogte (cm)</p>
-                    <Input
-                      type="number"
-                      min={10}
-                      step={10}
-                      value={struct.heightCm}
-                      onChange={(e) => {
-                        const val = Math.max(10, Number(e.target.value));
-                        transformStructure(selectedId, struct.x, struct.y, struct.widthCm, val, struct.rotation);
-                      }}
-                    />
-                  </div>
-                </div>
-                {struct.locked && (
-                  <p className="text-sm text-muted-foreground">Vergrendeld</p>
-                )}
-              </div>
-            );
-          })()}
         </aside>
       </div>
     </div>

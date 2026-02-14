@@ -5,7 +5,7 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { searchPlants, getPlantsByCategory, addCustomPlant } from "@/lib/plants/catalog";
-import { PlantData, PlantCategory } from "@/lib/plants/types";
+import { PlantData, PlantCategory, SunNeed, WaterNeed, MonthRange } from "@/lib/plants/types";
 import { StructureType } from "@/lib/garden/types";
 import { generateId } from "@/lib/garden/helpers";
 import { Search, ChevronDown, ChevronRight, Plus } from "lucide-react";
@@ -81,6 +81,31 @@ function PlantCard({
   );
 }
 
+const MONTHS = ["Jan","Feb","Mrt","Apr","Mei","Jun","Jul","Aug","Sep","Okt","Nov","Dec"];
+
+function MonthRangeInput({ label, value, onChange }: { label: string; value: MonthRange | null; onChange: (v: MonthRange | null) => void }) {
+  const enabled = value !== null;
+  return (
+    <div>
+      <div className="flex items-center gap-2 mb-1">
+        <input type="checkbox" checked={enabled} onChange={(e) => onChange(e.target.checked ? { start: 3, end: 6 } : null)} className="rounded" />
+        <p className="text-xs text-muted-foreground">{label}</p>
+      </div>
+      {enabled && (
+        <div className="flex gap-1">
+          <select value={value!.start} onChange={(e) => onChange({ ...value!, start: Number(e.target.value) })} className="text-xs border rounded px-1 py-0.5 flex-1">
+            {MONTHS.map((m, i) => <option key={i} value={i + 1}>{m}</option>)}
+          </select>
+          <span className="text-xs text-muted-foreground self-center">t/m</span>
+          <select value={value!.end} onChange={(e) => onChange({ ...value!, end: Number(e.target.value) })} className="text-xs border rounded px-1 py-0.5 flex-1">
+            {MONTHS.map((m, i) => <option key={i} value={i + 1}>{m}</option>)}
+          </select>
+        </div>
+      )}
+    </div>
+  );
+}
+
 function AddPlantForm({
   onAdd,
   onCancel,
@@ -94,6 +119,14 @@ function AddPlantForm({
   const [rowSpacingCm, setRowSpacingCm] = useState(40);
   const [selectedIcon, setSelectedIcon] = useState("🌱");
   const [selectedColor, setSelectedColor] = useState("#4caf50");
+  const [showMore, setShowMore] = useState(false);
+  const [sowIndoor, setSowIndoor] = useState<MonthRange | null>(null);
+  const [sowOutdoor, setSowOutdoor] = useState<MonthRange | null>(null);
+  const [harvest, setHarvest] = useState<MonthRange | null>(null);
+  const [sunNeed, setSunNeed] = useState<SunNeed>("vol");
+  const [waterNeed, setWaterNeed] = useState<WaterNeed>("gemiddeld");
+  const [goodCompanions, setGoodCompanions] = useState("");
+  const [badCompanions, setBadCompanions] = useState("");
 
   const handleSubmit = () => {
     if (!name.trim()) return;
@@ -103,14 +136,17 @@ function AddPlantForm({
       icon: selectedIcon,
       color: selectedColor,
       category,
-      sowIndoor: null,
-      sowOutdoor: null,
-      harvest: { start: 1, end: 12 },
+      sowIndoor,
+      sowOutdoor,
+      harvest: harvest || { start: 1, end: 12 },
       spacingCm,
       rowSpacingCm,
-      sunNeed: "vol",
-      waterNeed: "gemiddeld",
-      companions: { good: [], bad: [] },
+      sunNeed,
+      waterNeed,
+      companions: {
+        good: goodCompanions.split(",").map((s) => s.trim()).filter(Boolean),
+        bad: badCompanions.split(",").map((s) => s.trim()).filter(Boolean),
+      },
     };
     addCustomPlant(plant);
     onAdd();
@@ -179,25 +215,58 @@ function AddPlantForm({
       <div className="grid grid-cols-2 gap-2">
         <div>
           <p className="text-xs text-muted-foreground mb-1">Plantafstand (cm)</p>
-          <Input
-            type="number"
-            min={5}
-            step={5}
-            value={spacingCm}
-            onChange={(e) => setSpacingCm(Number(e.target.value))}
-          />
+          <Input type="number" min={5} step={5} value={spacingCm} onChange={(e) => setSpacingCm(Number(e.target.value))} />
         </div>
         <div>
           <p className="text-xs text-muted-foreground mb-1">Rijafstand (cm)</p>
-          <Input
-            type="number"
-            min={5}
-            step={5}
-            value={rowSpacingCm}
-            onChange={(e) => setRowSpacingCm(Number(e.target.value))}
-          />
+          <Input type="number" min={5} step={5} value={rowSpacingCm} onChange={(e) => setRowSpacingCm(Number(e.target.value))} />
         </div>
       </div>
+
+      {/* Optionele velden */}
+      <button
+        onClick={() => setShowMore(!showMore)}
+        className="flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground transition-colors"
+      >
+        {showMore ? <ChevronDown className="h-3 w-3" /> : <ChevronRight className="h-3 w-3" />}
+        Meer opties (zaaitijd, zon, buren)
+      </button>
+
+      {showMore && (
+        <div className="space-y-3 pt-1">
+          <MonthRangeInput label="Binnen zaaien" value={sowIndoor} onChange={setSowIndoor} />
+          <MonthRangeInput label="Buiten zaaien" value={sowOutdoor} onChange={setSowOutdoor} />
+          <MonthRangeInput label="Oogst" value={harvest} onChange={setHarvest} />
+
+          <div className="grid grid-cols-2 gap-2">
+            <div>
+              <p className="text-xs text-muted-foreground mb-1">Zon</p>
+              <select value={sunNeed} onChange={(e) => setSunNeed(e.target.value as SunNeed)} className="w-full text-xs border rounded px-2 py-1.5">
+                <option value="vol">Volle zon</option>
+                <option value="halfschaduw">Halfschaduw</option>
+                <option value="schaduw">Schaduw</option>
+              </select>
+            </div>
+            <div>
+              <p className="text-xs text-muted-foreground mb-1">Water</p>
+              <select value={waterNeed} onChange={(e) => setWaterNeed(e.target.value as WaterNeed)} className="w-full text-xs border rounded px-2 py-1.5">
+                <option value="laag">Weinig</option>
+                <option value="gemiddeld">Gemiddeld</option>
+                <option value="hoog">Veel</option>
+              </select>
+            </div>
+          </div>
+
+          <div>
+            <p className="text-xs text-muted-foreground mb-1">Goede buren (komma-gescheiden)</p>
+            <Input placeholder="bijv. tomaat, wortel" value={goodCompanions} onChange={(e) => setGoodCompanions(e.target.value)} />
+          </div>
+          <div>
+            <p className="text-xs text-muted-foreground mb-1">Slechte buren (komma-gescheiden)</p>
+            <Input placeholder="bijv. aardappel, venkel" value={badCompanions} onChange={(e) => setBadCompanions(e.target.value)} />
+          </div>
+        </div>
+      )}
 
       <div className="flex gap-2">
         <Button size="sm" onClick={handleSubmit} disabled={!name.trim()} className="flex-1">
