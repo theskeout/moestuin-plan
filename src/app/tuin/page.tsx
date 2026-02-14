@@ -70,6 +70,7 @@ function TuinContent() {
     moveStructure,
     resizeStructure,
     removeStructure,
+    toggleStructureLock,
     updateShape,
     save,
     loadGarden,
@@ -145,6 +146,7 @@ function TuinContent() {
           onResizeStructure={resizeStructure}
           onAddStructure={addStructure}
           onRemoveStructure={removeStructure}
+          onToggleStructureLock={toggleStructureLock}
           onUpdateShape={updateShape}
           onLoadGarden={loadGarden}
           editingCorners={editingCorners}

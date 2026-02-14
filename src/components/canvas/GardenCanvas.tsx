@@ -27,6 +27,7 @@ interface GardenCanvasProps {
   onResizeStructure: (id: string, widthCm: number, heightCm: number) => void;
   onAddStructure: (type: StructureType, x: number, y: number) => void;
   onRemoveStructure: (id: string) => void;
+  onToggleStructureLock: (id: string) => void;
   onUpdateShape: (shape: Garden["shape"]) => void;
   onLoadGarden: (garden: Garden) => void;
   editingCorners: boolean;
@@ -44,6 +45,7 @@ export default function GardenCanvas({
   onResizeStructure,
   onAddStructure,
   onRemoveStructure,
+  onToggleStructureLock,
   onUpdateShape,
   onLoadGarden,
   editingCorners,
@@ -81,12 +83,20 @@ export default function GardenCanvas({
     return () => observer.disconnect();
   }, []);
 
-  // Koppel transformer aan geselecteerd element
+  // Koppel transformer aan geselecteerd element (niet bij locked structuren)
   useEffect(() => {
     const tr = transformerRef.current;
     if (!tr) return;
 
     if (!selectedId) {
+      tr.nodes([]);
+      tr.getLayer()?.batchDraw();
+      return;
+    }
+
+    // Check of het een locked structuur is
+    const lockedStruct = garden.structures.find((s) => s.id === selectedId && s.locked);
+    if (lockedStruct) {
       tr.nodes([]);
       tr.getLayer()?.batchDraw();
       return;
@@ -309,6 +319,7 @@ export default function GardenCanvas({
               onSelect={(id) => onSelect(id, "structure")}
               onDragEnd={onMoveStructure}
               onDelete={onRemoveStructure}
+              onToggleLock={onToggleStructureLock}
             />
           ))}
           {/* Gewaszones */}

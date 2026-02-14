@@ -7,7 +7,13 @@ const STORAGE_KEY = "moestuin-plan-gardens";
 /** Migreer oude tuinen: plants[] → zones[] als zones ontbreekt */
 function migrateGarden(g: Garden): Garden {
   // Al gemigreerd
-  if (g.zones) return { ...g, plants: g.plants || [] };
+  if (g.zones) {
+    return {
+      ...g,
+      plants: g.plants || [],
+      structures: (g.structures || []).map((s) => ({ ...s, locked: s.locked ?? false })),
+    };
+  }
 
   const zones: CropZone[] = (g.plants || []).map((p) => {
     const plantData = getPlant(p.plantId);
@@ -28,7 +34,7 @@ function migrateGarden(g: Garden): Garden {
   return {
     ...g,
     zones,
-    structures: g.structures || [],
+    structures: (g.structures || []).map((s) => ({ ...s, locked: s.locked ?? false })),
     plants: g.plants || [],
   };
 }

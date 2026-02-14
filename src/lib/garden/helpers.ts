@@ -111,6 +111,8 @@ export function getStructureDefaults(type: StructureType): { widthCm: number; he
       return { widthCm: 60, heightCm: 200 };
     case "schuur":
       return { widthCm: 200, heightCm: 200 };
+    case "hek":
+      return { widthCm: 10, heightCm: 200 };
   }
 }
 

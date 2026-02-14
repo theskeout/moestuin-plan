@@ -15,7 +15,7 @@ export interface PlacedPlant {
   rotation: number; // graden
 }
 
-export type StructureType = "kas" | "grondbak" | "pad" | "schuur";
+export type StructureType = "kas" | "grondbak" | "pad" | "schuur" | "hek";
 
 export interface Structure {
   id: string;
@@ -25,6 +25,7 @@ export interface Structure {
   widthCm: number;
   heightCm: number;
   rotation: number;
+  locked: boolean;
 }
 
 export interface CropZone {

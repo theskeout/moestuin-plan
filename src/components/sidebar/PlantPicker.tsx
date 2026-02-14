@@ -17,6 +17,7 @@ const STRUCTURES: { type: StructureType; icon: string; label: string }[] = [
   { type: "grondbak", icon: "📦", label: "Grondbak" },
   { type: "pad", icon: "🚶", label: "Pad" },
   { type: "schuur", icon: "🏚️", label: "Schuur" },
+  { type: "hek", icon: "🪵", label: "Hek" },
 ];
 
 function StructureCard({ type, icon, label }: { type: StructureType; icon: string; label: string }) {

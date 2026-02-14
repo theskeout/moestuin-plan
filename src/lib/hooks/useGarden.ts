@@ -56,6 +56,8 @@ export function useGarden(initialGarden?: Garden) {
         zones: [...prev.zones, newZone],
         updatedAt: new Date().toISOString(),
       }));
+      setSelectedId(newZone.id);
+      setSelectedType("zone");
       setHasChanges(true);
       return newZone;
     },
@@ -109,12 +111,15 @@ export function useGarden(initialGarden?: Garden) {
         widthCm: size.widthCm,
         heightCm: size.heightCm,
         rotation: 0,
+        locked: false,
       };
       setGarden((prev) => ({
         ...prev,
         structures: [...prev.structures, newStruct],
         updatedAt: new Date().toISOString(),
       }));
+      setSelectedId(newStruct.id);
+      setSelectedType("structure");
       setHasChanges(true);
       return newStruct;
     },
@@ -122,26 +127,34 @@ export function useGarden(initialGarden?: Garden) {
   );
 
   const moveStructure = useCallback((id: string, x: number, y: number) => {
-    setGarden((prev) => ({
-      ...prev,
-      structures: prev.structures.map((s) =>
-        s.id === id ? { ...s, x: snapToGrid(x), y: snapToGrid(y) } : s
-      ),
-      updatedAt: new Date().toISOString(),
-    }));
+    setGarden((prev) => {
+      const struct = prev.structures.find((s) => s.id === id);
+      if (struct?.locked) return prev;
+      return {
+        ...prev,
+        structures: prev.structures.map((s) =>
+          s.id === id ? { ...s, x: snapToGrid(x), y: snapToGrid(y) } : s
+        ),
+        updatedAt: new Date().toISOString(),
+      };
+    });
     setHasChanges(true);
   }, []);
 
   const resizeStructure = useCallback((id: string, widthCm: number, heightCm: number) => {
-    setGarden((prev) => ({
-      ...prev,
-      structures: prev.structures.map((s) =>
-        s.id === id
-          ? { ...s, widthCm: snapToGrid(Math.max(widthCm, 10)), heightCm: snapToGrid(Math.max(heightCm, 10)) }
-          : s
-      ),
-      updatedAt: new Date().toISOString(),
-    }));
+    setGarden((prev) => {
+      const struct = prev.structures.find((s) => s.id === id);
+      if (struct?.locked) return prev;
+      return {
+        ...prev,
+        structures: prev.structures.map((s) =>
+          s.id === id
+            ? { ...s, widthCm: snapToGrid(Math.max(widthCm, 10)), heightCm: snapToGrid(Math.max(heightCm, 10)) }
+            : s
+        ),
+        updatedAt: new Date().toISOString(),
+      };
+    });
     setHasChanges(true);
   }, []);
 
@@ -152,6 +165,17 @@ export function useGarden(initialGarden?: Garden) {
       updatedAt: new Date().toISOString(),
     }));
     setSelectedId((prev) => (prev === id ? null : prev));
+    setHasChanges(true);
+  }, []);
+
+  const toggleStructureLock = useCallback((id: string) => {
+    setGarden((prev) => ({
+      ...prev,
+      structures: prev.structures.map((s) =>
+        s.id === id ? { ...s, locked: !s.locked } : s
+      ),
+      updatedAt: new Date().toISOString(),
+    }));
     setHasChanges(true);
   }, []);
 
@@ -190,7 +214,7 @@ export function useGarden(initialGarden?: Garden) {
     setGarden({
       ...g,
       zones: g.zones || [],
-      structures: g.structures || [],
+      structures: (g.structures || []).map((s) => ({ ...s, locked: s.locked ?? false })),
       plants: g.plants || [],
     });
     setHasChanges(false);
@@ -211,6 +235,7 @@ export function useGarden(initialGarden?: Garden) {
     moveStructure,
     resizeStructure,
     removeStructure,
+    toggleStructureLock,
     updateShape,
     updateGardenInfo,
     save,

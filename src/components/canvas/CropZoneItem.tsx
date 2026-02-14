@@ -94,11 +94,11 @@ export default function CropZoneItem({
         listening={false}
       />
 
-      {/* Delete kruisje bij selectie */}
+      {/* Delete kruisje bij selectie — IN het vak rechtsboven */}
       {isSelected && (
         <Group
-          x={w - 10}
-          y={-10}
+          x={w - 14}
+          y={4}
           onClick={(e) => {
             e.cancelBubble = true;
             onDelete(zone.id);
