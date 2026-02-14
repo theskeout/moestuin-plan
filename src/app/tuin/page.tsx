@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useMemo, useCallback, useEffect, Suspense } from "react";
+import { useState, useMemo, useCallback, useEffect, useRef, Suspense } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import dynamic from "next/dynamic";
 import { Button } from "@/components/ui/button";
@@ -46,6 +46,8 @@ function TuinContent() {
   const [editWidth, setEditWidth] = useState("");
   const [editHeight, setEditHeight] = useState("");
   const [gardenLoading, setGardenLoading] = useState(true);
+  const initRef = useRef(false);
+  const newGardenIdRef = useRef(generateId());
 
   const {
     garden, selectedId, selectedType, select, hasChanges,
@@ -54,9 +56,10 @@ function TuinContent() {
     updateShape, updateGardenSize, save, loadGarden,
   } = useGarden();
 
-  // Async garden loading via storage backend
+  // Async garden loading via storage backend (draait eenmalig na auth)
   useEffect(() => {
-    if (authLoading) return;
+    if (authLoading || initRef.current) return;
+    initRef.current = true;
 
     async function init() {
       if (user) {
@@ -78,7 +81,7 @@ function TuinContent() {
         const w = Number(searchParams.get("w")) || 300;
         const h = Number(searchParams.get("h")) || 1000;
         loadGarden({
-          id: generateId(), name, widthCm: w, heightCm: h,
+          id: newGardenIdRef.current, name, widthCm: w, heightCm: h,
           shape: { corners: createRectangleCorners(w, h) },
           plants: [], zones: [], structures: [],
           createdAt: new Date().toISOString(), updatedAt: new Date().toISOString(),
@@ -88,7 +91,8 @@ function TuinContent() {
     }
 
     init();
-  }, [authLoading, user, searchParams, loadGarden]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [authLoading]);
 
   const handleSave = useCallback(async () => {
     await save();
