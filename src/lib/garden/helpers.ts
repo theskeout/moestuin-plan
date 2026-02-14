@@ -70,11 +70,17 @@ export function pixelsToCm(pixels: number, scale: number): number {
 // --- Nieuwe helpers voor zones en structuren ---
 
 /** Bereken individuele plantposities binnen een zone als stippengrid.
- *  Planten starten direct bij de rand/hoek van het bed. */
+ *  Planten starten direct bij de rand/hoek van het bed.
+ *  Fruitbomen: altijd exact 1 plant in het midden. */
 export function calculatePlantPositions(
   zone: CropZone,
   plant: PlantData
 ): Point[] {
+  // Fruitbomen: altijd 1 plant, gecentreerd
+  if (isFruitTree(plant.id)) {
+    return [{ x: zone.widthCm / 2, y: zone.heightCm / 2 }];
+  }
+
   const positions: Point[] = [];
   const spacingX = plant.spacingCm;
   const spacingY = plant.rowSpacingCm;
@@ -93,8 +99,23 @@ export function calculatePlantPositions(
   return positions;
 }
 
-/** Standaard zone-afmeting bij drop: ~3x spacing in beide richtingen */
+/** IDs van fruitbomen — verschijnen als enkele plant in rond vak */
+const FRUIT_TREE_IDS = new Set([
+  "appelboom", "perenboom", "kersenboom", "pruimenboom",
+  "vijgenboom", "vijg", "kiwi",
+]);
+
+export function isFruitTree(plantId: string): boolean {
+  return FRUIT_TREE_IDS.has(plantId);
+}
+
+/** Standaard zone-afmeting bij drop: ~3x spacing in beide richtingen, of vierkant voor fruitbomen */
 export function getDefaultZoneSize(plant: PlantData): { widthCm: number; heightCm: number } {
+  if (isFruitTree(plant.id)) {
+    // Fruitbomen: vierkant vak van 1 boom (diameter ~kroongrootte)
+    const size = snapToGrid(Math.max(150, plant.spacingCm * 0.5));
+    return { widthCm: size, heightCm: size };
+  }
   const w = snapToGrid(Math.max(plant.spacingCm * 3, 30));
   const h = snapToGrid(Math.max(plant.rowSpacingCm * 3, 30));
   return { widthCm: w, heightCm: h };

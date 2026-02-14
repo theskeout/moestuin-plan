@@ -3,7 +3,7 @@
 import { Rect, Text, Group, Circle } from "react-konva";
 import { CropZone } from "@/lib/garden/types";
 import { PlantData } from "@/lib/plants/types";
-import { snapToGrid, calculatePlantPositions } from "@/lib/garden/helpers";
+import { snapToGrid, calculatePlantPositions, isFruitTree } from "@/lib/garden/helpers";
 import { useMemo } from "react";
 
 interface CropZoneItemProps {
@@ -26,6 +26,7 @@ export default function CropZoneItem({
   const w = zone.widthCm * scale;
   const h = zone.heightCm * scale;
   const locked = zone.locked;
+  const isTree = isFruitTree(zone.plantId);
 
   const positions = useMemo(
     () => calculatePlantPositions(zone, plantData),
@@ -37,7 +38,9 @@ export default function CropZoneItem({
   // Bij kleine bedden: labels buiten (eraan hangen) als de box < 50px hoog of breed
   const tooSmall = w < 50 || h < 40;
   const labelFontSize = Math.max(10, Math.min(13, w * 0.1));
-  const bottomText = `${zone.widthCm}x${zone.heightCm}cm (${positions.length}x)`;
+  const bottomText = isTree
+    ? `${zone.widthCm}cm`
+    : `${zone.widthCm}x${zone.heightCm}cm (${positions.length}x)`;
 
   return (
     <Group
@@ -58,38 +61,32 @@ export default function CropZoneItem({
         onDragEnd(zone.id, newX, newY);
       }}
     >
-      {/* Achtergrond */}
-      <Rect
-        width={w}
-        height={h}
-        fill={plantData.color + "25"}
-        stroke={isSelected ? "#1d4ed8" : plantData.color}
-        strokeWidth={isSelected ? 2 : 1.5}
-        cornerRadius={3}
-      />
-
-      {/* Stippengrid — individuele plantposities */}
-      {positions.map((pos, i) => (
-        <Circle
-          key={i}
-          x={pos.x * scale}
-          y={pos.y * scale}
-          radius={dotRadius}
-          fill={plantData.color}
-          opacity={0.5}
-          listening={false}
-        />
-      ))}
-
-      {tooSmall ? (
+      {isTree ? (
         <>
-          {/* Klein bed: labels hangen eraan (onder het bed) */}
+          {/* Fruitboom: ronde zone net als Boom-structuur */}
+          <Circle
+            x={w / 2}
+            y={h / 2}
+            radius={Math.min(w, h) / 2}
+            fill={plantData.color + "25"}
+            stroke={isSelected ? "#1d4ed8" : plantData.color}
+            strokeWidth={isSelected ? 2 : 1.5}
+          />
           <Text
-            text={`${plantData.icon} ${plantData.name}`}
+            text={plantData.icon}
+            x={w / 2 - 8}
+            y={h / 2 - 8}
+            fontSize={16}
+            listening={false}
+          />
+          <Text
+            text={plantData.name}
             x={0}
             y={h + 3}
             fontSize={11}
             fill="#1f2937"
+            width={w}
+            align="center"
             listening={false}
           />
           <Text
@@ -98,37 +95,86 @@ export default function CropZoneItem({
             y={h + 16}
             fontSize={9}
             fill="#6b7280"
+            width={w}
+            align="center"
             listening={false}
           />
         </>
       ) : (
         <>
-          {/* Normaal bed: labels binnenin */}
-          <Text
-            text={`${plantData.icon} ${plantData.name}`}
-            x={4}
-            y={3}
-            fontSize={labelFontSize}
-            fill="#1f2937"
-            width={w - 8}
-            listening={false}
+          {/* Achtergrond */}
+          <Rect
+            width={w}
+            height={h}
+            fill={plantData.color + "25"}
+            stroke={isSelected ? "#1d4ed8" : plantData.color}
+            strokeWidth={isSelected ? 2 : 1.5}
+            cornerRadius={3}
           />
-          <Text
-            text={bottomText}
-            x={4}
-            y={h - 16}
-            fontSize={10}
-            fill="#6b7280"
-            listening={false}
-          />
+
+          {/* Stippengrid — individuele plantposities */}
+          {positions.map((pos, i) => (
+            <Circle
+              key={i}
+              x={pos.x * scale}
+              y={pos.y * scale}
+              radius={dotRadius}
+              fill={plantData.color}
+              opacity={0.5}
+              listening={false}
+            />
+          ))}
+
+          {tooSmall ? (
+            <>
+              {/* Klein bed: labels hangen eraan (onder het bed) */}
+              <Text
+                text={`${plantData.icon} ${plantData.name}`}
+                x={0}
+                y={h + 3}
+                fontSize={11}
+                fill="#1f2937"
+                listening={false}
+              />
+              <Text
+                text={bottomText}
+                x={0}
+                y={h + 16}
+                fontSize={9}
+                fill="#6b7280"
+                listening={false}
+              />
+            </>
+          ) : (
+            <>
+              {/* Normaal bed: labels binnenin */}
+              <Text
+                text={`${plantData.icon} ${plantData.name}`}
+                x={4}
+                y={3}
+                fontSize={labelFontSize}
+                fill="#1f2937"
+                width={w - 8}
+                listening={false}
+              />
+              <Text
+                text={bottomText}
+                x={4}
+                y={h - 16}
+                fontSize={10}
+                fill="#6b7280"
+                listening={false}
+              />
+            </>
+          )}
         </>
       )}
 
       {locked && (
         <Text
           text="🔒"
-          x={tooSmall ? w + 2 : w - 18}
-          y={tooSmall ? 0 : 4}
+          x={isTree ? w / 2 + Math.min(w, h) / 2 - 10 : (tooSmall ? w + 2 : w - 18)}
+          y={isTree ? h / 2 - Math.min(w, h) / 2 : (tooSmall ? 0 : 4)}
           fontSize={12}
           listening={false}
         />

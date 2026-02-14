@@ -410,7 +410,7 @@ function TuinContent() {
                   <div>
                     <p className="text-xs text-muted-foreground mb-1">Verfijning (soort)</p>
                     <Input
-                      placeholder={`bijv. Platte ${selectedZoneData.plantData.name.toLowerCase()}`}
+                      placeholder={`Type ${selectedZoneData.plantData.name.toLowerCase()}, bijv. Cherry`}
                       value={selectedZoneData.zone.label || ""}
                       onChange={(e) => {
                         if (!selectedId) return;

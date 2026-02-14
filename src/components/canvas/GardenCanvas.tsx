@@ -503,8 +503,27 @@ export default function GardenCanvas({
               const node = e.target;
               const evt = e.evt as MouseEvent;
               if (evt.shiftKey) {
-                const snapped = Math.round(node.rotation() / 45) * 45;
-                node.rotation(snapped);
+                const currentRot = node.rotation();
+                const snapped = Math.round(currentRot / 45) * 45;
+                if (snapped !== currentRot) {
+                  // Roteer om het midden van de node zodat positie niet verschuift
+                  const w = node.width() * node.scaleX();
+                  const h = node.height() * node.scaleY();
+                  const cx = w / 2;
+                  const cy = h / 2;
+                  const toRad = Math.PI / 180;
+                  const oldRad = currentRot * toRad;
+                  const newRad = snapped * toRad;
+                  // Bereken waar het midden lag en waar het naartoe gaat
+                  const cosOld = Math.cos(oldRad), sinOld = Math.sin(oldRad);
+                  const cosNew = Math.cos(newRad), sinNew = Math.sin(newRad);
+                  const oldCx = node.x() + cx * cosOld - cy * sinOld;
+                  const oldCy = node.y() + cx * sinOld + cy * cosOld;
+                  const newX = oldCx - (cx * cosNew - cy * sinNew);
+                  const newY = oldCy - (cx * sinNew + cy * cosNew);
+                  node.position({ x: newX, y: newY });
+                  node.rotation(snapped);
+                }
               }
             }}
             onTransformEnd={handleTransformEnd}

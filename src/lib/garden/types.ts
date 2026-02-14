@@ -39,7 +39,13 @@ export interface CropZone {
   locked: boolean;
   label?: string;  // bijv. "Platte peterselie" als verfijning
   notes?: string;  // vrije opmerkingen
+  // TODO: plantedAt?: string (ISO datum) — wanneer geplant, voor reminders/oogst-notificaties
 }
+
+// TODO: Tuin delen — uitnodigingen per email zodat familieleden de moestuin ook kunnen bewerken
+// Vereist: Supabase RLS policies voor gedeelde tuinen, invite tabel, UI voor uitnodigen
+
+// TODO: Tuin verwijderen — bevestigingsdialoog toevoegen, gaat nu te makkelijk per ongeluk
 
 export interface Garden {
   id: string;
