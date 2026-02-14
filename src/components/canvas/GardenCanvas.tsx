@@ -1,16 +1,14 @@
 "use client";
 
-import { useState, useRef, useCallback, useEffect, useMemo } from "react";
+import { useState, useRef, useCallback, useEffect, useMemo, useImperativeHandle, forwardRef } from "react";
 import { Stage, Layer, Transformer } from "react-konva";
 import type Konva from "konva";
 import GridLayer from "./GridLayer";
 import PlotOutline from "./PlotOutline";
 import CropZoneItem from "./CropZoneItem";
 import StructureItem from "./StructureItem";
-import CanvasToolbar from "./CanvasToolbar";
 import { Garden, Point, StructureType } from "@/lib/garden/types";
 import { getPlant } from "@/lib/plants/catalog";
-import { exportGarden, importGarden } from "@/lib/garden/storage";
 import { snapToGrid } from "@/lib/garden/helpers";
 import { SelectedType } from "@/lib/hooks/useGarden";
 
@@ -28,11 +26,18 @@ interface GardenCanvasProps {
   onAddStructure: (type: StructureType, x: number, y: number) => void;
   onRemoveStructure: (id: string) => void;
   onUpdateShape: (shape: Garden["shape"]) => void;
-  onLoadGarden: (garden: Garden) => void;
   editingCorners: boolean;
+  zoom: number;
+  onZoomChange: (zoom: number) => void;
+  gridVisible: boolean;
 }
 
-export default function GardenCanvas({
+export interface GardenCanvasHandle {
+  zoomIn: () => void;
+  zoomOut: () => void;
+}
+
+const GardenCanvas = forwardRef<GardenCanvasHandle, GardenCanvasProps>(function GardenCanvas({
   garden,
   selectedId,
   onSelect,
@@ -45,16 +50,16 @@ export default function GardenCanvas({
   onAddStructure,
   onRemoveStructure,
   onUpdateShape,
-  onLoadGarden,
   editingCorners,
-}: GardenCanvasProps) {
+  zoom,
+  onZoomChange,
+  gridVisible,
+}, ref) {
   const containerRef = useRef<HTMLDivElement>(null);
   const stageRef = useRef<Konva.Stage>(null);
   const transformerRef = useRef<Konva.Transformer>(null);
   const [stageSize, setStageSize] = useState({ width: 800, height: 600 });
-  const [zoom, setZoom] = useState(1);
   const [position, setPosition] = useState<{ x: number; y: number } | null>(null);
-  const [gridVisible, setGridVisible] = useState(true);
   const initializedRef = useRef(false);
 
   // Bereken initiële schaal zodat de tuin in het scherm past
@@ -161,7 +166,7 @@ export default function GardenCanvas({
           y: (pointer.y - pos.y) / (baseScale * oldZoom),
         };
 
-        setZoom(newZoom);
+        onZoomChange(newZoom);
         setPosition({
           x: pointer.x - mousePointTo.x * baseScale * newZoom,
           y: pointer.y - mousePointTo.y * baseScale * newZoom,
@@ -177,11 +182,31 @@ export default function GardenCanvas({
         });
       }
     },
-    [zoom, pos, baseScale, centeredPosition]
+    [zoom, pos, baseScale, centeredPosition, onZoomChange]
   );
 
-  const handleZoomIn = () => setZoom((z) => Math.min(z * 1.2, 15));
-  const handleZoomOut = () => setZoom((z) => Math.max(z / 1.2, 0.1));
+  const zoomAroundCenter = useCallback((factor: number) => {
+    const newZoom = Math.min(Math.max(zoom * factor, 0.1), 15);
+    const cx = stageSize.width / 2;
+    const cy = stageSize.height / 2;
+    const pointTo = {
+      x: (cx - pos.x) / (baseScale * zoom),
+      y: (cy - pos.y) / (baseScale * zoom),
+    };
+    onZoomChange(newZoom);
+    setPosition({
+      x: cx - pointTo.x * baseScale * newZoom,
+      y: cy - pointTo.y * baseScale * newZoom,
+    });
+  }, [zoom, pos, baseScale, stageSize, onZoomChange]);
+
+  const handleZoomIn = useCallback(() => zoomAroundCenter(1.2), [zoomAroundCenter]);
+  const handleZoomOut = useCallback(() => zoomAroundCenter(1 / 1.2), [zoomAroundCenter]);
+
+  useImperativeHandle(ref, () => ({
+    zoomIn: handleZoomIn,
+    zoomOut: handleZoomOut,
+  }), [handleZoomIn, handleZoomOut]);
 
   const handleCornerDrag = (index: number, newPos: Point) => {
     const newCorners = [...garden.shape.corners];
@@ -259,39 +284,6 @@ export default function GardenCanvas({
     [pos, scale, onAddZone, onAddStructure]
   );
 
-  const handleExport = () => {
-    const json = exportGarden(garden);
-    const blob = new Blob([json], { type: "application/json" });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = `${garden.name.replace(/\s+/g, "-")}.json`;
-    a.click();
-    URL.revokeObjectURL(url);
-  };
-
-  const handleImport = () => {
-    const input = document.createElement("input");
-    input.type = "file";
-    input.accept = ".json";
-    input.onchange = (e) => {
-      const file = (e.target as HTMLInputElement).files?.[0];
-      if (!file) return;
-      const reader = new FileReader();
-      reader.onload = (ev) => {
-        const result = ev.target?.result;
-        if (typeof result !== "string") return;
-        const imported = importGarden(result);
-        if (imported) {
-          onLoadGarden(imported);
-        } else {
-          alert("Ongeldig bestand.");
-        }
-      };
-      reader.readAsText(file);
-    };
-    input.click();
-  };
 
   // Delete handler via keyboard
   useEffect(() => {
@@ -335,9 +327,34 @@ export default function GardenCanvas({
       {showScrollbars && (
         <>
           {/* Horizontale scrollbar */}
-          <div className="absolute bottom-1 left-0 right-4 h-2 z-10 pointer-events-none">
+          <div
+            className="absolute bottom-1 left-0 right-4 h-3 z-10 cursor-pointer"
+            onMouseDown={(e) => {
+              const track = e.currentTarget;
+              const rect = track.getBoundingClientRect();
+              const startMouseX = e.clientX;
+              const startPos = pos.x;
+              const trackW = rect.width;
+              const totalW = gardenPxW + 100;
+
+              const onMouseMove = (ev: MouseEvent) => {
+                const dx = ev.clientX - startMouseX;
+                const ratio = dx / trackW;
+                setPosition((prev) => ({
+                  x: startPos - ratio * totalW,
+                  y: (prev || centeredPosition).y,
+                }));
+              };
+              const onMouseUp = () => {
+                window.removeEventListener("mousemove", onMouseMove);
+                window.removeEventListener("mouseup", onMouseUp);
+              };
+              window.addEventListener("mousemove", onMouseMove);
+              window.addEventListener("mouseup", onMouseUp);
+            }}
+          >
             <div
-              className="absolute h-full rounded-full bg-foreground/20"
+              className="absolute h-2 top-0.5 rounded-full bg-foreground/20 hover:bg-foreground/35 transition-colors"
               style={{
                 left: `${hThumbPos * 100}%`,
                 width: `${Math.max(hThumbRatio * 100, 8)}%`,
@@ -345,9 +362,34 @@ export default function GardenCanvas({
             />
           </div>
           {/* Verticale scrollbar */}
-          <div className="absolute top-0 right-1 bottom-4 w-2 z-10 pointer-events-none">
+          <div
+            className="absolute top-0 right-1 bottom-4 w-3 z-10 cursor-pointer"
+            onMouseDown={(e) => {
+              const track = e.currentTarget;
+              const rect = track.getBoundingClientRect();
+              const startMouseY = e.clientY;
+              const startPos = pos.y;
+              const trackH = rect.height;
+              const totalH = gardenPxH + 100;
+
+              const onMouseMove = (ev: MouseEvent) => {
+                const dy = ev.clientY - startMouseY;
+                const ratio = dy / trackH;
+                setPosition((prev) => ({
+                  x: (prev || centeredPosition).x,
+                  y: startPos - ratio * totalH,
+                }));
+              };
+              const onMouseUp = () => {
+                window.removeEventListener("mousemove", onMouseMove);
+                window.removeEventListener("mouseup", onMouseUp);
+              };
+              window.addEventListener("mousemove", onMouseMove);
+              window.addEventListener("mouseup", onMouseUp);
+            }}
+          >
             <div
-              className="absolute w-full rounded-full bg-foreground/20"
+              className="absolute w-2 left-0.5 rounded-full bg-foreground/20 hover:bg-foreground/35 transition-colors"
               style={{
                 top: `${vThumbPos * 100}%`,
                 height: `${Math.max(vThumbRatio * 100, 8)}%`,
@@ -356,15 +398,6 @@ export default function GardenCanvas({
           </div>
         </>
       )}
-      <CanvasToolbar
-        zoom={zoom}
-        onZoomIn={handleZoomIn}
-        onZoomOut={handleZoomOut}
-        gridVisible={gridVisible}
-        onToggleGrid={() => setGridVisible(!gridVisible)}
-        onExport={handleExport}
-        onImport={handleImport}
-      />
       <Stage
         ref={stageRef}
         width={stageSize.width}
@@ -457,4 +490,6 @@ export default function GardenCanvas({
       </Stage>
     </div>
   );
-}
+});
+
+export default GardenCanvas;

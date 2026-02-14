@@ -30,7 +30,7 @@ export default function CanvasToolbar({
 }: CanvasToolbarProps) {
   return (
     <TooltipProvider>
-      <div className="absolute top-3 left-3 z-10 flex gap-1 bg-white/90 backdrop-blur rounded-lg p-1 shadow-md border">
+      <div className="flex gap-1 flex-wrap">
         <Tooltip>
           <TooltipTrigger asChild>
             <Button variant="ghost" size="icon" onClick={onZoomIn}>

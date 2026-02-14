@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useMemo, useCallback, Suspense } from "react";
+import { useState, useRef, useMemo, useCallback, Suspense } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import dynamic from "next/dynamic";
 import { Button } from "@/components/ui/button";
@@ -8,9 +8,10 @@ import { Input } from "@/components/ui/input";
 import PlantPicker from "@/components/sidebar/PlantPicker";
 import PlantInfo from "@/components/sidebar/PlantInfo";
 import CompanionAlert from "@/components/sidebar/CompanionAlert";
+import CanvasToolbar from "@/components/canvas/CanvasToolbar";
 import { useGarden } from "@/lib/hooks/useGarden";
 import { useAutoSave } from "@/lib/hooks/useAutoSave";
-import { loadGardens } from "@/lib/garden/storage";
+import { loadGardens, exportGarden, importGarden } from "@/lib/garden/storage";
 import { getPlant } from "@/lib/plants/catalog";
 import { checkAllCompanions, CompanionCheck } from "@/lib/plants/companions";
 import { findNearbyZones, calculatePlantPositions } from "@/lib/garden/helpers";
@@ -18,6 +19,7 @@ import { PlantData } from "@/lib/plants/types";
 import { Garden } from "@/lib/garden/types";
 import { createRectangleCorners, generateId } from "@/lib/garden/helpers";
 import { ArrowLeft, Move, Lock, Unlock, Check } from "lucide-react";
+import type { GardenCanvasHandle } from "@/components/canvas/GardenCanvas";
 
 const GardenCanvas = dynamic(
   () => import("@/components/canvas/GardenCanvas"),
@@ -31,9 +33,12 @@ const STRUCTURE_LABELS: Record<string, string> = {
 function TuinContent() {
   const searchParams = useSearchParams();
   const router = useRouter();
+  const canvasRef = useRef<GardenCanvasHandle>(null);
   const [editingCorners, setEditingCorners] = useState(false);
   const [sidebarPlant, setSidebarPlant] = useState<PlantData | null>(null);
   const [saveLabel, setSaveLabel] = useState("Opslaan");
+  const [zoom, setZoom] = useState(1);
+  const [gridVisible, setGridVisible] = useState(true);
 
   const initialGarden = useMemo((): Garden | undefined => {
     const id = searchParams.get("id");
@@ -67,6 +72,48 @@ function TuinContent() {
 
   useAutoSave(hasChanges, handleSave);
 
+  const handleExport = useCallback(() => {
+    const json = exportGarden(garden);
+    const blob = new Blob([json], { type: "application/json" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `${garden.name.replace(/\s+/g, "-")}.json`;
+    a.click();
+    URL.revokeObjectURL(url);
+  }, [garden]);
+
+  const handleImport = useCallback(() => {
+    const input = document.createElement("input");
+    input.type = "file";
+    input.accept = ".json";
+    input.onchange = (e) => {
+      const file = (e.target as HTMLInputElement).files?.[0];
+      if (!file) return;
+      const reader = new FileReader();
+      reader.onload = (ev) => {
+        const result = ev.target?.result;
+        if (typeof result !== "string") return;
+        const imported = importGarden(result);
+        if (imported) {
+          loadGarden(imported);
+        } else {
+          alert("Ongeldig bestand.");
+        }
+      };
+      reader.readAsText(file);
+    };
+    input.click();
+  }, [loadGarden]);
+
+  const handleZoomIn = useCallback(() => {
+    canvasRef.current?.zoomIn();
+  }, []);
+
+  const handleZoomOut = useCallback(() => {
+    canvasRef.current?.zoomOut();
+  }, []);
+
   const companionChecks = useMemo((): CompanionCheck[] => {
     if (!selectedId || selectedType !== "zone") return [];
     const zone = garden.zones.find((z) => z.id === selectedId);
@@ -89,8 +136,6 @@ function TuinContent() {
     if (!selectedId || selectedType !== "structure") return null;
     return garden.structures.find((s) => s.id === selectedId) || null;
   }, [selectedId, selectedType, garden.structures]);
-
-  const hasLeftPanel = !!(selectedZoneData || selectedStruct);
 
   return (
     <div className="h-screen flex flex-col">
@@ -125,9 +170,22 @@ function TuinContent() {
       </header>
 
       <div className="flex-1 flex overflow-hidden">
-        {/* Linkerpaneel: geselecteerd element */}
-        {hasLeftPanel && (
-          <aside className="w-72 border-r bg-white overflow-y-auto p-4 space-y-4 hidden md:block">
+        {/* Linkerpaneel: toolbar + geselecteerd element */}
+        <aside className="w-72 border-r bg-white overflow-y-auto hidden md:flex md:flex-col">
+          {/* Toolbar altijd zichtbaar */}
+          <div className="p-3 border-b">
+            <CanvasToolbar
+              zoom={zoom}
+              onZoomIn={handleZoomIn}
+              onZoomOut={handleZoomOut}
+              gridVisible={gridVisible}
+              onToggleGrid={() => setGridVisible(!gridVisible)}
+              onExport={handleExport}
+              onImport={handleImport}
+            />
+          </div>
+
+          <div className="flex-1 overflow-y-auto p-4 space-y-4">
             {/* Zone geselecteerd */}
             {selectedZoneData && (
               <>
@@ -147,7 +205,6 @@ function TuinContent() {
                   </div>
                 </div>
 
-                {/* Afmetingen */}
                 <div className="space-y-2">
                   <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide">Bed</p>
                   <div className="grid grid-cols-2 gap-2">
@@ -184,12 +241,10 @@ function TuinContent() {
 
                 <div className="h-px bg-border" />
 
-                {/* Gewasinfo */}
                 <PlantInfo plant={selectedZoneData.plantData} onClose={() => {}} compact />
 
                 <div className="h-px bg-border" />
 
-                {/* Kruisteelt */}
                 <CompanionAlert checks={companionChecks} />
 
                 <Button
@@ -262,11 +317,19 @@ function TuinContent() {
                 </Button>
               </>
             )}
-          </aside>
-        )}
+
+            {/* Niets geselecteerd */}
+            {!selectedZoneData && !selectedStruct && (
+              <p className="text-sm text-muted-foreground">
+                Klik op een gewas of structuur om details te zien en aan te passen.
+              </p>
+            )}
+          </div>
+        </aside>
 
         {/* Canvas */}
         <GardenCanvas
+          ref={canvasRef}
           garden={garden}
           selectedId={selectedId}
           selectedType={selectedType}
@@ -280,8 +343,10 @@ function TuinContent() {
           onAddStructure={addStructure}
           onRemoveStructure={removeStructure}
           onUpdateShape={updateShape}
-          onLoadGarden={loadGarden}
           editingCorners={editingCorners}
+          zoom={zoom}
+          onZoomChange={setZoom}
+          gridVisible={gridVisible}
         />
 
         {/* Rechterpaneel: picker */}

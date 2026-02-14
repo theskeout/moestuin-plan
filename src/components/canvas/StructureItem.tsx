@@ -1,6 +1,6 @@
 "use client";
 
-import { Rect, Text, Group } from "react-konva";
+import { Rect, Text, Group, Circle } from "react-konva";
 import { Structure } from "@/lib/garden/types";
 import { snapToGrid } from "@/lib/garden/helpers";
 
@@ -35,6 +35,7 @@ export default function StructureItem({
   const w = structure.widthCm * scale;
   const h = structure.heightCm * scale;
   const locked = structure.locked;
+  const isBoom = structure.type === "boom";
 
   return (
     <Group
@@ -56,40 +57,69 @@ export default function StructureItem({
         onDragEnd(structure.id, newX, newY);
       }}
     >
-      <Rect
-        width={w}
-        height={h}
-        fill={style.fill}
-        stroke={isSelected ? "#1d4ed8" : style.stroke}
-        strokeWidth={isSelected ? 2 : 2}
-        dash={style.dash}
-        cornerRadius={4}
-      />
-      {/* Label */}
-      <Text
-        text={`${style.icon} ${style.label}`}
-        x={4}
-        y={4}
-        fontSize={Math.max(12, Math.min(14, w * 0.12))}
-        fill="#374151"
-        width={w - 8}
-        listening={false}
-      />
-      {/* Afmetingen */}
-      <Text
-        text={`${structure.widthCm}x${structure.heightCm}cm`}
-        x={4}
-        y={h - 18}
-        fontSize={10}
-        fill="#6b7280"
-        listening={false}
-      />
-      {/* Locked indicator */}
+      {isBoom ? (
+        <>
+          <Circle
+            x={w / 2}
+            y={h / 2}
+            radius={Math.min(w, h) / 2}
+            fill={style.fill}
+            stroke={isSelected ? "#1d4ed8" : style.stroke}
+            strokeWidth={2}
+          />
+          <Text
+            text={style.icon}
+            x={w / 2 - 8}
+            y={h / 2 - 8}
+            fontSize={16}
+            listening={false}
+          />
+          <Text
+            text={style.label}
+            x={0}
+            y={h + 3}
+            fontSize={11}
+            fill="#374151"
+            width={w}
+            align="center"
+            listening={false}
+          />
+        </>
+      ) : (
+        <>
+          <Rect
+            width={w}
+            height={h}
+            fill={style.fill}
+            stroke={isSelected ? "#1d4ed8" : style.stroke}
+            strokeWidth={2}
+            dash={style.dash}
+            cornerRadius={4}
+          />
+          <Text
+            text={`${style.icon} ${style.label}`}
+            x={4}
+            y={4}
+            fontSize={Math.max(12, Math.min(14, w * 0.12))}
+            fill="#374151"
+            width={w - 8}
+            listening={false}
+          />
+          <Text
+            text={`${structure.widthCm}x${structure.heightCm}cm`}
+            x={4}
+            y={h - 18}
+            fontSize={10}
+            fill="#6b7280"
+            listening={false}
+          />
+        </>
+      )}
       {locked && (
         <Text
           text="🔒"
-          x={w - 18}
-          y={4}
+          x={isBoom ? w / 2 + Math.min(w, h) / 2 - 10 : w - 18}
+          y={isBoom ? h / 2 - Math.min(w, h) / 2 : 4}
           fontSize={12}
           listening={false}
         />
