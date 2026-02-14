@@ -485,6 +485,14 @@ export default function GardenCanvas({
               }
               return newBox;
             }}
+            onTransform={(e: Konva.KonvaEventObject<Event>) => {
+              const node = e.target;
+              const evt = e.evt as MouseEvent;
+              if (evt.shiftKey) {
+                const snapped = Math.round(node.rotation() / 45) * 45;
+                node.rotation(snapped);
+              }
+            }}
             onTransformEnd={handleTransformEnd}
           />
         </Layer>

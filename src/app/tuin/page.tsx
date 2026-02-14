@@ -18,6 +18,7 @@ import { findNearbyZones, calculatePlantPositions } from "@/lib/garden/helpers";
 import { PlantData } from "@/lib/plants/types";
 import { Garden } from "@/lib/garden/types";
 import { createRectangleCorners, generateId } from "@/lib/garden/helpers";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ArrowLeft, Move, Lock, Unlock, Check, Download, Upload } from "lucide-react";
 
 const GardenCanvas = dynamic(
@@ -237,6 +238,18 @@ function TuinContent() {
                       />
                     </div>
                   </div>
+                  <div>
+                    <p className="text-xs text-muted-foreground mb-1">Rotatie (graden)</p>
+                    <Input
+                      type="number" step={1}
+                      value={Math.round(selectedZoneData.zone.rotation)}
+                      onChange={(e) => {
+                        if (!selectedId) return;
+                        const val = Number(e.target.value);
+                        transformZone(selectedId, selectedZoneData.zone.x, selectedZoneData.zone.y, selectedZoneData.zone.widthCm, selectedZoneData.zone.heightCm, val);
+                      }}
+                    />
+                  </div>
                   <p className="text-sm text-muted-foreground">
                     {selectedZoneData.plantCount} planten
                     {selectedZoneData.zone.locked && " — Vergrendeld"}
@@ -335,6 +348,18 @@ function TuinContent() {
                       />
                     </div>
                   </div>
+                  <div>
+                    <p className="text-xs text-muted-foreground mb-1">Rotatie (graden)</p>
+                    <Input
+                      type="number" step={1}
+                      value={Math.round(selectedStruct.rotation)}
+                      onChange={(e) => {
+                        if (!selectedId) return;
+                        const val = Number(e.target.value);
+                        transformStructure(selectedId, selectedStruct.x, selectedStruct.y, selectedStruct.widthCm, selectedStruct.heightCm, val);
+                      }}
+                    />
+                  </div>
                   {selectedStruct.locked && (
                     <p className="text-sm text-muted-foreground">Vergrendeld</p>
                   )}
@@ -380,20 +405,28 @@ function TuinContent() {
           gridVisible={gridVisible}
         />
 
-        {/* Rechterpaneel: picker */}
+        {/* Rechterpaneel: tabs */}
         <aside className="w-72 border-l bg-white hidden md:flex md:flex-col">
-          <div className="flex-1 overflow-y-auto p-4 space-y-4">
-            <h2 className="font-semibold">Gewassen & Structuren</h2>
-            <p className="text-xs text-muted-foreground">
-              Sleep naar het canvas
-            </p>
-            <PlantPicker onSelectPlant={(plant) => setSidebarPlant(plant)} />
-          </div>
-          {sidebarPlant && (
-            <div className="border-t bg-white p-3 max-h-[40%] overflow-y-auto">
-              <PlantInfo plant={sidebarPlant} onClose={() => setSidebarPlant(null)} />
+          <Tabs defaultValue="toevoegen" className="flex flex-col flex-1 overflow-hidden">
+            <div className="p-3 pb-0">
+              <TabsList className="w-full">
+                <TabsTrigger value="toevoegen" className="flex-1">Toevoegen</TabsTrigger>
+              </TabsList>
             </div>
-          )}
+            <TabsContent value="toevoegen" className="flex flex-col flex-1 overflow-hidden mt-0">
+              <div className="flex-1 overflow-y-auto p-4 pt-3 space-y-4">
+                <p className="text-xs text-muted-foreground">
+                  Sleep naar het canvas
+                </p>
+                <PlantPicker onSelectPlant={(plant) => setSidebarPlant(plant)} />
+              </div>
+              {sidebarPlant && (
+                <div className="border-t bg-white p-3 max-h-[40%] overflow-y-auto">
+                  <PlantInfo plant={sidebarPlant} onClose={() => setSidebarPlant(null)} />
+                </div>
+              )}
+            </TabsContent>
+          </Tabs>
         </aside>
       </div>
     </div>

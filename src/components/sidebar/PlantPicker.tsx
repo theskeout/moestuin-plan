@@ -4,7 +4,8 @@ import { useState, useCallback } from "react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { searchPlants, getPlantsByCategory, addCustomPlant, updateCustomPlant, isCustomPlant } from "@/lib/plants/catalog";
+import { searchPlants, getPlantsByCategory, addCustomPlant, updateCustomPlant, isBuiltinPlant, savePlantOverride } from "@/lib/plants/catalog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { PlantData, PlantCategory, SunNeed, WaterNeed, MonthRange } from "@/lib/plants/types";
 import { StructureType } from "@/lib/garden/types";
 import { generateId } from "@/lib/garden/helpers";
@@ -79,7 +80,6 @@ function PlantCard({
   onSelect: (plant: PlantData) => void;
   onEdit?: (plant: PlantData) => void;
 }) {
-  const custom = isCustomPlant(plant.id);
   return (
     <div
       draggable
@@ -101,7 +101,7 @@ function PlantCard({
           {plant.spacingCm}cm afstand
         </p>
       </div>
-      {custom && onEdit && (
+      {onEdit && (
         <button
           onClick={(e) => {
             e.stopPropagation();
@@ -189,7 +189,9 @@ function PlantForm({
         bad: badCompanions.split(",").map((s) => s.trim()).filter(Boolean),
       },
     };
-    if (isEdit) {
+    if (isEdit && isBuiltinPlant(plant.id)) {
+      savePlantOverride(plant);
+    } else if (isEdit) {
       updateCustomPlant(plant);
     } else {
       addCustomPlant(plant);
@@ -201,9 +203,7 @@ function PlantForm({
   const visibleIcons = iconsExpanded ? ALL_ICONS : ALL_ICONS.slice(0, 14);
 
   return (
-    <div className="space-y-3 p-3 border rounded-lg bg-muted/30">
-      <p className="text-sm font-medium">{isEdit ? "Gewas bewerken" : "Nieuw gewas toevoegen"}</p>
-
+    <div className="space-y-3">
       <Input
         placeholder="Naam"
         value={name}
@@ -418,14 +418,22 @@ export default function PlantPicker({ onSelectPlant }: PlantPickerProps) {
         </Button>
       </div>
 
-      {/* Formulier voor toevoegen of bewerken */}
-      {(showAddForm || editingPlant) && (
-        <PlantForm
-          onDone={handleFormDone}
-          onCancel={() => { setShowAddForm(false); setEditingPlant(null); }}
-          editPlant={editingPlant ?? undefined}
-        />
-      )}
+      {/* Formulier voor toevoegen of bewerken (modal) */}
+      <Dialog open={showAddForm || !!editingPlant} onOpenChange={(open) => { if (!open) { setShowAddForm(false); setEditingPlant(null); } }}>
+        <DialogContent className="max-h-[85vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>{editingPlant ? "Gewas bewerken" : "Nieuw gewas toevoegen"}</DialogTitle>
+            <DialogDescription>
+              {editingPlant ? "Pas de eigenschappen van dit gewas aan." : "Voeg een eigen gewas toe aan je collectie."}
+            </DialogDescription>
+          </DialogHeader>
+          <PlantForm
+            onDone={handleFormDone}
+            onCancel={() => { setShowAddForm(false); setEditingPlant(null); }}
+            editPlant={editingPlant ?? undefined}
+          />
+        </DialogContent>
+      </Dialog>
 
       {filtered ? (
         <div className="flex flex-col gap-1">
