@@ -18,11 +18,11 @@ export default function Home() {
     setGardens(loadGardens());
   }, []);
 
-  const handleCreate = (name: string, widthM: number, heightM: number) => {
+  const handleCreate = (name: string, widthCm: number, heightCm: number) => {
     const params = new URLSearchParams({
       name,
-      w: String(widthM * 100),
-      h: String(heightM * 100),
+      w: String(widthCm),
+      h: String(heightCm),
     });
     router.push(`/tuin?${params.toString()}`);
   };
@@ -80,8 +80,8 @@ export default function Home() {
                         <p className="font-medium">{g.name}</p>
                         <p className="text-sm text-muted-foreground">
                           {(g.widthCm / 100).toFixed(1)} x{" "}
-                          {(g.heightCm / 100).toFixed(1)}m — {g.plants.length}{" "}
-                          gewassen
+                          {(g.heightCm / 100).toFixed(1)}m — {(g.zones || []).length}{" "}
+                          zones
                         </p>
                       </button>
                       <Button

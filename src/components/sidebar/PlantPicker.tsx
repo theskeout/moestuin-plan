@@ -5,10 +5,33 @@ import { Input } from "@/components/ui/input";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { searchPlants, getPlantsByCategory } from "@/lib/plants/catalog";
 import { PlantData, PlantCategory } from "@/lib/plants/types";
+import { StructureType } from "@/lib/garden/types";
 import { Search } from "lucide-react";
 
 interface PlantPickerProps {
   onSelectPlant: (plant: PlantData) => void;
+}
+
+const STRUCTURES: { type: StructureType; icon: string; label: string }[] = [
+  { type: "kas", icon: "🏠", label: "Kas" },
+  { type: "grondbak", icon: "📦", label: "Grondbak" },
+  { type: "pad", icon: "🚶", label: "Pad" },
+  { type: "schuur", icon: "🏚️", label: "Schuur" },
+];
+
+function StructureCard({ type, icon, label }: { type: StructureType; icon: string; label: string }) {
+  return (
+    <div
+      draggable
+      onDragStart={(e) => {
+        e.dataTransfer.setData("structureType", type);
+      }}
+      className="flex flex-col items-center justify-center p-2 rounded-lg hover:bg-accent cursor-grab active:cursor-grabbing transition-colors border border-dashed border-border hover:border-foreground/30 min-w-[60px]"
+    >
+      <span className="text-lg">{icon}</span>
+      <span className="text-xs text-muted-foreground">{label}</span>
+    </div>
+  );
 }
 
 function PlantCard({
@@ -56,6 +79,19 @@ export default function PlantPicker({ onSelectPlant }: PlantPickerProps) {
 
   return (
     <div className="flex flex-col gap-3">
+      {/* Structuren */}
+      <div>
+        <p className="text-xs font-medium text-muted-foreground mb-1.5">Structuren</p>
+        <div className="flex gap-2">
+          {STRUCTURES.map((s) => (
+            <StructureCard key={s.type} {...s} />
+          ))}
+        </div>
+      </div>
+
+      <div className="h-px bg-border" />
+
+      {/* Zoekbalk */}
       <div className="relative">
         <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
         <Input

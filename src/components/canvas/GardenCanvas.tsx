@@ -1,40 +1,56 @@
 "use client";
 
 import { useState, useRef, useCallback, useEffect } from "react";
-import { Stage, Layer } from "react-konva";
+import { Stage, Layer, Transformer } from "react-konva";
 import type Konva from "konva";
 import GridLayer from "./GridLayer";
 import PlotOutline from "./PlotOutline";
-import PlantItem from "./PlantItem";
+import CropZoneItem from "./CropZoneItem";
+import StructureItem from "./StructureItem";
 import CanvasToolbar from "./CanvasToolbar";
-import { Garden, Point } from "@/lib/garden/types";
+import { Garden, Point, StructureType } from "@/lib/garden/types";
 import { getPlant } from "@/lib/plants/catalog";
 import { exportGarden, importGarden } from "@/lib/garden/storage";
+import { snapToGrid } from "@/lib/garden/helpers";
+import { SelectedType } from "@/lib/hooks/useGarden";
 
 interface GardenCanvasProps {
   garden: Garden;
-  selectedPlantId: string | null;
-  onSelectPlant: (id: string | null) => void;
-  onMovePlant: (id: string, x: number, y: number) => void;
-  onAddPlant: (plantId: string, x: number, y: number) => void;
+  selectedId: string | null;
+  selectedType: SelectedType;
+  onSelect: (id: string | null, type?: SelectedType) => void;
+  onMoveZone: (id: string, x: number, y: number) => void;
+  onResizeZone: (id: string, widthCm: number, heightCm: number) => void;
+  onAddZone: (plantId: string, x: number, y: number) => void;
+  onRemoveZone: (id: string) => void;
+  onMoveStructure: (id: string, x: number, y: number) => void;
+  onResizeStructure: (id: string, widthCm: number, heightCm: number) => void;
+  onAddStructure: (type: StructureType, x: number, y: number) => void;
+  onRemoveStructure: (id: string) => void;
   onUpdateShape: (shape: Garden["shape"]) => void;
   onLoadGarden: (garden: Garden) => void;
   editingCorners: boolean;
-  dragPlantId: string | null;
 }
 
 export default function GardenCanvas({
   garden,
-  selectedPlantId,
-  onSelectPlant,
-  onMovePlant,
-  onAddPlant,
+  selectedId,
+  onSelect,
+  onMoveZone,
+  onResizeZone,
+  onAddZone,
+  onRemoveZone,
+  onMoveStructure,
+  onResizeStructure,
+  onAddStructure,
+  onRemoveStructure,
   onUpdateShape,
   onLoadGarden,
   editingCorners,
 }: GardenCanvasProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const stageRef = useRef<Konva.Stage>(null);
+  const transformerRef = useRef<Konva.Transformer>(null);
   const [stageSize, setStageSize] = useState({ width: 800, height: 600 });
   const [zoom, setZoom] = useState(1);
   const [position, setPosition] = useState({ x: 20, y: 20 });
@@ -65,33 +81,67 @@ export default function GardenCanvas({
     return () => observer.disconnect();
   }, []);
 
-  // Zoom met scrollwiel
+  // Koppel transformer aan geselecteerd element
+  useEffect(() => {
+    const tr = transformerRef.current;
+    if (!tr) return;
+
+    if (!selectedId) {
+      tr.nodes([]);
+      tr.getLayer()?.batchDraw();
+      return;
+    }
+
+    const stage = stageRef.current;
+    if (!stage) return;
+
+    const node = stage.findOne(`#${selectedId}`);
+    if (node) {
+      tr.nodes([node]);
+      tr.getLayer()?.batchDraw();
+    } else {
+      tr.nodes([]);
+      tr.getLayer()?.batchDraw();
+    }
+  }, [selectedId, garden.zones, garden.structures]);
+
+  // Scroll = pan, pinch/ctrl+scroll = zoom
   const handleWheel = useCallback(
     (e: Konva.KonvaEventObject<WheelEvent>) => {
       e.evt.preventDefault();
-      const scaleBy = 1.1;
-      const stage = stageRef.current;
-      if (!stage) return;
 
-      const oldZoom = zoom;
-      const newZoom =
-        e.evt.deltaY < 0
-          ? Math.min(oldZoom * scaleBy, 5)
-          : Math.max(oldZoom / scaleBy, 0.1);
+      if (e.evt.ctrlKey || e.evt.metaKey) {
+        // Pinch-zoom (trackpad) of ctrl+scroll
+        const scaleBy = 1.1;
+        const stage = stageRef.current;
+        if (!stage) return;
 
-      const pointer = stage.getPointerPosition();
-      if (!pointer) return;
+        const oldZoom = zoom;
+        const newZoom =
+          e.evt.deltaY < 0
+            ? Math.min(oldZoom * scaleBy, 5)
+            : Math.max(oldZoom / scaleBy, 0.1);
 
-      const mousePointTo = {
-        x: (pointer.x - position.x) / (baseScale * oldZoom),
-        y: (pointer.y - position.y) / (baseScale * oldZoom),
-      };
+        const pointer = stage.getPointerPosition();
+        if (!pointer) return;
 
-      setZoom(newZoom);
-      setPosition({
-        x: pointer.x - mousePointTo.x * baseScale * newZoom,
-        y: pointer.y - mousePointTo.y * baseScale * newZoom,
-      });
+        const mousePointTo = {
+          x: (pointer.x - position.x) / (baseScale * oldZoom),
+          y: (pointer.y - position.y) / (baseScale * oldZoom),
+        };
+
+        setZoom(newZoom);
+        setPosition({
+          x: pointer.x - mousePointTo.x * baseScale * newZoom,
+          y: pointer.y - mousePointTo.y * baseScale * newZoom,
+        });
+      } else {
+        // Gewoon scrollen = pan
+        setPosition((prev) => ({
+          x: prev.x - e.evt.deltaX,
+          y: prev.y - e.evt.deltaY,
+        }));
+      }
     },
     [zoom, position, baseScale]
   );
@@ -111,22 +161,51 @@ export default function GardenCanvas({
     }
   };
 
-  // Drop een plant op het canvas
+  // Klik op lege ruimte = deselecteer
   const handleStageClick = (e: Konva.KonvaEventObject<MouseEvent>) => {
-    // Klik op lege ruimte = deselecteer
     if (e.target === stageRef.current) {
-      onSelectPlant(null);
+      onSelect(null);
     }
   };
 
+  // Transform end: sla nieuwe afmetingen op
+  const handleTransformEnd = (e: Konva.KonvaEventObject<Event>) => {
+    const node = e.target;
+    const id = node.id();
+    const scaleX = node.scaleX();
+    const scaleY = node.scaleY();
+
+    // Reset scale, bereken nieuwe afmetingen
+    node.scaleX(1);
+    node.scaleY(1);
+
+    const newWidthCm = snapToGrid(Math.max((node.width() * scaleX) / scale, 10));
+    const newHeightCm = snapToGrid(Math.max((node.height() * scaleY) / scale, 10));
+    const newX = snapToGrid(node.x() / scale);
+    const newY = snapToGrid(node.y() / scale);
+
+    node.width(newWidthCm * scale);
+    node.height(newHeightCm * scale);
+    node.x(newX * scale);
+    node.y(newY * scale);
+
+    // Bepaal of het een zone of structure is
+    const isZone = garden.zones.some((z) => z.id === id);
+    if (isZone) {
+      onMoveZone(id, newX, newY);
+      onResizeZone(id, newWidthCm, newHeightCm);
+    } else {
+      onMoveStructure(id, newX, newY);
+      onResizeStructure(id, newWidthCm, newHeightCm);
+    }
+  };
+
+  // Drop een plant of structuur op het canvas
   const handleDrop = useCallback(
     (e: React.DragEvent<HTMLDivElement>) => {
       e.preventDefault();
       const plantId = e.dataTransfer.getData("plantId");
-      if (!plantId) return;
-
-      const stage = stageRef.current;
-      if (!stage) return;
+      const structureType = e.dataTransfer.getData("structureType") as StructureType;
 
       const rect = containerRef.current?.getBoundingClientRect();
       if (!rect) return;
@@ -134,9 +213,13 @@ export default function GardenCanvas({
       const x = (e.clientX - rect.left - position.x) / scale;
       const y = (e.clientY - rect.top - position.y) / scale;
 
-      onAddPlant(plantId, x, y);
+      if (plantId) {
+        onAddZone(plantId, x, y);
+      } else if (structureType) {
+        onAddStructure(structureType, x, y);
+      }
     },
-    [position, scale, onAddPlant]
+    [position, scale, onAddZone, onAddStructure]
   );
 
   const handleExport = () => {
@@ -202,33 +285,74 @@ export default function GardenCanvas({
         onTap={handleStageClick}
       >
         <Layer>
+          {/* Grid */}
           <GridLayer
             widthCm={garden.widthCm}
             heightCm={garden.heightCm}
             scale={scale}
             visible={gridVisible}
           />
+          {/* Tuinomtrek */}
           <PlotOutline
             corners={garden.shape.corners}
             scale={scale}
             editable={editingCorners}
             onCornerDrag={handleCornerDrag}
           />
-          {garden.plants.map((plant) => {
-            const plantData = getPlant(plant.plantId);
+          {/* Structuren */}
+          {garden.structures.map((structure) => (
+            <StructureItem
+              key={structure.id}
+              structure={structure}
+              scale={scale}
+              isSelected={selectedId === structure.id}
+              onSelect={(id) => onSelect(id, "structure")}
+              onDragEnd={onMoveStructure}
+              onDelete={onRemoveStructure}
+            />
+          ))}
+          {/* Gewaszones */}
+          {garden.zones.map((zone) => {
+            const plantData = getPlant(zone.plantId);
             if (!plantData) return null;
             return (
-              <PlantItem
-                key={plant.id}
-                plant={plant}
+              <CropZoneItem
+                key={zone.id}
+                zone={zone}
                 plantData={plantData}
                 scale={scale}
-                isSelected={selectedPlantId === plant.id}
-                onSelect={onSelectPlant}
-                onDragEnd={onMovePlant}
+                isSelected={selectedId === zone.id}
+                onSelect={(id) => onSelect(id, "zone")}
+                onDragEnd={onMoveZone}
+                onDelete={onRemoveZone}
               />
             );
           })}
+          {/* Transformer voor resize */}
+          <Transformer
+            ref={transformerRef}
+            rotateEnabled={false}
+            keepRatio={false}
+            enabledAnchors={[
+              "top-left",
+              "top-right",
+              "bottom-left",
+              "bottom-right",
+              "middle-left",
+              "middle-right",
+              "top-center",
+              "bottom-center",
+            ]}
+            boundBoxFunc={(oldBox, newBox) => {
+              // Minimum 10cm
+              const minPx = 10 * scale;
+              if (newBox.width < minPx || newBox.height < minPx) {
+                return oldBox;
+              }
+              return newBox;
+            }}
+            onTransformEnd={handleTransformEnd}
+          />
         </Layer>
       </Stage>
     </div>

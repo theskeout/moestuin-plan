@@ -7,18 +7,18 @@ import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
 interface GardenSetupProps {
-  onSubmit: (name: string, widthM: number, heightM: number) => void;
+  onSubmit: (name: string, widthCm: number, heightCm: number) => void;
 }
 
 export default function GardenSetup({ onSubmit }: GardenSetupProps) {
   const [name, setName] = useState("Mijn Moestuin");
-  const [widthM, setWidthM] = useState(3);
-  const [heightM, setHeightM] = useState(10);
+  const [widthCm, setWidthCm] = useState(300);
+  const [heightCm, setHeightCm] = useState(1000);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (widthM > 0 && heightM > 0 && name.trim()) {
-      onSubmit(name.trim(), widthM, heightM);
+    if (widthCm >= 50 && heightCm >= 50 && name.trim()) {
+      onSubmit(name.trim(), widthCm, heightCm);
     }
   };
 
@@ -41,33 +41,33 @@ export default function GardenSetup({ onSubmit }: GardenSetupProps) {
 
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
-              <Label htmlFor="width">Breedte (m)</Label>
+              <Label htmlFor="width">Breedte (cm)</Label>
               <Input
                 id="width"
                 type="number"
-                min={0.5}
-                max={50}
-                step={0.5}
-                value={widthM}
-                onChange={(e) => setWidthM(Number(e.target.value))}
+                min={50}
+                max={5000}
+                step={10}
+                value={widthCm}
+                onChange={(e) => setWidthCm(Number(e.target.value))}
               />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="height">Lengte (m)</Label>
+              <Label htmlFor="height">Lengte (cm)</Label>
               <Input
                 id="height"
                 type="number"
-                min={0.5}
-                max={50}
-                step={0.5}
-                value={heightM}
-                onChange={(e) => setHeightM(Number(e.target.value))}
+                min={50}
+                max={5000}
+                step={10}
+                value={heightCm}
+                onChange={(e) => setHeightCm(Number(e.target.value))}
               />
             </div>
           </div>
 
           <p className="text-sm text-muted-foreground">
-            Oppervlakte: {(widthM * heightM).toFixed(1)} m²
+            Oppervlakte: {((widthCm * heightCm) / 10000).toFixed(1)} m²
           </p>
 
           <Button type="submit" className="w-full">

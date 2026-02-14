@@ -1,4 +1,5 @@
-import { Point, PlacedPlant } from "./types";
+import { Point, PlacedPlant, CropZone, StructureType } from "./types";
+import { PlantData } from "@/lib/plants/types";
 
 const GRID_SIZE = 10; // 10cm raster
 
@@ -64,4 +65,74 @@ export function cmToPixels(cm: number, scale: number): number {
 
 export function pixelsToCm(pixels: number, scale: number): number {
   return pixels / scale;
+}
+
+// --- Nieuwe helpers voor zones en structuren ---
+
+/** Bereken individuele plantposities binnen een zone als stippengrid */
+export function calculatePlantPositions(
+  zone: CropZone,
+  plant: PlantData
+): Point[] {
+  const positions: Point[] = [];
+  const spacingX = plant.spacingCm;
+  const spacingY = plant.rowSpacingCm;
+
+  if (spacingX <= 0 || spacingY <= 0) return positions;
+
+  // Begin met halve spacing als marge, dan elke spacing een positie
+  const marginX = spacingX / 2;
+  const marginY = spacingY / 2;
+
+  for (let y = marginY; y <= zone.heightCm - marginY; y += spacingY) {
+    for (let x = marginX; x <= zone.widthCm - marginX; x += spacingX) {
+      positions.push({ x, y });
+    }
+  }
+
+  return positions;
+}
+
+/** Standaard zone-afmeting bij drop: ~3x spacing in beide richtingen */
+export function getDefaultZoneSize(plant: PlantData): { widthCm: number; heightCm: number } {
+  const w = snapToGrid(Math.max(plant.spacingCm * 3, 30));
+  const h = snapToGrid(Math.max(plant.rowSpacingCm * 3, 30));
+  return { widthCm: w, heightCm: h };
+}
+
+/** Standaardmaten per structuurtype */
+export function getStructureDefaults(type: StructureType): { widthCm: number; heightCm: number } {
+  switch (type) {
+    case "kas":
+      return { widthCm: 200, heightCm: 400 };
+    case "grondbak":
+      return { widthCm: 100, heightCm: 200 };
+    case "pad":
+      return { widthCm: 60, heightCm: 200 };
+    case "schuur":
+      return { widthCm: 200, heightCm: 200 };
+  }
+}
+
+/** Bereken minimale afstand tussen randen van twee zones */
+export function zonesEdgeDistance(
+  a: { x: number; y: number; widthCm: number; heightCm: number },
+  b: { x: number; y: number; widthCm: number; heightCm: number }
+): number {
+  // Bereken horizontale en verticale gap
+  const gapX = Math.max(0, Math.max(a.x, b.x) - Math.min(a.x + a.widthCm, b.x + b.widthCm));
+  const gapY = Math.max(0, Math.max(a.y, b.y) - Math.min(a.y + a.heightCm, b.y + b.heightCm));
+  return Math.sqrt(gapX * gapX + gapY * gapY);
+}
+
+/** Vind nabije zones (randen < margin cm) */
+export function findNearbyZones(
+  zone: CropZone,
+  allZones: CropZone[],
+  marginCm: number = 50
+): CropZone[] {
+  return allZones.filter((z) => {
+    if (z.id === zone.id) return false;
+    return zonesEdgeDistance(zone, z) <= marginCm;
+  });
 }

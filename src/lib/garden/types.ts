@@ -15,13 +15,37 @@ export interface PlacedPlant {
   rotation: number; // graden
 }
 
+export type StructureType = "kas" | "grondbak" | "pad" | "schuur";
+
+export interface Structure {
+  id: string;
+  type: StructureType;
+  x: number;       // positie in cm
+  y: number;       // positie in cm
+  widthCm: number;
+  heightCm: number;
+  rotation: number;
+}
+
+export interface CropZone {
+  id: string;
+  plantId: string; // verwijst naar PlantData.id
+  x: number;       // positie in cm (linkerbovenhoek)
+  y: number;       // positie in cm (linkerbovenhoek)
+  widthCm: number;
+  heightCm: number;
+  rotation: number;
+}
+
 export interface Garden {
   id: string;
   name: string;
   widthCm: number;
   heightCm: number;
   shape: GardenShape;
-  plants: PlacedPlant[];
+  plants: PlacedPlant[];    // legacy — bewaard voor migratie
+  zones: CropZone[];
+  structures: Structure[];
   createdAt: string;
   updatedAt: string;
 }
