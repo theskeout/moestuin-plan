@@ -45,6 +45,15 @@ export function addCustomPlant(plant: PlantData): void {
   saveCustomPlants(customs);
 }
 
+export function updateCustomPlant(plant: PlantData): void {
+  const customs = loadCustomPlants();
+  const idx = customs.findIndex((p) => p.id === plant.id);
+  if (idx >= 0) {
+    customs[idx] = plant;
+    saveCustomPlants(customs);
+  }
+}
+
 export function removeCustomPlant(id: string): void {
   const customs = loadCustomPlants().filter((p) => p.id !== id);
   saveCustomPlants(customs);

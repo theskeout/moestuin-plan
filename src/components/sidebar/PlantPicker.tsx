@@ -4,11 +4,11 @@ import { useState, useCallback } from "react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { searchPlants, getPlantsByCategory, addCustomPlant } from "@/lib/plants/catalog";
+import { searchPlants, getPlantsByCategory, addCustomPlant, updateCustomPlant, isCustomPlant } from "@/lib/plants/catalog";
 import { PlantData, PlantCategory, SunNeed, WaterNeed, MonthRange } from "@/lib/plants/types";
 import { StructureType } from "@/lib/garden/types";
 import { generateId } from "@/lib/garden/helpers";
-import { Search, ChevronDown, ChevronRight, Plus } from "lucide-react";
+import { Search, ChevronDown, ChevronRight, Plus, Pencil } from "lucide-react";
 
 interface PlantPickerProps {
   onSelectPlant: (plant: PlantData) => void;
@@ -29,10 +29,31 @@ const CATEGORY_COLORS = [
   "#ff5722", "#795548", "#607d8b", "#f44336", "#00bcd4",
 ];
 
-const CATEGORY_ICONS = [
-  "🌱", "🌿", "🍃", "🌻", "🌸", "🌺", "💐", "🌹", "🌷",
-  "🌾", "🍀", "🪻", "🌼", "🪴", "🌵",
+const ICON_GROUPS: { label: string; icons: string[] }[] = [
+  {
+    label: "Groente",
+    icons: [
+      "🍅", "🥕", "🥦", "🥬", "🥒", "🌽", "🫑", "🌶️", "🧅", "🧄",
+      "🥔", "🍆", "🫛", "🥜", "🫘", "🥗",
+    ],
+  },
+  {
+    label: "Fruit",
+    icons: [
+      "🍓", "🫐", "🍇", "🍎", "🍐", "🍑", "🍒", "🍊", "🍋", "🍌",
+      "🍈", "🍉", "🥝", "🥭", "🍍",
+    ],
+  },
+  {
+    label: "Kruiden & bloemen",
+    icons: [
+      "🌱", "🌿", "🍃", "🍀", "🪴", "🌻", "🌸", "🌺", "🌹", "🌷",
+      "🌼", "🪻", "💐", "🪷", "🌾", "🌵",
+    ],
+  },
 ];
+
+const ALL_ICONS = ICON_GROUPS.flatMap((g) => g.icons);
 
 function StructureCard({ type, icon, label }: { type: StructureType; icon: string; label: string }) {
   return (
@@ -52,10 +73,13 @@ function StructureCard({ type, icon, label }: { type: StructureType; icon: strin
 function PlantCard({
   plant,
   onSelect,
+  onEdit,
 }: {
   plant: PlantData;
   onSelect: (plant: PlantData) => void;
+  onEdit?: (plant: PlantData) => void;
 }) {
+  const custom = isCustomPlant(plant.id);
   return (
     <div
       draggable
@@ -63,10 +87,10 @@ function PlantCard({
         e.dataTransfer.setData("plantId", plant.id);
       }}
       onClick={() => onSelect(plant)}
-      className="flex items-center gap-2 p-2 rounded-lg hover:bg-accent cursor-grab active:cursor-grabbing transition-colors border border-transparent hover:border-border"
+      className="flex items-center gap-2 p-2 rounded-lg hover:bg-accent cursor-grab active:cursor-grabbing transition-colors border border-transparent hover:border-border group"
     >
       <span
-        className="w-8 h-8 rounded-full flex items-center justify-center text-lg"
+        className="w-8 h-8 rounded-full flex items-center justify-center text-lg shrink-0"
         style={{ backgroundColor: plant.color + "30" }}
       >
         {plant.icon}
@@ -77,6 +101,18 @@ function PlantCard({
           {plant.spacingCm}cm afstand
         </p>
       </div>
+      {custom && onEdit && (
+        <button
+          onClick={(e) => {
+            e.stopPropagation();
+            onEdit(plant);
+          }}
+          className="opacity-0 group-hover:opacity-100 p-1 rounded hover:bg-foreground/10 transition-opacity shrink-0"
+          title="Bewerken"
+        >
+          <Pencil className="h-3.5 w-3.5 text-muted-foreground" />
+        </button>
+      )}
     </div>
   );
 }
@@ -106,32 +142,37 @@ function MonthRangeInput({ label, value, onChange }: { label: string; value: Mon
   );
 }
 
-function AddPlantForm({
-  onAdd,
+function PlantForm({
+  onDone,
   onCancel,
+  editPlant,
 }: {
-  onAdd: () => void;
+  onDone: () => void;
   onCancel: () => void;
+  editPlant?: PlantData;
 }) {
-  const [name, setName] = useState("");
-  const [category, setCategory] = useState<PlantCategory>("sier");
-  const [spacingCm, setSpacingCm] = useState(30);
-  const [rowSpacingCm, setRowSpacingCm] = useState(40);
-  const [selectedIcon, setSelectedIcon] = useState("🌱");
-  const [selectedColor, setSelectedColor] = useState("#4caf50");
-  const [showMore, setShowMore] = useState(false);
-  const [sowIndoor, setSowIndoor] = useState<MonthRange | null>(null);
-  const [sowOutdoor, setSowOutdoor] = useState<MonthRange | null>(null);
-  const [harvest, setHarvest] = useState<MonthRange | null>(null);
-  const [sunNeed, setSunNeed] = useState<SunNeed>("vol");
-  const [waterNeed, setWaterNeed] = useState<WaterNeed>("gemiddeld");
-  const [goodCompanions, setGoodCompanions] = useState("");
-  const [badCompanions, setBadCompanions] = useState("");
+  const [name, setName] = useState(editPlant?.name ?? "");
+  const [category, setCategory] = useState<PlantCategory>(editPlant?.category ?? "sier");
+  const [spacingCm, setSpacingCm] = useState(editPlant?.spacingCm ?? 30);
+  const [rowSpacingCm, setRowSpacingCm] = useState(editPlant?.rowSpacingCm ?? 40);
+  const [selectedIcon, setSelectedIcon] = useState(editPlant?.icon ?? "🌱");
+  const [selectedColor, setSelectedColor] = useState(editPlant?.color ?? "#4caf50");
+  const [showMore, setShowMore] = useState(!!editPlant?.sowIndoor || !!editPlant?.sowOutdoor || !!editPlant?.harvest);
+  const [sowIndoor, setSowIndoor] = useState<MonthRange | null>(editPlant?.sowIndoor ?? null);
+  const [sowOutdoor, setSowOutdoor] = useState<MonthRange | null>(editPlant?.sowOutdoor ?? null);
+  const [harvest, setHarvest] = useState<MonthRange | null>(editPlant?.harvest ?? null);
+  const [sunNeed, setSunNeed] = useState<SunNeed>(editPlant?.sunNeed ?? "vol");
+  const [waterNeed, setWaterNeed] = useState<WaterNeed>(editPlant?.waterNeed ?? "gemiddeld");
+  const [goodCompanions, setGoodCompanions] = useState(editPlant?.companions.good.join(", ") ?? "");
+  const [badCompanions, setBadCompanions] = useState(editPlant?.companions.bad.join(", ") ?? "");
+  const [iconsExpanded, setIconsExpanded] = useState(false);
+
+  const isEdit = !!editPlant;
 
   const handleSubmit = () => {
     if (!name.trim()) return;
     const plant: PlantData = {
-      id: `custom-${generateId()}`,
+      id: editPlant?.id ?? `custom-${generateId()}`,
       name: name.trim(),
       icon: selectedIcon,
       color: selectedColor,
@@ -148,13 +189,20 @@ function AddPlantForm({
         bad: badCompanions.split(",").map((s) => s.trim()).filter(Boolean),
       },
     };
-    addCustomPlant(plant);
-    onAdd();
+    if (isEdit) {
+      updateCustomPlant(plant);
+    } else {
+      addCustomPlant(plant);
+    }
+    onDone();
   };
+
+  // Toon standaard een compacte selectie, klik om alles te zien
+  const visibleIcons = iconsExpanded ? ALL_ICONS : ALL_ICONS.slice(0, 14);
 
   return (
     <div className="space-y-3 p-3 border rounded-lg bg-muted/30">
-      <p className="text-sm font-medium">Nieuw gewas toevoegen</p>
+      <p className="text-sm font-medium">{isEdit ? "Gewas bewerken" : "Nieuw gewas toevoegen"}</p>
 
       <Input
         placeholder="Naam"
@@ -165,18 +213,35 @@ function AddPlantForm({
       <div>
         <p className="text-xs text-muted-foreground mb-1">Icoon</p>
         <div className="flex flex-wrap gap-1">
-          {CATEGORY_ICONS.map((icon) => (
+          {visibleIcons.map((icon, i) => (
             <button
-              key={icon}
+              key={`${icon}-${i}`}
               onClick={() => setSelectedIcon(icon)}
-              className={`w-8 h-8 rounded flex items-center justify-center text-lg transition-colors ${
+              className={`w-7 h-7 rounded flex items-center justify-center text-base transition-colors ${
                 selectedIcon === icon ? "bg-accent ring-2 ring-foreground/20" : "hover:bg-accent"
               }`}
             >
               {icon}
             </button>
           ))}
+          {!iconsExpanded && (
+            <button
+              onClick={() => setIconsExpanded(true)}
+              className="w-7 h-7 rounded flex items-center justify-center text-xs text-muted-foreground hover:bg-accent transition-colors"
+              title="Meer iconen"
+            >
+              +{ALL_ICONS.length - 14}
+            </button>
+          )}
         </div>
+        {iconsExpanded && (
+          <button
+            onClick={() => setIconsExpanded(false)}
+            className="text-xs text-muted-foreground hover:text-foreground mt-1"
+          >
+            Minder tonen
+          </button>
+        )}
       </div>
 
       <div>
@@ -223,7 +288,6 @@ function AddPlantForm({
         </div>
       </div>
 
-      {/* Optionele velden */}
       <button
         onClick={() => setShowMore(!showMore)}
         className="flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground transition-colors"
@@ -270,7 +334,7 @@ function AddPlantForm({
 
       <div className="flex gap-2">
         <Button size="sm" onClick={handleSubmit} disabled={!name.trim()} className="flex-1">
-          Toevoegen
+          {isEdit ? "Opslaan" : "Toevoegen"}
         </Button>
         <Button size="sm" variant="ghost" onClick={onCancel}>
           Annuleer
@@ -284,6 +348,7 @@ export default function PlantPicker({ onSelectPlant }: PlantPickerProps) {
   const [query, setQuery] = useState("");
   const [structuresOpen, setStructuresOpen] = useState(false);
   const [showAddForm, setShowAddForm] = useState(false);
+  const [editingPlant, setEditingPlant] = useState<PlantData | null>(null);
   const [refreshKey, setRefreshKey] = useState(0);
 
   const categories: { key: PlantCategory; label: string }[] = [
@@ -293,9 +358,15 @@ export default function PlantPicker({ onSelectPlant }: PlantPickerProps) {
     { key: "sier", label: "Sier" },
   ];
 
-  const handlePlantAdded = useCallback(() => {
+  const handleFormDone = useCallback(() => {
     setShowAddForm(false);
+    setEditingPlant(null);
     setRefreshKey((k) => k + 1);
+  }, []);
+
+  const handleEdit = useCallback((plant: PlantData) => {
+    setEditingPlant(plant);
+    setShowAddForm(false);
   }, []);
 
   const filtered = query.trim() ? searchPlants(query) : null;
@@ -340,17 +411,19 @@ export default function PlantPicker({ onSelectPlant }: PlantPickerProps) {
         <Button
           variant="outline"
           size="icon"
-          onClick={() => setShowAddForm(!showAddForm)}
+          onClick={() => { setShowAddForm(!showAddForm); setEditingPlant(null); }}
           title="Eigen gewas toevoegen"
         >
           <Plus className="h-4 w-4" />
         </Button>
       </div>
 
-      {showAddForm && (
-        <AddPlantForm
-          onAdd={handlePlantAdded}
-          onCancel={() => setShowAddForm(false)}
+      {/* Formulier voor toevoegen of bewerken */}
+      {(showAddForm || editingPlant) && (
+        <PlantForm
+          onDone={handleFormDone}
+          onCancel={() => { setShowAddForm(false); setEditingPlant(null); }}
+          editPlant={editingPlant ?? undefined}
         />
       )}
 
@@ -360,7 +433,7 @@ export default function PlantPicker({ onSelectPlant }: PlantPickerProps) {
             <p className="text-sm text-muted-foreground p-2">Geen resultaten</p>
           )}
           {filtered.map((p) => (
-            <PlantCard key={p.id} plant={p} onSelect={onSelectPlant} />
+            <PlantCard key={p.id} plant={p} onSelect={onSelectPlant} onEdit={handleEdit} />
           ))}
         </div>
       ) : (
@@ -375,7 +448,7 @@ export default function PlantPicker({ onSelectPlant }: PlantPickerProps) {
           {categories.map((c) => (
             <TabsContent key={c.key} value={c.key} className="flex flex-col gap-1 mt-2">
               {getPlantsByCategory(c.key).map((p) => (
-                <PlantCard key={p.id} plant={p} onSelect={onSelectPlant} />
+                <PlantCard key={p.id} plant={p} onSelect={onSelectPlant} onEdit={handleEdit} />
               ))}
             </TabsContent>
           ))}
