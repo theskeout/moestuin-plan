@@ -347,6 +347,7 @@ function PlantForm({
 export default function PlantPicker({ onSelectPlant }: PlantPickerProps) {
   const [query, setQuery] = useState("");
   const [structuresOpen, setStructuresOpen] = useState(false);
+  const [gewassenOpen, setGewassenOpen] = useState(true);
   const [showAddForm, setShowAddForm] = useState(false);
   const [editingPlant, setEditingPlant] = useState<PlantData | null>(null);
   const [refreshKey, setRefreshKey] = useState(0);
@@ -397,26 +398,73 @@ export default function PlantPicker({ onSelectPlant }: PlantPickerProps) {
 
       <div className="h-px bg-border" />
 
-      {/* Zoekbalk + toevoegen */}
-      <div className="flex gap-2">
-        <div className="relative flex-1">
-          <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
-          <Input
-            placeholder="Zoek gewas..."
-            value={query}
-            onChange={(e) => setQuery(e.target.value)}
-            className="pl-9"
-          />
-        </div>
-        <Button
-          variant="outline"
-          size="icon"
-          onClick={() => { setShowAddForm(!showAddForm); setEditingPlant(null); }}
-          title="Eigen gewas toevoegen"
+      {/* Gewassen — standaard open */}
+      <div>
+        <button
+          onClick={() => setGewassenOpen(!gewassenOpen)}
+          className="flex items-center gap-1.5 text-sm font-medium text-foreground hover:text-foreground/80 transition-colors w-full py-1"
         >
-          <Plus className="h-4 w-4" />
-        </Button>
+          {gewassenOpen ? (
+            <ChevronDown className="h-4 w-4" />
+          ) : (
+            <ChevronRight className="h-4 w-4" />
+          )}
+          Gewassen
+        </button>
       </div>
+
+      {gewassenOpen && (
+        <>
+          {/* Zoekbalk + toevoegen */}
+          <div className="flex gap-2">
+            <div className="relative flex-1">
+              <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+              <Input
+                placeholder="Zoek gewas..."
+                value={query}
+                onChange={(e) => setQuery(e.target.value)}
+                className="pl-9"
+              />
+            </div>
+            <Button
+              variant="outline"
+              size="icon"
+              onClick={() => { setShowAddForm(!showAddForm); setEditingPlant(null); }}
+              title="Eigen gewas toevoegen"
+            >
+              <Plus className="h-4 w-4" />
+            </Button>
+          </div>
+
+          {filtered ? (
+            <div className="flex flex-col gap-1">
+              {filtered.length === 0 && (
+                <p className="text-sm text-muted-foreground p-2">Geen resultaten</p>
+              )}
+              {filtered.map((p) => (
+                <PlantCard key={p.id} plant={p} onSelect={onSelectPlant} onEdit={handleEdit} />
+              ))}
+            </div>
+          ) : (
+            <Tabs defaultValue="groente">
+              <TabsList className="w-full">
+                {categories.map((c) => (
+                  <TabsTrigger key={c.key} value={c.key} className="flex-1 text-xs px-2">
+                    {c.label}
+                  </TabsTrigger>
+                ))}
+              </TabsList>
+              {categories.map((c) => (
+                <TabsContent key={c.key} value={c.key} className="flex flex-col gap-1 mt-2">
+                  {getPlantsByCategory(c.key).map((p) => (
+                    <PlantCard key={p.id} plant={p} onSelect={onSelectPlant} onEdit={handleEdit} />
+                  ))}
+                </TabsContent>
+              ))}
+            </Tabs>
+          )}
+        </>
+      )}
 
       {/* Formulier voor toevoegen of bewerken (modal) */}
       <Dialog open={showAddForm || !!editingPlant} onOpenChange={(open) => { if (!open) { setShowAddForm(false); setEditingPlant(null); } }}>
@@ -434,34 +482,6 @@ export default function PlantPicker({ onSelectPlant }: PlantPickerProps) {
           />
         </DialogContent>
       </Dialog>
-
-      {filtered ? (
-        <div className="flex flex-col gap-1">
-          {filtered.length === 0 && (
-            <p className="text-sm text-muted-foreground p-2">Geen resultaten</p>
-          )}
-          {filtered.map((p) => (
-            <PlantCard key={p.id} plant={p} onSelect={onSelectPlant} onEdit={handleEdit} />
-          ))}
-        </div>
-      ) : (
-        <Tabs defaultValue="groente">
-          <TabsList className="w-full">
-            {categories.map((c) => (
-              <TabsTrigger key={c.key} value={c.key} className="flex-1 text-xs px-2">
-                {c.label}
-              </TabsTrigger>
-            ))}
-          </TabsList>
-          {categories.map((c) => (
-            <TabsContent key={c.key} value={c.key} className="flex flex-col gap-1 mt-2">
-              {getPlantsByCategory(c.key).map((p) => (
-                <PlantCard key={p.id} plant={p} onSelect={onSelectPlant} onEdit={handleEdit} />
-              ))}
-            </TabsContent>
-          ))}
-        </Tabs>
-      )}
     </div>
   );
 }

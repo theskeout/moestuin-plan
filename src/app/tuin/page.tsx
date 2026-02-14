@@ -19,7 +19,7 @@ import { PlantData } from "@/lib/plants/types";
 import { Garden } from "@/lib/garden/types";
 import { createRectangleCorners, generateId } from "@/lib/garden/helpers";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { ArrowLeft, Move, Lock, Unlock, Check, Download, Upload } from "lucide-react";
+import { ArrowLeft, Move, Lock, Unlock, Check, Download, Upload, Pencil } from "lucide-react";
 
 const GardenCanvas = dynamic(
   () => import("@/components/canvas/GardenCanvas"),
@@ -38,6 +38,10 @@ function TuinContent() {
   const [saveLabel, setSaveLabel] = useState("Opslaan");
   const [zoom, setZoom] = useState(1);
   const [gridVisible, setGridVisible] = useState(true);
+  const [editingHeader, setEditingHeader] = useState(false);
+  const [editName, setEditName] = useState("");
+  const [editWidth, setEditWidth] = useState("");
+  const [editHeight, setEditHeight] = useState("");
 
   const initialGarden = useMemo((): Garden | undefined => {
     const id = searchParams.get("id");
@@ -60,7 +64,7 @@ function TuinContent() {
     garden, selectedId, selectedType, select, hasChanges,
     addZone, moveZone, transformZone, removeZone, toggleZoneLock, updateZoneInfo,
     addStructure, moveStructure, transformStructure, removeStructure, toggleStructureLock,
-    updateShape, save, loadGarden,
+    updateShape, updateGardenSize, save, loadGarden,
   } = useGarden(initialGarden);
 
   const handleSave = useCallback(() => {
@@ -144,10 +148,58 @@ function TuinContent() {
           <Button variant="ghost" size="icon" onClick={() => router.push("/")}>
             <ArrowLeft className="h-4 w-4" />
           </Button>
-          <h1 className="font-semibold">{garden.name}</h1>
-          <span className="text-sm text-muted-foreground">
-            {garden.widthCm} x {garden.heightCm}cm
-          </span>
+          {editingHeader ? (
+            <div className="flex items-center gap-2">
+              <Input
+                value={editName}
+                onChange={(e) => setEditName(e.target.value)}
+                className="h-8 w-36 text-sm font-semibold"
+                placeholder="Naam"
+              />
+              <Input
+                type="number" min={50} step={10}
+                value={editWidth}
+                onChange={(e) => setEditWidth(e.target.value)}
+                className="h-8 w-20 text-sm"
+              />
+              <span className="text-sm text-muted-foreground">x</span>
+              <Input
+                type="number" min={50} step={10}
+                value={editHeight}
+                onChange={(e) => setEditHeight(e.target.value)}
+                className="h-8 w-20 text-sm"
+              />
+              <span className="text-sm text-muted-foreground">cm</span>
+              <Button size="sm" variant="secondary" onClick={() => {
+                const w = Math.max(50, Number(editWidth) || garden.widthCm);
+                const h = Math.max(50, Number(editHeight) || garden.heightCm);
+                const n = editName.trim() || garden.name;
+                updateGardenSize(n, w, h);
+                setEditingHeader(false);
+              }}>
+                <Check className="h-3.5 w-3.5" />
+              </Button>
+            </div>
+          ) : (
+            <>
+              <h1 className="font-semibold">{garden.name}</h1>
+              <span className="text-sm text-muted-foreground">
+                {garden.widthCm} x {garden.heightCm}cm
+              </span>
+              <button
+                onClick={() => {
+                  setEditName(garden.name);
+                  setEditWidth(String(garden.widthCm));
+                  setEditHeight(String(garden.heightCm));
+                  setEditingHeader(true);
+                }}
+                className="p-1 rounded hover:bg-accent transition-colors"
+                title="Naam en formaat aanpassen"
+              >
+                <Pencil className="h-3.5 w-3.5 text-muted-foreground" />
+              </button>
+            </>
+          )}
         </div>
         <div className="flex items-center gap-2">
           <Button

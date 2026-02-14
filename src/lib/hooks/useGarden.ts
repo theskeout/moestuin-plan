@@ -250,6 +250,21 @@ export function useGarden(initialGarden?: Garden) {
     []
   );
 
+  /** Pas alleen afmetingen aan, behoud bestaande hoeken */
+  const updateGardenSize = useCallback(
+    (name: string, widthCm: number, heightCm: number) => {
+      setGarden((prev) => ({
+        ...prev,
+        name,
+        widthCm,
+        heightCm,
+        updatedAt: new Date().toISOString(),
+      }));
+      setHasChanges(true);
+    },
+    []
+  );
+
   const save = useCallback(() => {
     saveGarden(garden);
     setHasChanges(false);
@@ -304,6 +319,7 @@ export function useGarden(initialGarden?: Garden) {
     toggleStructureLock,
     updateShape,
     updateGardenInfo,
+    updateGardenSize,
     save,
     loadGarden,
   };

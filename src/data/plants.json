@@ -1433,5 +1433,95 @@
       "good": ["tomaat", "kool"],
       "bad": []
     }
+  },
+  {
+    "id": "appelboom",
+    "name": "Appelboom",
+    "icon": "🍎",
+    "color": "#e74c3c",
+    "category": "fruit",
+    "sowIndoor": null,
+    "sowOutdoor": null,
+    "harvest": { "start": 8, "end": 10 },
+    "spacingCm": 300,
+    "rowSpacingCm": 400,
+    "sunNeed": "vol",
+    "waterNeed": "gemiddeld",
+    "companions": {
+      "good": ["bieslook", "nasturtium"],
+      "bad": ["walnoot"]
+    }
+  },
+  {
+    "id": "perenboom",
+    "name": "Perenboom",
+    "icon": "🍐",
+    "color": "#a8d08d",
+    "category": "fruit",
+    "sowIndoor": null,
+    "sowOutdoor": null,
+    "harvest": { "start": 8, "end": 10 },
+    "spacingCm": 300,
+    "rowSpacingCm": 400,
+    "sunNeed": "vol",
+    "waterNeed": "gemiddeld",
+    "companions": {
+      "good": ["bieslook", "lavendel"],
+      "bad": ["walnoot"]
+    }
+  },
+  {
+    "id": "vijgenboom",
+    "name": "Vijgenboom",
+    "icon": "🌳",
+    "color": "#795548",
+    "category": "fruit",
+    "sowIndoor": null,
+    "sowOutdoor": null,
+    "harvest": { "start": 8, "end": 9 },
+    "spacingCm": 250,
+    "rowSpacingCm": 350,
+    "sunNeed": "vol",
+    "waterNeed": "laag",
+    "companions": {
+      "good": ["lavendel", "munt"],
+      "bad": []
+    }
+  },
+  {
+    "id": "kersenboom",
+    "name": "Kersenboom",
+    "icon": "🍒",
+    "color": "#c0392b",
+    "category": "fruit",
+    "sowIndoor": null,
+    "sowOutdoor": null,
+    "harvest": { "start": 6, "end": 7 },
+    "spacingCm": 300,
+    "rowSpacingCm": 400,
+    "sunNeed": "vol",
+    "waterNeed": "gemiddeld",
+    "companions": {
+      "good": ["bieslook", "nasturtium"],
+      "bad": ["walnoot"]
+    }
+  },
+  {
+    "id": "pruimenboom",
+    "name": "Pruimenboom",
+    "icon": "🟣",
+    "color": "#8e44ad",
+    "category": "fruit",
+    "sowIndoor": null,
+    "sowOutdoor": null,
+    "harvest": { "start": 7, "end": 9 },
+    "spacingCm": 300,
+    "rowSpacingCm": 400,
+    "sunNeed": "vol",
+    "waterNeed": "gemiddeld",
+    "companions": {
+      "good": ["bieslook", "lavendel"],
+      "bad": ["walnoot"]
+    }
   }
 ]
