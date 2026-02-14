@@ -125,6 +125,17 @@ export function useGarden(initialGarden?: Garden) {
     setHasChanges(true);
   }, []);
 
+  const updateZoneInfo = useCallback((id: string, label: string, notes: string) => {
+    setGarden((prev) => ({
+      ...prev,
+      zones: prev.zones.map((z) =>
+        z.id === id ? { ...z, label, notes } : z
+      ),
+      updatedAt: new Date().toISOString(),
+    }));
+    setHasChanges(true);
+  }, []);
+
   // --- Structures CRUD ---
 
   const addStructure = useCallback(
@@ -285,6 +296,7 @@ export function useGarden(initialGarden?: Garden) {
     transformZone,
     removeZone,
     toggleZoneLock,
+    updateZoneInfo,
     addStructure,
     moveStructure,
     transformStructure,

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useRef, useCallback, useEffect, useMemo, useImperativeHandle, forwardRef } from "react";
+import { useState, useRef, useCallback, useEffect, useMemo } from "react";
 import { Stage, Layer, Transformer } from "react-konva";
 import type Konva from "konva";
 import GridLayer from "./GridLayer";
@@ -32,12 +32,7 @@ interface GardenCanvasProps {
   gridVisible: boolean;
 }
 
-export interface GardenCanvasHandle {
-  zoomIn: () => void;
-  zoomOut: () => void;
-}
-
-const GardenCanvas = forwardRef<GardenCanvasHandle, GardenCanvasProps>(function GardenCanvas({
+export default function GardenCanvas({
   garden,
   selectedId,
   onSelect,
@@ -54,7 +49,7 @@ const GardenCanvas = forwardRef<GardenCanvasHandle, GardenCanvasProps>(function 
   zoom,
   onZoomChange,
   gridVisible,
-}, ref) {
+}: GardenCanvasProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const stageRef = useRef<Konva.Stage>(null);
   const transformerRef = useRef<Konva.Transformer>(null);
@@ -166,6 +161,7 @@ const GardenCanvas = forwardRef<GardenCanvasHandle, GardenCanvasProps>(function 
           y: (pointer.y - pos.y) / (baseScale * oldZoom),
         };
 
+        internalZoomRef.current = true;
         onZoomChange(newZoom);
         setPosition({
           x: pointer.x - mousePointTo.x * baseScale * newZoom,
@@ -185,28 +181,33 @@ const GardenCanvas = forwardRef<GardenCanvasHandle, GardenCanvasProps>(function 
     [zoom, pos, baseScale, centeredPosition, onZoomChange]
   );
 
-  const zoomAroundCenter = useCallback((factor: number) => {
-    const newZoom = Math.min(Math.max(zoom * factor, 0.1), 15);
+  // Detecteer externe zoom-wijzigingen (toolbar) en centreer
+  const prevZoomRef = useRef(zoom);
+  const internalZoomRef = useRef(false);
+  useEffect(() => {
+    const oldZoom = prevZoomRef.current;
+    if (oldZoom === zoom) return;
+    prevZoomRef.current = zoom;
+
+    // Wheel-zoom handelt positie zelf af
+    if (internalZoomRef.current) {
+      internalZoomRef.current = false;
+      return;
+    }
+
+    // Externe zoom: centreer op viewport midden
+    if (!position) return;
     const cx = stageSize.width / 2;
     const cy = stageSize.height / 2;
     const pointTo = {
-      x: (cx - pos.x) / (baseScale * zoom),
-      y: (cy - pos.y) / (baseScale * zoom),
+      x: (cx - position.x) / (baseScale * oldZoom),
+      y: (cy - position.y) / (baseScale * oldZoom),
     };
-    onZoomChange(newZoom);
     setPosition({
-      x: cx - pointTo.x * baseScale * newZoom,
-      y: cy - pointTo.y * baseScale * newZoom,
+      x: cx - pointTo.x * baseScale * zoom,
+      y: cy - pointTo.y * baseScale * zoom,
     });
-  }, [zoom, pos, baseScale, stageSize, onZoomChange]);
-
-  const handleZoomIn = useCallback(() => zoomAroundCenter(1.2), [zoomAroundCenter]);
-  const handleZoomOut = useCallback(() => zoomAroundCenter(1 / 1.2), [zoomAroundCenter]);
-
-  useImperativeHandle(ref, () => ({
-    zoomIn: handleZoomIn,
-    zoomOut: handleZoomOut,
-  }), [handleZoomIn, handleZoomOut]);
+  }, [zoom, position, baseScale, stageSize]);
 
   const handleCornerDrag = (index: number, newPos: Point) => {
     const newCorners = [...garden.shape.corners];
@@ -490,6 +491,4 @@ const GardenCanvas = forwardRef<GardenCanvasHandle, GardenCanvasProps>(function 
       </Stage>
     </div>
   );
-});
-
-export default GardenCanvas;
+}

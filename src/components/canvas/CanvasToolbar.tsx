@@ -1,6 +1,7 @@
 "use client";
 
-import { ZoomIn, ZoomOut, Grid3X3, Download, Upload } from "lucide-react";
+import { useState } from "react";
+import { ZoomIn, ZoomOut, Grid3X3 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   Tooltip,
@@ -13,24 +14,38 @@ interface CanvasToolbarProps {
   zoom: number;
   onZoomIn: () => void;
   onZoomOut: () => void;
+  onZoomSet: (zoom: number) => void;
   gridVisible: boolean;
   onToggleGrid: () => void;
-  onExport: () => void;
-  onImport: () => void;
 }
 
 export default function CanvasToolbar({
   zoom,
   onZoomIn,
   onZoomOut,
+  onZoomSet,
   gridVisible,
   onToggleGrid,
-  onExport,
-  onImport,
 }: CanvasToolbarProps) {
+  const [editing, setEditing] = useState(false);
+  const [editValue, setEditValue] = useState("");
+
+  const startEdit = () => {
+    setEditValue(String(Math.round(zoom * 100)));
+    setEditing(true);
+  };
+
+  const commitEdit = () => {
+    const val = parseInt(editValue, 10);
+    if (!isNaN(val) && val >= 10 && val <= 1500) {
+      onZoomSet(val / 100);
+    }
+    setEditing(false);
+  };
+
   return (
     <TooltipProvider>
-      <div className="flex gap-1 flex-wrap">
+      <div className="flex gap-1 items-center flex-wrap">
         <Tooltip>
           <TooltipTrigger asChild>
             <Button variant="ghost" size="icon" onClick={onZoomIn}>
@@ -40,9 +55,30 @@ export default function CanvasToolbar({
           <TooltipContent>Zoom in</TooltipContent>
         </Tooltip>
 
-        <span className="flex items-center px-2 text-sm text-muted-foreground min-w-[3rem] justify-center">
-          {Math.round(zoom * 100)}%
-        </span>
+        {editing ? (
+          <input
+            type="number"
+            min={10}
+            max={1500}
+            value={editValue}
+            onChange={(e) => setEditValue(e.target.value)}
+            onBlur={commitEdit}
+            onKeyDown={(e) => {
+              if (e.key === "Enter") commitEdit();
+              if (e.key === "Escape") setEditing(false);
+            }}
+            autoFocus
+            className="w-14 text-center text-sm border rounded px-1 py-0.5"
+          />
+        ) : (
+          <button
+            onClick={startEdit}
+            className="px-2 text-sm text-muted-foreground hover:text-foreground min-w-[3rem] text-center transition-colors"
+            title="Klik om zoom in te voeren"
+          >
+            {Math.round(zoom * 100)}%
+          </button>
+        )}
 
         <Tooltip>
           <TooltipTrigger asChild>
@@ -53,7 +89,7 @@ export default function CanvasToolbar({
           <TooltipContent>Zoom uit</TooltipContent>
         </Tooltip>
 
-        <div className="w-px bg-border mx-1" />
+        <div className="w-px h-6 bg-border mx-1" />
 
         <Tooltip>
           <TooltipTrigger asChild>
@@ -66,26 +102,6 @@ export default function CanvasToolbar({
             </Button>
           </TooltipTrigger>
           <TooltipContent>Raster {gridVisible ? "verbergen" : "tonen"}</TooltipContent>
-        </Tooltip>
-
-        <div className="w-px bg-border mx-1" />
-
-        <Tooltip>
-          <TooltipTrigger asChild>
-            <Button variant="ghost" size="icon" onClick={onExport}>
-              <Download className="h-4 w-4" />
-            </Button>
-          </TooltipTrigger>
-          <TooltipContent>Exporteer JSON</TooltipContent>
-        </Tooltip>
-
-        <Tooltip>
-          <TooltipTrigger asChild>
-            <Button variant="ghost" size="icon" onClick={onImport}>
-              <Upload className="h-4 w-4" />
-            </Button>
-          </TooltipTrigger>
-          <TooltipContent>Importeer JSON</TooltipContent>
         </Tooltip>
       </div>
     </TooltipProvider>

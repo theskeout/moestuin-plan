@@ -37,6 +37,8 @@ export interface CropZone {
   heightCm: number;
   rotation: number;
   locked: boolean;
+  label?: string;  // bijv. "Platte peterselie" als verfijning
+  notes?: string;  // vrije opmerkingen
 }
 
 export interface Garden {

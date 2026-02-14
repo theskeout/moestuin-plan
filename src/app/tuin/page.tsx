@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useRef, useMemo, useCallback, Suspense } from "react";
+import { useState, useMemo, useCallback, Suspense } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import dynamic from "next/dynamic";
 import { Button } from "@/components/ui/button";
@@ -18,8 +18,7 @@ import { findNearbyZones, calculatePlantPositions } from "@/lib/garden/helpers";
 import { PlantData } from "@/lib/plants/types";
 import { Garden } from "@/lib/garden/types";
 import { createRectangleCorners, generateId } from "@/lib/garden/helpers";
-import { ArrowLeft, Move, Lock, Unlock, Check } from "lucide-react";
-import type { GardenCanvasHandle } from "@/components/canvas/GardenCanvas";
+import { ArrowLeft, Move, Lock, Unlock, Check, Download, Upload } from "lucide-react";
 
 const GardenCanvas = dynamic(
   () => import("@/components/canvas/GardenCanvas"),
@@ -33,7 +32,6 @@ const STRUCTURE_LABELS: Record<string, string> = {
 function TuinContent() {
   const searchParams = useSearchParams();
   const router = useRouter();
-  const canvasRef = useRef<GardenCanvasHandle>(null);
   const [editingCorners, setEditingCorners] = useState(false);
   const [sidebarPlant, setSidebarPlant] = useState<PlantData | null>(null);
   const [saveLabel, setSaveLabel] = useState("Opslaan");
@@ -59,7 +57,7 @@ function TuinContent() {
 
   const {
     garden, selectedId, selectedType, select, hasChanges,
-    addZone, moveZone, transformZone, removeZone, toggleZoneLock,
+    addZone, moveZone, transformZone, removeZone, toggleZoneLock, updateZoneInfo,
     addStructure, moveStructure, transformStructure, removeStructure, toggleStructureLock,
     updateShape, save, loadGarden,
   } = useGarden(initialGarden);
@@ -107,11 +105,11 @@ function TuinContent() {
   }, [loadGarden]);
 
   const handleZoomIn = useCallback(() => {
-    canvasRef.current?.zoomIn();
+    setZoom((z) => Math.min(z * 1.2, 15));
   }, []);
 
   const handleZoomOut = useCallback(() => {
-    canvasRef.current?.zoomOut();
+    setZoom((z) => Math.max(z / 1.2, 0.1));
   }, []);
 
   const companionChecks = useMemo((): CompanionCheck[] => {
@@ -159,6 +157,13 @@ function TuinContent() {
             <Move className="h-3.5 w-3.5 mr-1.5" />
             {editingCorners ? "Klaar" : "Hoeken aanpassen"}
           </Button>
+          <Button variant="ghost" size="icon" onClick={handleExport} title="Exporteer JSON">
+            <Download className="h-4 w-4" />
+          </Button>
+          <Button variant="ghost" size="icon" onClick={handleImport} title="Importeer JSON">
+            <Upload className="h-4 w-4" />
+          </Button>
+          <div className="w-px h-6 bg-border" />
           {hasChanges && (
             <span className="text-xs text-muted-foreground">Niet opgeslagen</span>
           )}
@@ -178,10 +183,9 @@ function TuinContent() {
               zoom={zoom}
               onZoomIn={handleZoomIn}
               onZoomOut={handleZoomOut}
+              onZoomSet={setZoom}
               gridVisible={gridVisible}
               onToggleGrid={() => setGridVisible(!gridVisible)}
-              onExport={handleExport}
-              onImport={handleImport}
             />
           </div>
 
@@ -237,6 +241,34 @@ function TuinContent() {
                     {selectedZoneData.plantCount} planten
                     {selectedZoneData.zone.locked && " — Vergrendeld"}
                   </p>
+                </div>
+
+                {/* Verfijning en opmerkingen */}
+                <div className="space-y-2">
+                  <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide">Notities</p>
+                  <div>
+                    <p className="text-xs text-muted-foreground mb-1">Verfijning (soort)</p>
+                    <Input
+                      placeholder={`bijv. Platte ${selectedZoneData.plantData.name.toLowerCase()}`}
+                      value={selectedZoneData.zone.label || ""}
+                      onChange={(e) => {
+                        if (!selectedId) return;
+                        updateZoneInfo(selectedId, e.target.value, selectedZoneData.zone.notes || "");
+                      }}
+                    />
+                  </div>
+                  <div>
+                    <p className="text-xs text-muted-foreground mb-1">Opmerkingen</p>
+                    <textarea
+                      placeholder="bijv. Stekje van de buren, test nieuwe soort..."
+                      value={selectedZoneData.zone.notes || ""}
+                      onChange={(e) => {
+                        if (!selectedId) return;
+                        updateZoneInfo(selectedId, selectedZoneData.zone.label || "", e.target.value);
+                      }}
+                      className="w-full text-sm border rounded-md px-3 py-2 min-h-[60px] resize-y bg-background"
+                    />
+                  </div>
                 </div>
 
                 <div className="h-px bg-border" />
@@ -329,7 +361,6 @@ function TuinContent() {
 
         {/* Canvas */}
         <GardenCanvas
-          ref={canvasRef}
           garden={garden}
           selectedId={selectedId}
           selectedType={selectedType}
@@ -350,14 +381,18 @@ function TuinContent() {
         />
 
         {/* Rechterpaneel: picker */}
-        <aside className="w-72 border-l bg-white overflow-y-auto p-4 space-y-4 hidden md:block">
-          <h2 className="font-semibold">Gewassen & Structuren</h2>
-          <p className="text-xs text-muted-foreground">
-            Sleep naar het canvas
-          </p>
-          <PlantPicker onSelectPlant={(plant) => setSidebarPlant(plant)} />
+        <aside className="w-72 border-l bg-white hidden md:flex md:flex-col">
+          <div className="flex-1 overflow-y-auto p-4 space-y-4">
+            <h2 className="font-semibold">Gewassen & Structuren</h2>
+            <p className="text-xs text-muted-foreground">
+              Sleep naar het canvas
+            </p>
+            <PlantPicker onSelectPlant={(plant) => setSidebarPlant(plant)} />
+          </div>
           {sidebarPlant && (
-            <PlantInfo plant={sidebarPlant} onClose={() => setSidebarPlant(null)} />
+            <div className="border-t bg-white p-3 max-h-[40%] overflow-y-auto">
+              <PlantInfo plant={sidebarPlant} onClose={() => setSidebarPlant(null)} />
+            </div>
           )}
         </aside>
       </div>

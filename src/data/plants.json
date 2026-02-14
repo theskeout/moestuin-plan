@@ -253,7 +253,7 @@
   },
   {
     "id": "mais",
-    "name": "Maïs",
+    "name": "Mais",
     "icon": "🌽",
     "color": "#fdd835",
     "category": "groente",
@@ -658,5 +658,780 @@
     "sunNeed": "vol",
     "waterNeed": "gemiddeld",
     "companions": { "good": [], "bad": [] }
+  },
+
+  {
+    "id": "aubergine",
+    "name": "Aubergine",
+    "icon": "🍆",
+    "color": "#4a148c",
+    "category": "groente",
+    "sowIndoor": { "start": 2, "end": 3 },
+    "sowOutdoor": null,
+    "harvest": { "start": 7, "end": 10 },
+    "spacingCm": 50,
+    "rowSpacingCm": 60,
+    "sunNeed": "vol",
+    "waterNeed": "hoog",
+    "companions": {
+      "good": ["paprika", "tomaat", "basilicum", "boon"],
+      "bad": ["venkel", "aardappel"]
+    }
+  },
+  {
+    "id": "broccoli",
+    "name": "Broccoli",
+    "icon": "🥦",
+    "color": "#2e7d32",
+    "category": "groente",
+    "sowIndoor": { "start": 3, "end": 4 },
+    "sowOutdoor": { "start": 5, "end": 7 },
+    "harvest": { "start": 6, "end": 10 },
+    "spacingCm": 40,
+    "rowSpacingCm": 60,
+    "sunNeed": "vol",
+    "waterNeed": "hoog",
+    "companions": {
+      "good": ["selderie", "ui", "aardappel", "bieten", "dille"],
+      "bad": ["tomaat", "aardbei"]
+    }
+  },
+  {
+    "id": "bloemkool",
+    "name": "Bloemkool",
+    "icon": "🥬",
+    "color": "#f5f5f0",
+    "category": "groente",
+    "sowIndoor": { "start": 2, "end": 4 },
+    "sowOutdoor": { "start": 5, "end": 6 },
+    "harvest": { "start": 6, "end": 11 },
+    "spacingCm": 50,
+    "rowSpacingCm": 60,
+    "sunNeed": "vol",
+    "waterNeed": "hoog",
+    "companions": {
+      "good": ["selderie", "boon", "bieten", "ui"],
+      "bad": ["tomaat", "aardbei"]
+    }
+  },
+  {
+    "id": "rodekool",
+    "name": "Rode kool",
+    "icon": "🟣",
+    "color": "#6a1b9a",
+    "category": "groente",
+    "sowIndoor": { "start": 3, "end": 4 },
+    "sowOutdoor": { "start": 5, "end": 6 },
+    "harvest": { "start": 9, "end": 11 },
+    "spacingCm": 50,
+    "rowSpacingCm": 60,
+    "sunNeed": "vol",
+    "waterNeed": "hoog",
+    "companions": {
+      "good": ["selderie", "bieten", "ui", "aardappel"],
+      "bad": ["tomaat", "aardbei"]
+    }
+  },
+  {
+    "id": "savooiekool",
+    "name": "Savooiekool",
+    "icon": "🥬",
+    "color": "#33691e",
+    "category": "groente",
+    "sowIndoor": { "start": 3, "end": 4 },
+    "sowOutdoor": { "start": 5, "end": 6 },
+    "harvest": { "start": 9, "end": 12 },
+    "spacingCm": 50,
+    "rowSpacingCm": 60,
+    "sunNeed": "vol",
+    "waterNeed": "hoog",
+    "companions": {
+      "good": ["selderie", "bieten", "ui", "aardappel"],
+      "bad": ["tomaat", "aardbei"]
+    }
+  },
+  {
+    "id": "boerenkool",
+    "name": "Boerenkool",
+    "icon": "🥬",
+    "color": "#1b5e20",
+    "category": "groente",
+    "sowIndoor": null,
+    "sowOutdoor": { "start": 5, "end": 7 },
+    "harvest": { "start": 10, "end": 2 },
+    "spacingCm": 40,
+    "rowSpacingCm": 50,
+    "sunNeed": "vol",
+    "waterNeed": "gemiddeld",
+    "companions": {
+      "good": ["bieten", "selderie", "aardappel", "ui"],
+      "bad": ["tomaat", "aardbei"]
+    }
+  },
+  {
+    "id": "spruitjes",
+    "name": "Spruitjes",
+    "icon": "🟢",
+    "color": "#4a8c3f",
+    "category": "groente",
+    "sowIndoor": { "start": 3, "end": 4 },
+    "sowOutdoor": { "start": 5, "end": 5 },
+    "harvest": { "start": 10, "end": 2 },
+    "spacingCm": 60,
+    "rowSpacingCm": 75,
+    "sunNeed": "vol",
+    "waterNeed": "hoog",
+    "companions": {
+      "good": ["selderie", "bieten", "aardappel", "tijm"],
+      "bad": ["tomaat", "aardbei"]
+    }
+  },
+  {
+    "id": "andijvie",
+    "name": "Andijvie",
+    "icon": "🥬",
+    "color": "#8bc34a",
+    "category": "groente",
+    "sowIndoor": { "start": 3, "end": 4 },
+    "sowOutdoor": { "start": 5, "end": 7 },
+    "harvest": { "start": 6, "end": 11 },
+    "spacingCm": 30,
+    "rowSpacingCm": 35,
+    "sunNeed": "halfschaduw",
+    "waterNeed": "gemiddeld",
+    "companions": {
+      "good": ["sla", "prei", "boon"],
+      "bad": []
+    }
+  },
+  {
+    "id": "rucola",
+    "name": "Rucola",
+    "icon": "🌿",
+    "color": "#558b2f",
+    "category": "groente",
+    "sowIndoor": null,
+    "sowOutdoor": { "start": 4, "end": 9 },
+    "harvest": { "start": 5, "end": 10 },
+    "spacingCm": 15,
+    "rowSpacingCm": 20,
+    "sunNeed": "halfschaduw",
+    "waterNeed": "gemiddeld",
+    "companions": {
+      "good": ["sla", "wortel", "radijs"],
+      "bad": []
+    }
+  },
+  {
+    "id": "veldsla",
+    "name": "Veldsla",
+    "icon": "🥬",
+    "color": "#33691e",
+    "category": "groente",
+    "sowIndoor": null,
+    "sowOutdoor": { "start": 8, "end": 10 },
+    "harvest": { "start": 10, "end": 3 },
+    "spacingCm": 10,
+    "rowSpacingCm": 15,
+    "sunNeed": "halfschaduw",
+    "waterNeed": "gemiddeld",
+    "companions": {
+      "good": ["prei", "sla"],
+      "bad": []
+    }
+  },
+  {
+    "id": "tuinkers",
+    "name": "Tuinkers",
+    "icon": "🌱",
+    "color": "#4caf50",
+    "category": "groente",
+    "sowIndoor": null,
+    "sowOutdoor": { "start": 3, "end": 9 },
+    "harvest": { "start": 4, "end": 10 },
+    "spacingCm": 5,
+    "rowSpacingCm": 15,
+    "sunNeed": "halfschaduw",
+    "waterNeed": "hoog",
+    "companions": {
+      "good": ["radijs", "sla"],
+      "bad": []
+    }
+  },
+  {
+    "id": "pastinaak",
+    "name": "Pastinaak",
+    "icon": "🥕",
+    "color": "#f0e68c",
+    "category": "groente",
+    "sowIndoor": null,
+    "sowOutdoor": { "start": 3, "end": 5 },
+    "harvest": { "start": 10, "end": 3 },
+    "spacingCm": 15,
+    "rowSpacingCm": 30,
+    "sunNeed": "vol",
+    "waterNeed": "gemiddeld",
+    "companions": {
+      "good": ["ui", "radijs", "erwt"],
+      "bad": ["wortel", "selderie"]
+    }
+  },
+  {
+    "id": "knolselderij",
+    "name": "Knolselderij",
+    "icon": "🌿",
+    "color": "#a1887f",
+    "category": "groente",
+    "sowIndoor": { "start": 2, "end": 3 },
+    "sowOutdoor": { "start": 5, "end": 6 },
+    "harvest": { "start": 9, "end": 11 },
+    "spacingCm": 35,
+    "rowSpacingCm": 40,
+    "sunNeed": "vol",
+    "waterNeed": "hoog",
+    "companions": {
+      "good": ["kool", "prei", "tomaat", "boon"],
+      "bad": ["aardappel", "mais", "pastinaak"]
+    }
+  },
+  {
+    "id": "schorseneer",
+    "name": "Schorseneer",
+    "icon": "🌿",
+    "color": "#5d4037",
+    "category": "groente",
+    "sowIndoor": null,
+    "sowOutdoor": { "start": 3, "end": 5 },
+    "harvest": { "start": 10, "end": 3 },
+    "spacingCm": 10,
+    "rowSpacingCm": 25,
+    "sunNeed": "vol",
+    "waterNeed": "gemiddeld",
+    "companions": {
+      "good": ["prei", "sla", "ui"],
+      "bad": []
+    }
+  },
+  {
+    "id": "tuinboon",
+    "name": "Tuinboon",
+    "icon": "🫘",
+    "color": "#558b2f",
+    "category": "groente",
+    "sowIndoor": null,
+    "sowOutdoor": { "start": 2, "end": 4 },
+    "harvest": { "start": 6, "end": 8 },
+    "spacingCm": 15,
+    "rowSpacingCm": 40,
+    "sunNeed": "vol",
+    "waterNeed": "gemiddeld",
+    "companions": {
+      "good": ["aardappel", "mais", "spinazie"],
+      "bad": ["ui", "knoflook"]
+    }
+  },
+  {
+    "id": "doperwt",
+    "name": "Doperwt",
+    "icon": "🟢",
+    "color": "#66bb6a",
+    "category": "groente",
+    "sowIndoor": null,
+    "sowOutdoor": { "start": 3, "end": 5 },
+    "harvest": { "start": 6, "end": 8 },
+    "spacingCm": 5,
+    "rowSpacingCm": 40,
+    "sunNeed": "vol",
+    "waterNeed": "gemiddeld",
+    "companions": {
+      "good": ["wortel", "komkommer", "radijs", "mais"],
+      "bad": ["ui", "knoflook"]
+    }
+  },
+  {
+    "id": "suikererwt",
+    "name": "Suikererwt",
+    "icon": "🟢",
+    "color": "#43a047",
+    "category": "groente",
+    "sowIndoor": null,
+    "sowOutdoor": { "start": 3, "end": 5 },
+    "harvest": { "start": 6, "end": 8 },
+    "spacingCm": 5,
+    "rowSpacingCm": 40,
+    "sunNeed": "vol",
+    "waterNeed": "gemiddeld",
+    "companions": {
+      "good": ["wortel", "komkommer", "radijs", "mais"],
+      "bad": ["ui", "knoflook"]
+    }
+  },
+  {
+    "id": "sugarsnap",
+    "name": "Sugar snap",
+    "icon": "🟢",
+    "color": "#2e7d32",
+    "category": "groente",
+    "sowIndoor": null,
+    "sowOutdoor": { "start": 4, "end": 6 },
+    "harvest": { "start": 6, "end": 9 },
+    "spacingCm": 8,
+    "rowSpacingCm": 40,
+    "sunNeed": "vol",
+    "waterNeed": "gemiddeld",
+    "companions": {
+      "good": ["wortel", "komkommer", "radijs", "mais"],
+      "bad": ["ui", "knoflook"]
+    }
+  },
+  {
+    "id": "rodebiet",
+    "name": "Rode biet",
+    "icon": "🟣",
+    "color": "#880e4f",
+    "category": "groente",
+    "sowIndoor": { "start": 3, "end": 4 },
+    "sowOutdoor": { "start": 4, "end": 7 },
+    "harvest": { "start": 6, "end": 11 },
+    "spacingCm": 10,
+    "rowSpacingCm": 30,
+    "sunNeed": "vol",
+    "waterNeed": "gemiddeld",
+    "companions": {
+      "good": ["ui", "kool", "sla", "knoflook"],
+      "bad": ["boon"]
+    }
+  },
+  {
+    "id": "wittekool",
+    "name": "Witte kool",
+    "icon": "🥬",
+    "color": "#c8e6c9",
+    "category": "groente",
+    "sowIndoor": { "start": 2, "end": 4 },
+    "sowOutdoor": { "start": 5, "end": 6 },
+    "harvest": { "start": 7, "end": 11 },
+    "spacingCm": 50,
+    "rowSpacingCm": 60,
+    "sunNeed": "vol",
+    "waterNeed": "hoog",
+    "companions": {
+      "good": ["selderie", "bieten", "ui", "aardappel"],
+      "bad": ["tomaat", "aardbei"]
+    }
+  },
+  {
+    "id": "chinesekool",
+    "name": "Chinese kool",
+    "icon": "🥬",
+    "color": "#aed581",
+    "category": "groente",
+    "sowIndoor": null,
+    "sowOutdoor": { "start": 7, "end": 8 },
+    "harvest": { "start": 9, "end": 11 },
+    "spacingCm": 30,
+    "rowSpacingCm": 40,
+    "sunNeed": "halfschaduw",
+    "waterNeed": "hoog",
+    "companions": {
+      "good": ["selderie", "ui", "bieten"],
+      "bad": ["tomaat", "aardbei"]
+    }
+  },
+  {
+    "id": "bleekselderij",
+    "name": "Bleekselderij",
+    "icon": "🌿",
+    "color": "#c5e1a5",
+    "category": "groente",
+    "sowIndoor": { "start": 3, "end": 4 },
+    "sowOutdoor": { "start": 5, "end": 6 },
+    "harvest": { "start": 7, "end": 10 },
+    "spacingCm": 25,
+    "rowSpacingCm": 35,
+    "sunNeed": "vol",
+    "waterNeed": "hoog",
+    "companions": {
+      "good": ["kool", "prei", "tomaat", "boon"],
+      "bad": ["aardappel", "mais"]
+    }
+  },
+  {
+    "id": "rabarber",
+    "name": "Rabarber",
+    "icon": "🌿",
+    "color": "#b71c1c",
+    "category": "groente",
+    "sowIndoor": null,
+    "sowOutdoor": { "start": 3, "end": 4 },
+    "harvest": { "start": 4, "end": 6 },
+    "spacingCm": 80,
+    "rowSpacingCm": 100,
+    "sunNeed": "halfschaduw",
+    "waterNeed": "hoog",
+    "companions": {
+      "good": ["kool", "boon"],
+      "bad": []
+    }
+  },
+  {
+    "id": "asperge",
+    "name": "Asperge",
+    "icon": "🌿",
+    "color": "#7cb342",
+    "category": "groente",
+    "sowIndoor": null,
+    "sowOutdoor": { "start": 3, "end": 4 },
+    "harvest": { "start": 4, "end": 6 },
+    "spacingCm": 30,
+    "rowSpacingCm": 120,
+    "sunNeed": "vol",
+    "waterNeed": "gemiddeld",
+    "companions": {
+      "good": ["tomaat", "peterselie", "basilicum"],
+      "bad": ["ui", "knoflook"]
+    }
+  },
+  {
+    "id": "winterpostelein",
+    "name": "Winterpostelein",
+    "icon": "🌱",
+    "color": "#81c784",
+    "category": "groente",
+    "sowIndoor": null,
+    "sowOutdoor": { "start": 9, "end": 10 },
+    "harvest": { "start": 11, "end": 3 },
+    "spacingCm": 10,
+    "rowSpacingCm": 15,
+    "sunNeed": "halfschaduw",
+    "waterNeed": "gemiddeld",
+    "companions": {
+      "good": ["veldsla", "sla"],
+      "bad": []
+    }
+  },
+  {
+    "id": "raapstelen",
+    "name": "Raapstelen",
+    "icon": "🌿",
+    "color": "#689f38",
+    "category": "groente",
+    "sowIndoor": null,
+    "sowOutdoor": { "start": 8, "end": 10 },
+    "harvest": { "start": 9, "end": 11 },
+    "spacingCm": 10,
+    "rowSpacingCm": 20,
+    "sunNeed": "halfschaduw",
+    "waterNeed": "gemiddeld",
+    "companions": {
+      "good": ["sla", "radijs"],
+      "bad": []
+    }
+  },
+  {
+    "id": "zeekraal",
+    "name": "Zeekraal",
+    "icon": "🌱",
+    "color": "#00897b",
+    "category": "groente",
+    "sowIndoor": { "start": 3, "end": 4 },
+    "sowOutdoor": { "start": 5, "end": 6 },
+    "harvest": { "start": 6, "end": 9 },
+    "spacingCm": 15,
+    "rowSpacingCm": 20,
+    "sunNeed": "vol",
+    "waterNeed": "hoog",
+    "companions": {
+      "good": [],
+      "bad": []
+    }
+  },
+  {
+    "id": "bosbes",
+    "name": "Bosbes",
+    "icon": "🫐",
+    "color": "#283593",
+    "category": "fruit",
+    "sowIndoor": null,
+    "sowOutdoor": { "start": 3, "end": 4 },
+    "harvest": { "start": 7, "end": 9 },
+    "spacingCm": 100,
+    "rowSpacingCm": 150,
+    "sunNeed": "halfschaduw",
+    "waterNeed": "hoog",
+    "companions": {
+      "good": ["framboos"],
+      "bad": []
+    }
+  },
+  {
+    "id": "kruisbes",
+    "name": "Kruisbes",
+    "icon": "🟢",
+    "color": "#9ccc65",
+    "category": "fruit",
+    "sowIndoor": null,
+    "sowOutdoor": { "start": 10, "end": 3 },
+    "harvest": { "start": 6, "end": 8 },
+    "spacingCm": 120,
+    "rowSpacingCm": 150,
+    "sunNeed": "halfschaduw",
+    "waterNeed": "gemiddeld",
+    "companions": {
+      "good": ["tomaat", "tuinboon"],
+      "bad": []
+    }
+  },
+  {
+    "id": "rodebes",
+    "name": "Rode bes",
+    "icon": "🔴",
+    "color": "#d32f2f",
+    "category": "fruit",
+    "sowIndoor": null,
+    "sowOutdoor": { "start": 10, "end": 3 },
+    "harvest": { "start": 6, "end": 8 },
+    "spacingCm": 100,
+    "rowSpacingCm": 150,
+    "sunNeed": "halfschaduw",
+    "waterNeed": "gemiddeld",
+    "companions": {
+      "good": ["knoflook", "tuinboon"],
+      "bad": []
+    }
+  },
+  {
+    "id": "zwartebes",
+    "name": "Zwarte bes",
+    "icon": "⚫",
+    "color": "#212121",
+    "category": "fruit",
+    "sowIndoor": null,
+    "sowOutdoor": { "start": 10, "end": 3 },
+    "harvest": { "start": 7, "end": 8 },
+    "spacingCm": 120,
+    "rowSpacingCm": 150,
+    "sunNeed": "halfschaduw",
+    "waterNeed": "gemiddeld",
+    "companions": {
+      "good": ["knoflook"],
+      "bad": []
+    }
+  },
+  {
+    "id": "druif",
+    "name": "Druif",
+    "icon": "🍇",
+    "color": "#6a1b9a",
+    "category": "fruit",
+    "sowIndoor": null,
+    "sowOutdoor": { "start": 3, "end": 4 },
+    "harvest": { "start": 9, "end": 10 },
+    "spacingCm": 150,
+    "rowSpacingCm": 200,
+    "sunNeed": "vol",
+    "waterNeed": "gemiddeld",
+    "companions": {
+      "good": ["rozemarijn", "basilicum"],
+      "bad": []
+    }
+  },
+  {
+    "id": "vijg",
+    "name": "Vijg",
+    "icon": "🟤",
+    "color": "#5d4037",
+    "category": "fruit",
+    "sowIndoor": null,
+    "sowOutdoor": { "start": 3, "end": 4 },
+    "harvest": { "start": 8, "end": 10 },
+    "spacingCm": 300,
+    "rowSpacingCm": 400,
+    "sunNeed": "vol",
+    "waterNeed": "gemiddeld",
+    "companions": {
+      "good": [],
+      "bad": []
+    }
+  },
+  {
+    "id": "kiwi",
+    "name": "Kiwi",
+    "icon": "🥝",
+    "color": "#689f38",
+    "category": "fruit",
+    "sowIndoor": null,
+    "sowOutdoor": { "start": 3, "end": 5 },
+    "harvest": { "start": 10, "end": 11 },
+    "spacingCm": 300,
+    "rowSpacingCm": 400,
+    "sunNeed": "vol",
+    "waterNeed": "hoog",
+    "companions": {
+      "good": [],
+      "bad": []
+    }
+  },
+  {
+    "id": "oregano",
+    "name": "Oregano",
+    "icon": "🌿",
+    "color": "#6d8b3a",
+    "category": "kruiden",
+    "sowIndoor": { "start": 3, "end": 4 },
+    "sowOutdoor": { "start": 5, "end": 6 },
+    "harvest": { "start": 6, "end": 10 },
+    "spacingCm": 25,
+    "rowSpacingCm": 30,
+    "sunNeed": "vol",
+    "waterNeed": "laag",
+    "companions": {
+      "good": ["tomaat", "paprika", "courgette"],
+      "bad": []
+    }
+  },
+  {
+    "id": "salie",
+    "name": "Salie",
+    "icon": "🌿",
+    "color": "#78909c",
+    "category": "kruiden",
+    "sowIndoor": { "start": 3, "end": 4 },
+    "sowOutdoor": { "start": 5, "end": 6 },
+    "harvest": { "start": 5, "end": 11 },
+    "spacingCm": 30,
+    "rowSpacingCm": 40,
+    "sunNeed": "vol",
+    "waterNeed": "laag",
+    "companions": {
+      "good": ["kool", "wortel", "tomaat", "rozemarijn"],
+      "bad": ["komkommer"]
+    }
+  },
+  {
+    "id": "koriander",
+    "name": "Koriander",
+    "icon": "🌿",
+    "color": "#66bb6a",
+    "category": "kruiden",
+    "sowIndoor": null,
+    "sowOutdoor": { "start": 4, "end": 8 },
+    "harvest": { "start": 5, "end": 10 },
+    "spacingCm": 15,
+    "rowSpacingCm": 20,
+    "sunNeed": "halfschaduw",
+    "waterNeed": "gemiddeld",
+    "companions": {
+      "good": ["spinazie", "sla", "tomaat"],
+      "bad": ["venkel"]
+    }
+  },
+  {
+    "id": "dragon",
+    "name": "Dragon",
+    "icon": "🌿",
+    "color": "#8bc34a",
+    "category": "kruiden",
+    "sowIndoor": { "start": 3, "end": 4 },
+    "sowOutdoor": { "start": 5, "end": 6 },
+    "harvest": { "start": 6, "end": 10 },
+    "spacingCm": 30,
+    "rowSpacingCm": 40,
+    "sunNeed": "vol",
+    "waterNeed": "gemiddeld",
+    "companions": {
+      "good": ["aubergine", "paprika"],
+      "bad": []
+    }
+  },
+  {
+    "id": "kervel",
+    "name": "Kervel",
+    "icon": "🌿",
+    "color": "#a5d6a7",
+    "category": "kruiden",
+    "sowIndoor": null,
+    "sowOutdoor": { "start": 3, "end": 8 },
+    "harvest": { "start": 4, "end": 10 },
+    "spacingCm": 15,
+    "rowSpacingCm": 20,
+    "sunNeed": "halfschaduw",
+    "waterNeed": "gemiddeld",
+    "companions": {
+      "good": ["sla", "radijs", "wortel"],
+      "bad": []
+    }
+  },
+  {
+    "id": "maggiplant",
+    "name": "Maggiplant (lavas)",
+    "icon": "🌿",
+    "color": "#33691e",
+    "category": "kruiden",
+    "sowIndoor": { "start": 3, "end": 4 },
+    "sowOutdoor": { "start": 4, "end": 5 },
+    "harvest": { "start": 5, "end": 10 },
+    "spacingCm": 60,
+    "rowSpacingCm": 80,
+    "sunNeed": "halfschaduw",
+    "waterNeed": "gemiddeld",
+    "companions": {
+      "good": ["boon", "tomaat"],
+      "bad": []
+    }
+  },
+  {
+    "id": "bonenkruid",
+    "name": "Bonenkruid",
+    "icon": "🌿",
+    "color": "#7cb342",
+    "category": "kruiden",
+    "sowIndoor": null,
+    "sowOutdoor": { "start": 4, "end": 6 },
+    "harvest": { "start": 6, "end": 10 },
+    "spacingCm": 15,
+    "rowSpacingCm": 25,
+    "sunNeed": "vol",
+    "waterNeed": "laag",
+    "companions": {
+      "good": ["boon", "ui", "bieten"],
+      "bad": []
+    }
+  },
+  {
+    "id": "marjolein",
+    "name": "Marjolein",
+    "icon": "🌿",
+    "color": "#9ccc65",
+    "category": "kruiden",
+    "sowIndoor": { "start": 3, "end": 4 },
+    "sowOutdoor": { "start": 5, "end": 6 },
+    "harvest": { "start": 6, "end": 10 },
+    "spacingCm": 20,
+    "rowSpacingCm": 25,
+    "sunNeed": "vol",
+    "waterNeed": "laag",
+    "companions": {
+      "good": ["tomaat", "paprika", "courgette"],
+      "bad": []
+    }
+  },
+  {
+    "id": "citroenmelisse",
+    "name": "Citroenmelisse",
+    "icon": "🍃",
+    "color": "#aed581",
+    "category": "kruiden",
+    "sowIndoor": { "start": 3, "end": 4 },
+    "sowOutdoor": { "start": 5, "end": 6 },
+    "harvest": { "start": 5, "end": 10 },
+    "spacingCm": 30,
+    "rowSpacingCm": 40,
+    "sunNeed": "halfschaduw",
+    "waterNeed": "gemiddeld",
+    "companions": {
+      "good": ["tomaat", "kool"],
+      "bad": []
+    }
   }
 ]
