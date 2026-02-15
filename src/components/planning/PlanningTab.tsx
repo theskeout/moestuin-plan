@@ -254,7 +254,7 @@ export default function PlanningTab({
                 >
                   <div className={`w-2 h-2 rounded-full shrink-0 ${STATUS_COLORS[status]}`} />
                   <span>{plant.icon}</span>
-                  <span className="truncate flex-1">{zone.label || plant.name}</span>
+                  <span className="truncate flex-1">{plant.name}{zone.label ? ` (${zone.label})` : ""}</span>
                   <span className="text-muted-foreground shrink-0">{STATUS_LABELS[status]}</span>
                 </div>
               );
