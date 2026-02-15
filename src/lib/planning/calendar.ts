@@ -402,9 +402,9 @@ export function getWeeklyTasks(
 
 /** Neerslag-drempels per waterbehoefte (mm/week) */
 const RAIN_THRESHOLDS: Record<WaterNeed, number> = {
-  hoog: 20,
-  gemiddeld: 10,
-  laag: 5,
+  hoog: 12,
+  gemiddeld: 7,
+  laag: 3,
 };
 
 /** Genereer watergift-taken op basis van weer en waterbehoefte */

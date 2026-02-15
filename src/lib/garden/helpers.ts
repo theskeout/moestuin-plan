@@ -138,6 +138,8 @@ export function getStructureDefaults(type: StructureType): { widthCm: number; he
       return { widthCm: 100, heightCm: 100 };
     case "compostbak":
       return { widthCm: 100, heightCm: 100 };
+    case "gras":
+      return { widthCm: 200, heightCm: 300 };
     case "custom":
       return { widthCm: 100, heightCm: 100 };
   }

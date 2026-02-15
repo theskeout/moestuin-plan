@@ -346,7 +346,6 @@ export default function GardenCanvas({
     const id = node.id();
     const scaleX = node.scaleX();
     const scaleY = node.scaleY();
-    const rotation = node.rotation();
 
     // Reset scale, bereken nieuwe afmetingen
     node.scaleX(1);
@@ -354,13 +353,42 @@ export default function GardenCanvas({
 
     const newWidthCm = snapToGrid(Math.max((node.width() * scaleX) / scale, 10));
     const newHeightCm = snapToGrid(Math.max((node.height() * scaleY) / scale, 10));
-    const newX = snapToGrid(node.x() / scale);
-    const newY = snapToGrid(node.y() / scale);
+
+    // Check of target een Rect in een Group is (zones)
+    const parent = node.getParent();
+    const isNestedRect = parent && parent.getClassName() === "Group" && parent.id()?.startsWith("g-");
+
+    let newX: number, newY: number, rotation: number;
+
+    if (isNestedRect) {
+      // Rect zit in Group: combineer posities
+      const parentRotRad = (parent.rotation() * Math.PI) / 180;
+      const cos = Math.cos(parentRotRad);
+      const sin = Math.sin(parentRotRad);
+      const absX = parent.x() + node.x() * cos - node.y() * sin;
+      const absY = parent.y() + node.x() * sin + node.y() * cos;
+
+      rotation = parent.rotation() + node.rotation();
+      newX = snapToGrid(absX / scale);
+      newY = snapToGrid(absY / scale);
+
+      // Reset: Group krijgt nieuwe positie/rotatie, Rect reset naar 0
+      parent.x(newX * scale);
+      parent.y(newY * scale);
+      parent.rotation(rotation);
+      node.x(0);
+      node.y(0);
+      node.rotation(0);
+    } else {
+      rotation = node.rotation();
+      newX = snapToGrid(node.x() / scale);
+      newY = snapToGrid(node.y() / scale);
+      node.x(newX * scale);
+      node.y(newY * scale);
+    }
 
     node.width(newWidthCm * scale);
     node.height(newHeightCm * scale);
-    node.x(newX * scale);
-    node.y(newY * scale);
 
     // Bepaal of het een zone of structure is
     const isZone = garden.zones.some((z) => z.id === id);
@@ -653,18 +681,22 @@ export default function GardenCanvas({
               const node = e.target;
               const evt = e.evt as MouseEvent;
               if (evt.shiftKey) {
-                const currentRot = node.rotation();
-                const snapped = Math.round(currentRot / 45) * 45;
-                if (snapped !== currentRot) {
+                // Bereken visuele rotatie (inclusief parent Group)
+                const parent = node.getParent();
+                const parentRot = (parent && parent.getClassName() === "Group" && parent.id()?.startsWith("g-"))
+                  ? parent.rotation() : 0;
+                const visualRot = parentRot + node.rotation();
+                const snapped = Math.round(visualRot / 45) * 45;
+                const newLocalRot = snapped - parentRot;
+                if (newLocalRot !== node.rotation()) {
                   // Roteer om het midden van de node zodat positie niet verschuift
                   const w = node.width() * node.scaleX();
                   const h = node.height() * node.scaleY();
                   const cx = w / 2;
                   const cy = h / 2;
                   const toRad = Math.PI / 180;
-                  const oldRad = currentRot * toRad;
-                  const newRad = snapped * toRad;
-                  // Bereken waar het midden lag en waar het naartoe gaat
+                  const oldRad = node.rotation() * toRad;
+                  const newRad = newLocalRot * toRad;
                   const cosOld = Math.cos(oldRad), sinOld = Math.sin(oldRad);
                   const cosNew = Math.cos(newRad), sinNew = Math.sin(newRad);
                   const oldCx = node.x() + cx * cosOld - cy * sinOld;
@@ -672,7 +704,7 @@ export default function GardenCanvas({
                   const newX = oldCx - (cx * cosNew - cy * sinNew);
                   const newY = oldCy - (cx * sinNew + cy * cosNew);
                   node.position({ x: newX, y: newY });
-                  node.rotation(snapped);
+                  node.rotation(newLocalRot);
                 }
               }
             }}

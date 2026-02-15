@@ -34,7 +34,7 @@ const GardenCanvas = dynamic(
 );
 
 const STRUCTURE_LABELS: Record<string, string> = {
-  kas: "Kas", grondbak: "Grondbak", pad: "Pad", schuur: "Schuur", hek: "Hek", boom: "Boom", compostbak: "Compostbak", custom: "Structuur",
+  kas: "Kas", grondbak: "Grondbak", pad: "Pad", schuur: "Schuur", hek: "Hek", boom: "Boom", compostbak: "Compostbak", gras: "Gras", custom: "Structuur",
 };
 
 /* ---------- Mobiel: Bottom Sheet met swipe gestures ---------- */

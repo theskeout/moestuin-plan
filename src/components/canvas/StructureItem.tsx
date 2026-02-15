@@ -23,6 +23,7 @@ const STRUCTURE_STYLES: Record<
   hek: { fill: "rgba(139, 90, 43, 0.35)", stroke: "#78350f", label: "Hek", icon: "🪵", dash: [4, 3] },
   boom: { fill: "rgba(76, 175, 80, 0.3)", stroke: "#2e7d32", label: "Boom", icon: "🌳" },
   compostbak: { fill: "rgba(120, 85, 40, 0.3)", stroke: "#5d4037", label: "Compostbak", icon: "♻️" },
+  gras: { fill: "rgba(76, 175, 80, 0.2)", stroke: "#66bb6a", label: "Gras", icon: "🌱" },
 };
 
 const CUSTOM_DEFAULT_STYLE = { fill: "rgba(180, 180, 180, 0.3)", stroke: "#6b7280", label: "Structuur", icon: "📌" };
@@ -111,14 +112,16 @@ export default function StructureItem({
             width={w - 8}
             listening={false}
           />
-          <Text
-            text={`${structure.widthCm}x${structure.heightCm}cm`}
-            x={4}
-            y={h - 18}
-            fontSize={10}
-            fill="#6b7280"
-            listening={false}
-          />
+          {structure.type !== "hek" && (
+            <Text
+              text={`${structure.widthCm}x${structure.heightCm}cm`}
+              x={4}
+              y={h - 18}
+              fontSize={10}
+              fill="#6b7280"
+              listening={false}
+            />
+          )}
         </>
       )}
       {locked && (

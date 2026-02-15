@@ -64,7 +64,7 @@ export default function CropZoneItem({
 
   return (
     <Group
-      id={zone.id}
+      id={`g-${zone.id}`}
       x={zone.x * scale}
       y={zone.y * scale}
       rotation={zone.rotation}
@@ -79,7 +79,7 @@ export default function CropZoneItem({
         onDragEnd(zone.id, newX, newY);
       }}
     >
-    {/* Invisible rect met id zodat Transformer alleen dit vak pakt */}
+    {/* Invisible rect als Transformer-target (alleen het bed, niet de labels) */}
     <Rect
       id={zone.id}
       width={w}

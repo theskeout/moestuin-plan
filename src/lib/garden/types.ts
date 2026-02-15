@@ -15,7 +15,7 @@ export interface PlacedPlant {
   rotation: number; // graden
 }
 
-export type StructureType = "kas" | "grondbak" | "pad" | "schuur" | "hek" | "boom" | "compostbak" | "custom";
+export type StructureType = "kas" | "grondbak" | "pad" | "schuur" | "hek" | "boom" | "compostbak" | "gras" | "custom";
 
 export interface Structure {
   id: string;
