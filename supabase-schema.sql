@@ -180,9 +180,7 @@ begin
   if not found then
     raise exception 'Uitnodiging niet gevonden of al geaccepteerd';
   end if;
-  if v_invite.email != (select email from auth.users where id = auth.uid()) then
-    raise exception 'Deze uitnodiging is niet voor jou';
-  end if;
+  -- Geen email-check: de geheime token-link is voldoende autorisatie
   insert into garden_members (garden_id, user_id, role)
   values (v_invite.garden_id, auth.uid(), 'member')
   on conflict (garden_id, user_id) do nothing;
