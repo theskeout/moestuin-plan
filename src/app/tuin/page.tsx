@@ -842,6 +842,7 @@ function TuinContent() {
                   wateringTasks={planning.wateringTasks}
                   onCompleteTask={planning.completeTask}
                   onUpdateZoneStatus={planning.updateZoneStatus}
+                  onSelectZone={(id) => select(id, "zone")}
                   onOpenFullView={() => setPlanningViewOpen(true)}
                 />
               </div>

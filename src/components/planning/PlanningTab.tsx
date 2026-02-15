@@ -52,6 +52,7 @@ interface PlanningTabProps {
   wateringTasks?: MonthlyTask[];
   onCompleteTask: (zoneId: string, taskId: string) => void;
   onUpdateZoneStatus?: (zoneId: string, status: ZoneStatus) => void;
+  onSelectZone?: (zoneId: string) => void;
   onOpenFullView: () => void;
 }
 
@@ -68,6 +69,7 @@ export default function PlanningTab({
   wateringTasks = [],
   onCompleteTask,
   onUpdateZoneStatus,
+  onSelectZone,
   onOpenFullView,
 }: PlanningTabProps) {
   const now = new Date();
@@ -314,15 +316,16 @@ export default function PlanningTab({
               .map(({ zone, plant }) => {
               const status = zone.status || "planned";
               return (
-                <div
+                <button
                   key={zone.id}
-                  className="flex items-center gap-2 px-2 py-1 text-xs"
+                  onClick={() => onSelectZone?.(zone.id)}
+                  className="flex items-center gap-2 px-2 py-1 text-xs w-full text-left rounded hover:bg-accent transition-colors"
                 >
                   <div className={`w-2 h-2 rounded-full shrink-0 ${STATUS_COLORS[status]}`} />
                   <span>{plant.icon}</span>
                   <span className="truncate flex-1">{plant.name}{zone.label ? ` (${zone.label})` : ""}</span>
                   <span className="text-muted-foreground shrink-0">{STATUS_LABELS[status]}</span>
-                </div>
+                </button>
               );
             })}
           </div>
