@@ -46,12 +46,10 @@ export default function StructureItem({
 
   return (
     <Group
-      id={structure.id}
+      id={`g-${structure.id}`}
       x={structure.x * scale}
       y={structure.y * scale}
       rotation={structure.rotation}
-      width={w}
-      height={h}
       draggable={!locked}
       onClick={() => onSelect(structure.id)}
       onTap={() => onSelect(structure.id)}
@@ -64,6 +62,14 @@ export default function StructureItem({
         onDragEnd(structure.id, newX, newY);
       }}
     >
+      {/* Invisible rect als Transformer-target */}
+      <Rect
+        id={structure.id}
+        width={w}
+        height={h}
+        fill="transparent"
+        listening={false}
+      />
       {isBoom ? (
         <>
           <Circle
