@@ -14,6 +14,7 @@ import { Search, ChevronDown, ChevronRight, Plus, Pencil } from "lucide-react";
 
 interface PlantPickerProps {
   onSelectPlant: (plant: PlantData) => void;
+  onTapStructure?: (type: StructureType) => void;
 }
 
 const STRUCTURES: { type: StructureType; icon: string; label: string }[] = [
@@ -57,13 +58,14 @@ const ICON_GROUPS: { label: string; icons: string[] }[] = [
 
 const ALL_ICONS = ICON_GROUPS.flatMap((g) => g.icons);
 
-function StructureCard({ type, icon, label }: { type: StructureType; icon: string; label: string }) {
+function StructureCard({ type, icon, label, onTap }: { type: StructureType; icon: string; label: string; onTap?: (type: StructureType) => void }) {
   return (
     <div
       draggable
       onDragStart={(e) => {
         e.dataTransfer.setData("structureType", type);
       }}
+      onClick={() => onTap?.(type)}
       className="flex flex-col items-center justify-center p-2 rounded-lg hover:bg-accent cursor-grab active:cursor-grabbing transition-colors border border-dashed border-border hover:border-foreground/30"
     >
       <span className="text-lg">{icon}</span>
@@ -345,7 +347,7 @@ function PlantForm({
   );
 }
 
-export default function PlantPicker({ onSelectPlant }: PlantPickerProps) {
+export default function PlantPicker({ onSelectPlant, onTapStructure }: PlantPickerProps) {
   const [query, setQuery] = useState("");
   const [structuresOpen, setStructuresOpen] = useState(false);
   const [gewassenOpen, setGewassenOpen] = useState(true);
@@ -393,7 +395,7 @@ export default function PlantPicker({ onSelectPlant }: PlantPickerProps) {
         {structuresOpen && (
           <div className="grid grid-cols-3 gap-2 mt-1.5">
             {STRUCTURES.map((s) => (
-              <StructureCard key={s.type} {...s} />
+              <StructureCard key={s.type} {...s} onTap={onTapStructure} />
             ))}
           </div>
         )}

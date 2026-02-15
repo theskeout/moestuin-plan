@@ -21,7 +21,7 @@ import { findNearbyZones, calculatePlantPositions } from "@/lib/garden/helpers";
 import { PlantData } from "@/lib/plants/types";
 import { createRectangleCorners, generateId } from "@/lib/garden/helpers";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { ArrowLeft, Move, Lock, Unlock, Check, Download, Upload, Pencil, Search, X } from "lucide-react";
+import { ArrowLeft, Move, Lock, Unlock, Check, Download, Upload, Pencil, Search, X, Plus, ZoomIn, ZoomOut, Grid3X3, Trash2 } from "lucide-react";
 
 const GardenCanvas = dynamic(
   () => import("@/components/canvas/GardenCanvas"),
@@ -31,6 +31,49 @@ const GardenCanvas = dynamic(
 const STRUCTURE_LABELS: Record<string, string> = {
   kas: "Kas", grondbak: "Grondbak", pad: "Pad", schuur: "Schuur", hek: "Hek", boom: "Boom",
 };
+
+/* ---------- Mobiel: Bottom Sheet component ---------- */
+function MobileBottomSheet({
+  open,
+  onClose,
+  title,
+  children,
+  height = "60vh",
+}: {
+  open: boolean;
+  onClose: () => void;
+  title?: string;
+  children: React.ReactNode;
+  height?: string;
+}) {
+  // Sluit bij klik op backdrop
+  if (!open) return null;
+  return (
+    <div className="fixed inset-0 z-50 md:hidden">
+      <div className="absolute inset-0 bg-black/40" onClick={onClose} />
+      <div
+        className="absolute bottom-0 left-0 right-0 bg-white rounded-t-2xl shadow-2xl flex flex-col animate-in slide-in-from-bottom duration-200"
+        style={{ maxHeight: height }}
+      >
+        {/* Drag handle */}
+        <div className="flex justify-center pt-2 pb-1">
+          <div className="w-10 h-1 rounded-full bg-gray-300" />
+        </div>
+        {title && (
+          <div className="flex items-center justify-between px-4 pb-2">
+            <h3 className="font-semibold text-sm">{title}</h3>
+            <button onClick={onClose} className="p-1 rounded-full hover:bg-accent">
+              <X className="h-4 w-4" />
+            </button>
+          </div>
+        )}
+        <div className="flex-1 overflow-y-auto px-4 pb-4">
+          {children}
+        </div>
+      </div>
+    </div>
+  );
+}
 
 function TuinContent() {
   const searchParams = useSearchParams();
@@ -47,6 +90,8 @@ function TuinContent() {
   const [editHeight, setEditHeight] = useState("");
   const [gardenLoading, setGardenLoading] = useState(true);
   const [canvasSearch, setCanvasSearch] = useState("");
+  const [mobileAddOpen, setMobileAddOpen] = useState(false);
+  const [mobileInfoOpen, setMobileInfoOpen] = useState(false);
   const initRef = useRef(false);
   const newGardenIdRef = useRef(generateId());
 
@@ -176,6 +221,15 @@ function TuinContent() {
     return garden.structures.find((s) => s.id === selectedId) || null;
   }, [selectedId, selectedType, garden.structures]);
 
+  // Mobiel: open info-sheet automatisch bij selectie
+  useEffect(() => {
+    if (selectedId && (selectedZoneData || selectedStruct)) {
+      setMobileInfoOpen(true);
+    } else {
+      setMobileInfoOpen(false);
+    }
+  }, [selectedId, selectedZoneData, selectedStruct]);
+
   if (gardenLoading) {
     return (
       <div className="h-screen flex items-center justify-center">
@@ -187,13 +241,13 @@ function TuinContent() {
   return (
     <div className="h-screen flex flex-col">
       {/* Header */}
-      <header className="flex items-center justify-between px-4 py-2 border-b bg-white">
-        <div className="flex items-center gap-3">
-          <Button variant="ghost" size="icon" onClick={() => router.push("/")}>
+      <header className="flex items-center justify-between px-2 md:px-4 py-2 border-b bg-white">
+        <div className="flex items-center gap-2 md:gap-3 min-w-0">
+          <Button variant="ghost" size="icon" onClick={() => router.push("/")} className="shrink-0">
             <ArrowLeft className="h-4 w-4" />
           </Button>
           {editingHeader ? (
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-2 flex-wrap">
               <Input
                 value={editName}
                 onChange={(e) => setEditName(e.target.value)}
@@ -226,8 +280,8 @@ function TuinContent() {
             </div>
           ) : (
             <>
-              <h1 className="font-semibold">{garden.name}</h1>
-              <span className="text-sm text-muted-foreground">
+              <h1 className="font-semibold text-sm md:text-base truncate">{garden.name}</h1>
+              <span className="text-xs md:text-sm text-muted-foreground whitespace-nowrap hidden sm:inline">
                 {garden.widthCm} x {garden.heightCm}cm
               </span>
               <button
@@ -237,7 +291,7 @@ function TuinContent() {
                   setEditHeight(String(garden.heightCm));
                   setEditingHeader(true);
                 }}
-                className="p-1 rounded hover:bg-accent transition-colors"
+                className="p-1 rounded hover:bg-accent transition-colors shrink-0"
                 title="Naam en formaat aanpassen"
               >
                 <Pencil className="h-3.5 w-3.5 text-muted-foreground" />
@@ -245,30 +299,32 @@ function TuinContent() {
             </>
           )}
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-1 md:gap-2 shrink-0">
           <UserMenu />
-          <div className="w-px h-6 bg-border" />
+          <div className="w-px h-6 bg-border hidden md:block" />
           <Button
             variant={editingCorners ? "secondary" : "outline"}
             size="sm"
             onClick={() => setEditingCorners(!editingCorners)}
+            className="hidden md:inline-flex"
           >
             <Move className="h-3.5 w-3.5 mr-1.5" />
             {editingCorners ? "Klaar" : "Hoeken aanpassen"}
           </Button>
-          <Button variant="ghost" size="icon" onClick={handleExport} title="Exporteer JSON">
+          <Button variant="ghost" size="icon" onClick={handleExport} title="Exporteer JSON" className="hidden md:inline-flex">
             <Download className="h-4 w-4" />
           </Button>
-          <Button variant="ghost" size="icon" onClick={handleImport} title="Importeer JSON">
+          <Button variant="ghost" size="icon" onClick={handleImport} title="Importeer JSON" className="hidden md:inline-flex">
             <Upload className="h-4 w-4" />
           </Button>
-          <div className="w-px h-6 bg-border" />
+          <div className="w-px h-6 bg-border hidden md:block" />
           {hasChanges && (
-            <span className="text-xs text-muted-foreground">Niet opgeslagen</span>
+            <span className="text-xs text-muted-foreground hidden md:inline">Niet opgeslagen</span>
           )}
           <Button size="sm" onClick={handleSave} variant={saveLabel === "Opgeslagen!" ? "secondary" : "default"}>
             {saveLabel === "Opgeslagen!" && <Check className="h-3.5 w-3.5 mr-1" />}
-            {saveLabel}
+            <span className="hidden sm:inline">{saveLabel}</span>
+            <span className="sm:hidden"><Check className="h-3.5 w-3.5" /></span>
           </Button>
         </div>
       </header>
@@ -578,6 +634,180 @@ function TuinContent() {
             </TabsContent>
           </Tabs>
         </aside>
+
+        {/* --- Mobiel: floating controls (alleen <md) --- */}
+
+        {/* Floating toolbar linksonder: zoom + grid */}
+        <div className="fixed bottom-4 left-3 flex items-center gap-1 bg-white/90 backdrop-blur-sm rounded-full shadow-lg border px-1 py-1 z-40 md:hidden">
+          <button onClick={handleZoomOut} className="p-2 rounded-full hover:bg-accent">
+            <ZoomOut className="h-4 w-4" />
+          </button>
+          <span className="text-xs text-muted-foreground min-w-[2.5rem] text-center">
+            {Math.round(zoom * 100)}%
+          </span>
+          <button onClick={handleZoomIn} className="p-2 rounded-full hover:bg-accent">
+            <ZoomIn className="h-4 w-4" />
+          </button>
+          <div className="w-px h-5 bg-border" />
+          <button onClick={() => setGridVisible(!gridVisible)} className={`p-2 rounded-full ${gridVisible ? "bg-accent" : "hover:bg-accent"}`}>
+            <Grid3X3 className="h-4 w-4" />
+          </button>
+        </div>
+
+        {/* Floating plus-knop rechtsboven canvas om elementen toe te voegen */}
+        <button
+          onClick={() => setMobileAddOpen(true)}
+          className="fixed top-16 right-3 z-40 md:hidden w-11 h-11 bg-foreground text-background rounded-full shadow-lg flex items-center justify-center active:scale-95 transition-transform"
+          title="Gewas of structuur toevoegen"
+        >
+          <Plus className="h-5 w-5" />
+        </button>
+
+        {/* Mobiel: bottom sheet voor toevoegen */}
+        <MobileBottomSheet
+          open={mobileAddOpen}
+          onClose={() => { setMobileAddOpen(false); setSidebarPlant(null); }}
+          title="Toevoegen"
+          height="70vh"
+        >
+          {sidebarPlant ? (
+            <div className="space-y-3">
+              <PlantInfo plant={sidebarPlant} onClose={() => setSidebarPlant(null)} />
+              <Button
+                className="w-full"
+                onClick={() => {
+                  addZone(sidebarPlant.id, garden.widthCm / 2, garden.heightCm / 2);
+                  setSidebarPlant(null);
+                  setMobileAddOpen(false);
+                }}
+              >
+                <Plus className="h-4 w-4 mr-1.5" />
+                Plaats op canvas
+              </Button>
+            </div>
+          ) : (
+            <>
+              <p className="text-xs text-muted-foreground mb-3">
+                Tik op een gewas om te bekijken en te plaatsen.
+              </p>
+              <PlantPicker
+                onSelectPlant={(plant) => setSidebarPlant(plant)}
+                onTapStructure={(type) => {
+                  addStructure(type, garden.widthCm / 2, garden.heightCm / 2);
+                  setMobileAddOpen(false);
+                }}
+              />
+            </>
+          )}
+        </MobileBottomSheet>
+
+        {/* Mobiel: bottom sheet voor geselecteerd element info */}
+        <MobileBottomSheet
+          open={mobileInfoOpen && !mobileAddOpen && (!!selectedZoneData || !!selectedStruct)}
+          onClose={() => { setMobileInfoOpen(false); select(null); }}
+          height="50vh"
+        >
+          {/* Zone geselecteerd */}
+          {selectedZoneData && (
+            <div className="space-y-3">
+              <div className="flex items-center justify-between">
+                <h3 className="font-semibold flex items-center gap-2">
+                  <span className="text-xl">{selectedZoneData.plantData.icon}</span>
+                  {selectedZoneData.plantData.name}
+                  {selectedZoneData.zone.label && (
+                    <span className="text-sm font-normal text-muted-foreground">— {selectedZoneData.zone.label}</span>
+                  )}
+                </h3>
+                <div className="flex items-center gap-1">
+                  <Button
+                    variant="ghost" size="icon"
+                    onClick={() => { if (selectedId) toggleZoneLock(selectedId); }}
+                  >
+                    {selectedZoneData.zone.locked ? <Lock className="h-4 w-4" /> : <Unlock className="h-4 w-4" />}
+                  </Button>
+                  <Button
+                    variant="ghost" size="icon"
+                    className="text-destructive hover:text-destructive"
+                    onClick={() => { if (selectedId) { removeZone(selectedId); setMobileInfoOpen(false); } }}
+                  >
+                    <Trash2 className="h-4 w-4" />
+                  </Button>
+                </div>
+              </div>
+
+              {/* Compacte info */}
+              <div className="grid grid-cols-3 gap-2 text-xs text-muted-foreground">
+                <div>
+                  <span className="block font-medium text-foreground">{selectedZoneData.zone.widthCm} x {selectedZoneData.zone.heightCm}cm</span>
+                  Bed
+                </div>
+                <div>
+                  <span className="block font-medium text-foreground">{selectedZoneData.plantCount}</span>
+                  Planten
+                </div>
+                <div>
+                  <span className="block font-medium text-foreground">{Math.round(selectedZoneData.zone.rotation)}°</span>
+                  Rotatie
+                </div>
+              </div>
+
+              {/* Plant details compact */}
+              <PlantInfo plant={selectedZoneData.plantData} onClose={() => {}} compact />
+
+              {/* Companion alerts */}
+              <CompanionAlert checks={companionChecks} />
+
+              {selectedZoneData.zone.notes && (
+                <p className="text-xs text-muted-foreground italic">{selectedZoneData.zone.notes}</p>
+              )}
+            </div>
+          )}
+
+          {/* Structuur geselecteerd */}
+          {selectedStruct && (
+            <div className="space-y-3">
+              <div className="flex items-center justify-between">
+                <h3 className="font-semibold">
+                  {STRUCTURE_LABELS[selectedStruct.type] || selectedStruct.type}
+                </h3>
+                <div className="flex items-center gap-1">
+                  <Button
+                    variant="ghost" size="icon"
+                    onClick={() => { if (selectedId) toggleStructureLock(selectedId); }}
+                  >
+                    {selectedStruct.locked ? <Lock className="h-4 w-4" /> : <Unlock className="h-4 w-4" />}
+                  </Button>
+                  <Button
+                    variant="ghost" size="icon"
+                    className="text-destructive hover:text-destructive"
+                    onClick={() => { if (selectedId) { removeStructure(selectedId); setMobileInfoOpen(false); } }}
+                  >
+                    <Trash2 className="h-4 w-4" />
+                  </Button>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-3 gap-2 text-xs text-muted-foreground">
+                <div>
+                  <span className="block font-medium text-foreground">{selectedStruct.widthCm}cm</span>
+                  Breedte
+                </div>
+                <div>
+                  <span className="block font-medium text-foreground">{selectedStruct.heightCm}cm</span>
+                  Hoogte
+                </div>
+                <div>
+                  <span className="block font-medium text-foreground">{Math.round(selectedStruct.rotation)}°</span>
+                  Rotatie
+                </div>
+              </div>
+
+              {selectedStruct.locked && (
+                <p className="text-xs text-muted-foreground">Vergrendeld</p>
+              )}
+            </div>
+          )}
+        </MobileBottomSheet>
       </div>
     </div>
   );
