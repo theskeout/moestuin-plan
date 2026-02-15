@@ -106,9 +106,12 @@ function MobileBottomSheet({
   }, [dragOffset, expandable, expanded, onExpandChange, onClose]);
 
   const handleHandleClick = useCallback(() => {
-    if (!expandable) return;
-    onExpandChange?.(!expanded);
-  }, [expandable, expanded, onExpandChange]);
+    if (expandable) {
+      onExpandChange?.(!expanded);
+    } else {
+      onClose();
+    }
+  }, [expandable, expanded, onExpandChange, onClose]);
 
   if (!open) return null;
 
@@ -303,9 +306,12 @@ function TuinContent() {
     return garden.structures.find((s) => s.id === selectedId) || null;
   }, [selectedId, selectedType, garden.structures]);
 
-  // Mobiel: open info-sheet automatisch bij selectie
+  // Mobiel: open info-sheet automatisch bij selectie (alleen bij id-wissel)
+  const prevSelectedIdRef = useRef<string | null>(null);
   useEffect(() => {
-    if (selectedId && (selectedZoneData || selectedStruct)) {
+    if (selectedId === prevSelectedIdRef.current) return;
+    prevSelectedIdRef.current = selectedId;
+    if (selectedId) {
       setMobileInfoOpen(true);
       setMobileInfoExpanded(false);
       setMobileEditing(false);
@@ -314,7 +320,7 @@ function TuinContent() {
       setMobileInfoExpanded(false);
       setMobileEditing(false);
     }
-  }, [selectedId, selectedZoneData, selectedStruct]);
+  }, [selectedId]);
 
   if (gardenLoading) {
     return (
