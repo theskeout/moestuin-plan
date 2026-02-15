@@ -123,14 +123,14 @@ alter table garden_invites enable row level security;
 
 create policy "Leden of genodigde zien uitnodigingen"
   on garden_invites for select using (
-    email = (select email from auth.users where id = auth.uid())
+    email = (auth.jwt() ->> 'email')
     or garden_id in (select my_garden_ids())
   );
 create policy "Eigenaar maakt uitnodigingen"
   on garden_invites for insert with check (garden_id in (select my_owned_garden_ids()));
 create policy "Genodigde accepteert uitnodiging"
   on garden_invites for update using (
-    email = (select email from auth.users where id = auth.uid())
+    email = (auth.jwt() ->> 'email')
   );
 create policy "Eigenaar of uitnodiger verwijdert uitnodiging"
   on garden_invites for delete using (
