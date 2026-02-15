@@ -17,6 +17,7 @@ interface PlanningViewProps {
   onClose: () => void;
   garden: Garden;
   currentTasks: MonthlyTask[];
+  currentWeek?: number;
   rotationWarnings: RotationWarning[];
   archives: SeasonArchive[];
   settings: UserSettings;
@@ -33,6 +34,7 @@ export default function PlanningView({
   onClose,
   garden,
   currentTasks,
+  currentWeek,
   rotationWarnings,
   archives,
   settings,
@@ -78,6 +80,7 @@ export default function PlanningView({
             <TabsContent value="taken" className="p-4 mt-0">
               <TaskListView
                 currentTasks={currentTasks}
+                currentWeek={currentWeek}
                 onCompleteTask={onCompleteTask}
               />
             </TabsContent>

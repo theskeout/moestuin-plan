@@ -1,7 +1,7 @@
 "use client";
 
-import { useState, useRef, useCallback, useEffect, useMemo } from "react";
-import { Stage, Layer, Transformer } from "react-konva";
+import React, { useState, useRef, useCallback, useEffect, useMemo } from "react";
+import { Stage, Layer, Transformer, Line, Text } from "react-konva";
 import type Konva from "konva";
 import GridLayer from "./GridLayer";
 import PlotOutline from "./PlotOutline";
@@ -9,7 +9,8 @@ import CropZoneItem from "./CropZoneItem";
 import StructureItem from "./StructureItem";
 import { Garden, Point, StructureType } from "@/lib/garden/types";
 import { getPlant } from "@/lib/plants/catalog";
-import { snapToGrid } from "@/lib/garden/helpers";
+import { snapToGrid, findNearbyZones } from "@/lib/garden/helpers";
+import { checkCompanion } from "@/lib/plants/companions";
 import { SelectedType } from "@/lib/hooks/useGarden";
 
 interface GardenCanvasProps {
@@ -413,6 +414,35 @@ export default function GardenCanvas({
     return () => window.removeEventListener("keydown", handleKeyDown);
   }, [selectedId, garden.zones, onRemoveZone, onRemoveStructure]);
 
+  // Companion-conflicten berekenen voor canvas-waarschuwingslijnen
+  const companionConflicts = useMemo(() => {
+    const conflicts: { id: string; x1: number; y1: number; x2: number; y2: number }[] = [];
+    const seen = new Set<string>();
+
+    for (const zone of garden.zones) {
+      const nearby = findNearbyZones(zone, garden.zones, 100);
+      for (const neighbor of nearby) {
+        // Deduplicatie: gesorteerd paar
+        const pairKey = [zone.id, neighbor.id].sort().join("-");
+        if (seen.has(pairKey)) continue;
+        seen.add(pairKey);
+
+        const check = checkCompanion(zone.plantId, neighbor.plantId);
+        if (check && check.type === "bad") {
+          conflicts.push({
+            id: pairKey,
+            x1: (zone.x + zone.widthCm / 2) * scale,
+            y1: (zone.y + zone.heightCm / 2) * scale,
+            x2: (neighbor.x + neighbor.widthCm / 2) * scale,
+            y2: (neighbor.y + neighbor.heightCm / 2) * scale,
+          });
+        }
+      }
+    }
+
+    return conflicts;
+  }, [garden.zones, scale]);
+
   // Scrollbar posities berekenen
   const gardenPxW = garden.widthCm * scale;
   const gardenPxH = garden.heightCm * scale;
@@ -560,6 +590,31 @@ export default function GardenCanvas({
                 onSelect={(id) => onSelect(id, "zone")}
                 onDragEnd={onMoveZone}
               />
+            );
+          })}
+          {/* Companion-conflict waarschuwingslijnen */}
+          {companionConflicts.map((conflict) => {
+            const midX = (conflict.x1 + conflict.x2) / 2;
+            const midY = (conflict.y1 + conflict.y2) / 2;
+            return (
+              <React.Fragment key={`conflict-${conflict.id}`}>
+                <Line
+                  points={[conflict.x1, conflict.y1, conflict.x2, conflict.y2]}
+                  stroke="#ef4444"
+                  strokeWidth={2}
+                  dash={[6, 4]}
+                  opacity={0.7}
+                  listening={false}
+                />
+                <Text
+                  text="⚠"
+                  x={midX - 6}
+                  y={midY - 6}
+                  fontSize={12}
+                  fill="#ef4444"
+                  listening={false}
+                />
+              </React.Fragment>
             );
           })}
           {/* Transformer voor resize + rotatie */}

@@ -76,6 +76,21 @@ export interface MonthlyTask {
   completed?: boolean;
 }
 
+export interface WeeklyTask extends MonthlyTask {
+  weekNumber: number;
+}
+
+export interface StatusHint {
+  zoneId: string;
+  plantId: string;
+  plantName: string;
+  plantIcon: string;
+  type: "status-hint";
+  suggestedStatus: import("@/lib/garden/types").ZoneStatus;
+  message: string;
+  description: string;
+}
+
 export interface RotationWarning {
   zoneId: string;
   plantId: string;

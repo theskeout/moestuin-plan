@@ -4,7 +4,7 @@ import { useState, useCallback, useEffect, useMemo } from "react";
 import { Garden, ZoneStatus } from "@/lib/garden/types";
 import { getPlant } from "@/lib/plants/catalog";
 import { getPlantFamily } from "@/lib/planning/families";
-import { getMonthlyTasks } from "@/lib/planning/calendar";
+import { getWeeklyTasks, getStatusHints } from "@/lib/planning/calendar";
 import { getAllRotationWarnings } from "@/lib/planning/rotation";
 import { getPlanningStorage } from "@/lib/storage";
 import {
@@ -12,6 +12,7 @@ import {
   SeasonArchive,
   ArchivedZone,
 } from "@/lib/planning/types";
+import { getISOWeek } from "@/lib/planning/weeks";
 import { generateId } from "@/lib/garden/helpers";
 
 export function usePlanning(
@@ -42,21 +43,27 @@ export function usePlanning(
     load();
   }, [garden.id]);
 
-  // Taken voor huidige maand
+  // Taken voor huidige week
   const now = new Date();
-  const currentMonth = now.getMonth() + 1;
   const currentYear = now.getFullYear();
+  const currentWeek = getISOWeek(now);
+  const nextWeek = currentWeek >= 53 ? 1 : currentWeek + 1;
 
   const currentTasks = useMemo(
-    () => getMonthlyTasks(garden, currentMonth, currentYear, settings),
-    [garden, currentMonth, currentYear, settings]
+    () => getWeeklyTasks(garden, currentWeek, currentYear, settings),
+    [garden, currentWeek, currentYear, settings]
   );
 
-  // Taken voor volgende maand (binnenkort)
-  const nextMonth = currentMonth === 12 ? 1 : currentMonth + 1;
+  // Taken voor volgende week
   const upcomingTasks = useMemo(
-    () => getMonthlyTasks(garden, nextMonth, currentYear, settings),
-    [garden, nextMonth, currentYear, settings]
+    () => getWeeklyTasks(garden, nextWeek, currentYear, settings),
+    [garden, nextWeek, currentYear, settings]
+  );
+
+  // Status-transitie suggesties
+  const statusHints = useMemo(
+    () => getStatusHints(garden, currentWeek, currentYear, settings),
+    [garden, currentWeek, currentYear, settings]
   );
 
   // Rotatie-waarschuwingen
@@ -169,6 +176,8 @@ export function usePlanning(
   return {
     currentTasks,
     upcomingTasks,
+    currentWeek,
+    statusHints,
     rotationWarnings,
     settings,
     updateSettings,

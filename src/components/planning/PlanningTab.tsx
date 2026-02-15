@@ -1,11 +1,11 @@
 "use client";
 
-import { MonthlyTask, RotationWarning } from "@/lib/planning/types";
+import { MonthlyTask, RotationWarning, StatusHint } from "@/lib/planning/types";
 import { CropZone, ZoneStatus } from "@/lib/garden/types";
 import { getPlant } from "@/lib/plants/catalog";
-import { AlertTriangle, CheckCircle2, Scissors, Sprout, Bug, Calendar } from "lucide-react";
+import { formatWeekLabel } from "@/lib/planning/weeks";
+import { AlertTriangle, CheckCircle2, Scissors, Sprout, Bug, Calendar, ArrowRight } from "lucide-react";
 
-const MONTH_NAMES = ["", "Jan", "Feb", "Mrt", "Apr", "Mei", "Jun", "Jul", "Aug", "Sep", "Okt", "Nov", "Dec"];
 
 const STATUS_LABELS: Record<ZoneStatus, string> = {
   planned: "Gepland",
@@ -42,7 +42,10 @@ interface PlanningTabProps {
   upcomingTasks: MonthlyTask[];
   rotationWarnings: RotationWarning[];
   zones: CropZone[];
+  currentWeek: number;
+  statusHints?: StatusHint[];
   onCompleteTask: (zoneId: string, taskId: string) => void;
+  onUpdateZoneStatus?: (zoneId: string, status: ZoneStatus) => void;
   onOpenFullView: () => void;
 }
 
@@ -51,11 +54,14 @@ export default function PlanningTab({
   upcomingTasks,
   rotationWarnings,
   zones,
+  currentWeek,
+  statusHints = [],
   onCompleteTask,
+  onUpdateZoneStatus,
   onOpenFullView,
 }: PlanningTabProps) {
-  const currentMonth = new Date().getMonth() + 1;
-  const nextMonth = currentMonth === 12 ? 1 : currentMonth + 1;
+  const currentYear = new Date().getFullYear();
+  const nextWeek = currentWeek >= 53 ? 1 : currentWeek + 1;
 
   const groupedUpcoming = groupByZone(upcomingTasks);
 
@@ -66,10 +72,35 @@ export default function PlanningTab({
 
   return (
     <div className="space-y-4">
-      {/* Nu te doen */}
+      {/* Status-suggesties */}
+      {statusHints.length > 0 && (
+        <div>
+          <h4 className="text-xs font-semibold text-blue-600 uppercase tracking-wide mb-2">
+            Suggesties
+          </h4>
+          <div className="space-y-1">
+            {statusHints.map((hint) => (
+              <button
+                key={`hint-${hint.zoneId}-${hint.suggestedStatus}`}
+                onClick={() => onUpdateZoneStatus?.(hint.zoneId, hint.suggestedStatus)}
+                className="w-full flex items-center gap-2 px-2 py-1.5 rounded-md text-left text-sm bg-blue-50 hover:bg-blue-100 transition-colors group"
+              >
+                <span className="text-sm">{hint.plantIcon}</span>
+                <div className="flex-1 min-w-0">
+                  <span className="text-xs font-medium">{hint.message}</span>
+                  <p className="text-xs text-muted-foreground">{hint.description}</p>
+                </div>
+                <ArrowRight className="h-3.5 w-3.5 text-blue-500 opacity-0 group-hover:opacity-100 transition-opacity shrink-0" />
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* Deze week */}
       <div>
         <h4 className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-2">
-          Nu te doen — {MONTH_NAMES[currentMonth]}
+          Deze week — {formatWeekLabel(currentWeek, currentYear)}
         </h4>
         {todoTasks.length === 0 && doneTasks.length === 0 ? (
           <p className="text-sm text-muted-foreground">Geen taken deze maand</p>
@@ -179,7 +210,7 @@ export default function PlanningTab({
       {groupedUpcoming.length > 0 && (
         <div>
           <h4 className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-2">
-            Binnenkort — {MONTH_NAMES[nextMonth]}
+            Volgende week — {formatWeekLabel(nextWeek, currentYear)}
           </h4>
           <div className="space-y-1">
             {upcomingTasks.filter((t) => t.type !== "warning").slice(0, 8).map((task, i) => (

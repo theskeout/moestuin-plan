@@ -3,8 +3,7 @@
 import { useState } from "react";
 import { MonthlyTask } from "@/lib/planning/types";
 import { Sprout, CheckCircle2, Scissors, Bug, Check } from "lucide-react";
-
-const MONTH_NAMES = ["", "Januari", "Februari", "Maart", "April", "Mei", "Juni", "Juli", "Augustus", "September", "Oktober", "November", "December"];
+import { getISOWeek, formatWeekLabel } from "@/lib/planning/weeks";
 
 type Filter = "alles" | "zaai" | "onderhoud" | "oogst" | "waarschuwing";
 
@@ -20,12 +19,15 @@ function TaskIcon({ type }: { type: MonthlyTask["type"] }) {
 
 interface TaskListViewProps {
   currentTasks: MonthlyTask[];
+  currentWeek?: number;
   onCompleteTask: (zoneId: string, taskId: string) => void;
 }
 
-export default function TaskListView({ currentTasks, onCompleteTask }: TaskListViewProps) {
+export default function TaskListView({ currentTasks, currentWeek, onCompleteTask }: TaskListViewProps) {
   const [filter, setFilter] = useState<Filter>("alles");
-  const currentMonth = new Date().getMonth() + 1;
+  const now = new Date();
+  const week = currentWeek ?? getISOWeek(now);
+  const year = now.getFullYear();
 
   const filtered = currentTasks.filter((t) => {
     switch (filter) {
@@ -62,7 +64,7 @@ export default function TaskListView({ currentTasks, onCompleteTask }: TaskListV
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between">
-        <h3 className="text-sm font-semibold">{MONTH_NAMES[currentMonth]}</h3>
+        <h3 className="text-sm font-semibold">{formatWeekLabel(week, year)}</h3>
         <div className="flex items-center gap-3 text-xs text-muted-foreground">
           <span>{openCount} open</span>
           {doneCount > 0 && <span className="text-green-600">{doneCount} afgerond</span>}

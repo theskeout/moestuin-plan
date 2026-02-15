@@ -805,7 +805,10 @@ function TuinContent() {
                   upcomingTasks={planning.upcomingTasks}
                   rotationWarnings={planning.rotationWarnings}
                   zones={garden.zones}
+                  currentWeek={planning.currentWeek}
+                  statusHints={planning.statusHints}
                   onCompleteTask={planning.completeTask}
+                  onUpdateZoneStatus={planning.updateZoneStatus}
                   onOpenFullView={() => setPlanningViewOpen(true)}
                 />
               </div>
@@ -1143,6 +1146,7 @@ function TuinContent() {
         onClose={() => setPlanningViewOpen(false)}
         garden={garden}
         currentTasks={planning.currentTasks}
+        currentWeek={planning.currentWeek}
         rotationWarnings={planning.rotationWarnings}
         archives={planning.archives}
         settings={planning.settings}
