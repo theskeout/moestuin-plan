@@ -59,7 +59,7 @@ export interface CropZone {
   status?: ZoneStatus;         // default "planned"
   season?: number;             // jaar, bijv. 2026
   events?: ZoneEvent[];        // lifecycle events
-  completedTasks?: string[];   // task IDs afgerond dit seizoen
+  completedTasks?: Record<string, string>;  // taskId -> ISO datum laatste afronding
 }
 
 // Tuin delen — geïmplementeerd via garden_members en garden_invites tabellen

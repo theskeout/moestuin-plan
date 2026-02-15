@@ -114,24 +114,29 @@ export function usePlanning(
     }
   }, [garden.id]);
 
-  // Taak afvinken
+  // Taak afvinken (toggle: opnieuw klikken maakt ongedaan)
   const completeTask = useCallback((zoneId: string, taskId: string) => {
     setGarden((prev) => ({
       ...prev,
       zones: prev.zones.map((z) => {
         if (z.id !== zoneId) return z;
-        const completed = z.completedTasks ? [...z.completedTasks] : [];
-        if (!completed.includes(taskId)) {
-          completed.push(taskId);
+        const completed = z.completedTasks ? { ...z.completedTasks } : {} as Record<string, string>;
+        if (completed[taskId]) {
+          // Toggle: verwijder completion
+          delete completed[taskId];
+        } else {
+          // Markeer als klaar met huidige datum
+          completed[taskId] = new Date().toISOString();
+          const events = z.events ? [...z.events] : [];
+          events.push({
+            id: generateId(),
+            type: "task-done",
+            date: new Date().toISOString(),
+            taskId,
+          });
+          return { ...z, completedTasks: completed, events };
         }
-        const events = z.events ? [...z.events] : [];
-        events.push({
-          id: generateId(),
-          type: "task-done",
-          date: new Date().toISOString(),
-          taskId,
-        });
-        return { ...z, completedTasks: completed, events };
+        return { ...z, completedTasks: completed };
       }),
       updatedAt: new Date().toISOString(),
     }));

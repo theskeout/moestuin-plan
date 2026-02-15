@@ -35,8 +35,9 @@ export default function PlanningTab({
 
   const groupedUpcoming = groupByZone(upcomingTasks);
 
-  // Filter: alleen niet-completed taken tonen bovenaan
+  // Split in open taken, afgeronde taken, en waarschuwingen
   const todoTasks = currentTasks.filter((t) => !t.completed && t.type !== "warning");
+  const doneTasks = currentTasks.filter((t) => t.completed && t.type !== "warning");
   const warningTasks = currentTasks.filter((t) => t.type === "warning");
 
   return (
@@ -46,8 +47,10 @@ export default function PlanningTab({
         <h4 className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-2">
           Nu te doen — {MONTH_NAMES[currentMonth]}
         </h4>
-        {todoTasks.length === 0 ? (
+        {todoTasks.length === 0 && doneTasks.length === 0 ? (
           <p className="text-sm text-muted-foreground">Geen taken deze maand</p>
+        ) : todoTasks.length === 0 ? (
+          <p className="text-sm text-green-600">Alles afgerond!</p>
         ) : (
           <div className="space-y-1">
             {todoTasks.map((task, i) => (
@@ -69,6 +72,33 @@ export default function PlanningTab({
           </div>
         )}
       </div>
+
+      {/* Afgerond (toggle: klik om ongedaan te maken) */}
+      {doneTasks.length > 0 && (
+        <div>
+          <h4 className="text-xs font-semibold text-green-600 uppercase tracking-wide mb-2">
+            Afgerond
+          </h4>
+          <div className="space-y-1">
+            {doneTasks.map((task, i) => (
+              <button
+                key={`done-${task.zoneId}-${task.task.id}-${i}`}
+                onClick={() => onCompleteTask(task.zoneId, task.task.id)}
+                className="w-full flex items-center gap-2 px-2 py-1.5 rounded-md text-left text-sm opacity-60 hover:bg-accent hover:opacity-100 transition-all group"
+              >
+                <CheckCircle2 className="h-3.5 w-3.5 text-green-500" />
+                <span className="text-sm">{task.plantIcon}</span>
+                <span className="flex-1 truncate text-xs line-through">
+                  {task.task.name}
+                </span>
+                <span className="text-xs text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity">
+                  Ongedaan
+                </span>
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
 
       {/* Waarschuwingen */}
       {warningTasks.length > 0 && (

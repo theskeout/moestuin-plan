@@ -120,10 +120,10 @@ export default function TaskListView({ currentTasks, onCompleteTask }: TaskListV
                       onClick={() => onCompleteTask(task.zoneId, task.task.id)}
                       className={`shrink-0 p-1 rounded transition-colors ${
                         task.completed
-                          ? "text-green-600"
+                          ? "text-green-600 hover:text-red-500 hover:bg-red-50"
                           : "text-muted-foreground hover:text-foreground hover:bg-accent"
                       }`}
-                      title={task.completed ? "Afgerond" : "Markeer als klaar"}
+                      title={task.completed ? "Klik om ongedaan te maken" : "Markeer als klaar"}
                     >
                       <Check className="h-4 w-4" />
                     </button>

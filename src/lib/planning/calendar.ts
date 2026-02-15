@@ -3,7 +3,7 @@ import { PlantData, MonthRange } from "@/lib/plants/types";
 import { getPlant } from "@/lib/plants/catalog";
 import { getWarnings, getTasksForMonth } from "./tasks";
 import { adjustSowingMonth } from "./frost";
-import { MonthlyTask, UserSettings } from "./types";
+import { MaintenanceTask, MonthlyTask, UserSettings } from "./types";
 import allPlantsJson from "@/data/plants.json";
 
 function isInMonthRange(month: number, range: MonthRange | null): boolean {
@@ -13,6 +13,34 @@ function isInMonthRange(month: number, range: MonthRange | null): boolean {
   }
   // Wrap around (bijv. okt-mrt)
   return month >= range.start || month <= range.end;
+}
+
+/** Check of een recurring taak opnieuw moet verschijnen na de frequentie-interval */
+function isTaskCompleted(
+  completedTasks: Record<string, string> | undefined,
+  task: MaintenanceTask
+): boolean {
+  if (!completedTasks) return false;
+  const dateStr = completedTasks[task.id];
+  if (!dateStr) return false;
+
+  // "once" taken blijven afgevinkt
+  if (task.frequency === "once" || task.frequency === "yearly") return true;
+
+  const completedDate = new Date(dateStr);
+  const now = new Date();
+  const daysSince = Math.floor((now.getTime() - completedDate.getTime()) / (1000 * 60 * 60 * 24));
+
+  const intervalDays: Record<string, number> = {
+    daily: 1,
+    weekly: 7,
+    biweekly: 14,
+    monthly: 30,
+  };
+
+  const interval = intervalDays[task.frequency];
+  if (!interval) return true; // onbekende frequentie → blijft afgevinkt
+  return daysSince < interval;
 }
 
 function adjustRange(range: MonthRange | null, settings?: UserSettings): MonthRange | null {
@@ -104,7 +132,7 @@ export function getMonthlyTasks(
         plantIcon: plant.icon,
         type: "maintenance",
         task,
-        completed: zone.completedTasks?.includes(task.id) ?? false,
+        completed: isTaskCompleted(zone.completedTasks, task),
       });
     }
 
@@ -197,7 +225,7 @@ export function getZoneTasks(
       plantIcon: plant.icon,
       type: "maintenance",
       task,
-      completed: zone.completedTasks?.includes(task.id) ?? false,
+      completed: isTaskCompleted(zone.completedTasks, task),
     });
   }
 
