@@ -27,11 +27,8 @@ export default function UitnodigingPage() {
   useEffect(() => {
     async function loadInvite() {
       const supabase = createClient();
-      const { data, error } = await supabase
-        .from("garden_invites")
-        .select("email, status, garden_id, gardens(name)")
-        .eq("token", token)
-        .maybeSingle();
+      // Gebruik security definer functie zodat ook niet-ingelogde users de invite kunnen zien
+      const { data, error } = await supabase.rpc("get_invite_by_token", { p_token: token });
 
       if (error || !data) {
         setError("Uitnodiging niet gevonden");
@@ -39,13 +36,12 @@ export default function UitnodigingPage() {
         return;
       }
 
-      // gardens is een object (single FK join) of null
-      const gardenData = data.gardens as unknown as { name: string } | null;
+      const result = data as { email: string; status: string; garden_id: string; garden_name: string };
       setInvite({
-        email: data.email,
-        status: data.status,
-        garden_id: data.garden_id,
-        garden_name: gardenData?.name || "Onbekende tuin",
+        email: result.email,
+        status: result.status,
+        garden_id: result.garden_id,
+        garden_name: result.garden_name || "Onbekende tuin",
       });
       setLoading(false);
     }

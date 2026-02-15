@@ -150,6 +150,26 @@ $$;
 create trigger on_garden_created
   after insert on gardens for each row execute function auto_create_garden_member();
 
+-- Functie: invite ophalen via token (publiek, security definer)
+create or replace function get_invite_by_token(p_token text)
+returns json language plpgsql security definer as $$
+declare
+  v_result json;
+begin
+  select json_build_object(
+    'email', gi.email,
+    'status', gi.status,
+    'garden_id', gi.garden_id,
+    'garden_name', g.name
+  ) into v_result
+  from garden_invites gi
+  join gardens g on g.id = gi.garden_id
+  where gi.token = p_token;
+
+  return v_result;
+end;
+$$;
+
 -- Functie: accepteer uitnodiging via token
 create or replace function accept_invite(p_token text)
 returns text language plpgsql security definer as $$
