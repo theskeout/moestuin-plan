@@ -21,7 +21,7 @@ import { findNearbyZones, calculatePlantPositions } from "@/lib/garden/helpers";
 import { PlantData } from "@/lib/plants/types";
 import { createRectangleCorners, generateId } from "@/lib/garden/helpers";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { ArrowLeft, Move, Lock, Unlock, Check, Download, Upload, Pencil, Search, X, Plus, ZoomIn, ZoomOut, Grid3X3, Trash2 } from "lucide-react";
+import { ArrowLeft, Move, Lock, Unlock, Check, Download, Upload, Pencil, Search, X, Plus, ZoomIn, ZoomOut, Grid3X3, Trash2, ChevronUp } from "lucide-react";
 
 const GardenCanvas = dynamic(
   () => import("@/components/canvas/GardenCanvas"),
@@ -92,6 +92,7 @@ function TuinContent() {
   const [canvasSearch, setCanvasSearch] = useState("");
   const [mobileAddOpen, setMobileAddOpen] = useState(false);
   const [mobileInfoOpen, setMobileInfoOpen] = useState(false);
+  const [mobileInfoExpanded, setMobileInfoExpanded] = useState(false);
   const initRef = useRef(false);
   const newGardenIdRef = useRef(generateId());
 
@@ -225,8 +226,10 @@ function TuinContent() {
   useEffect(() => {
     if (selectedId && (selectedZoneData || selectedStruct)) {
       setMobileInfoOpen(true);
+      setMobileInfoExpanded(false);
     } else {
       setMobileInfoOpen(false);
+      setMobileInfoExpanded(false);
     }
   }, [selectedId, selectedZoneData, selectedStruct]);
 
@@ -704,8 +707,8 @@ function TuinContent() {
         {/* Mobiel: bottom sheet voor geselecteerd element info */}
         <MobileBottomSheet
           open={mobileInfoOpen && !mobileAddOpen && (!!selectedZoneData || !!selectedStruct)}
-          onClose={() => { setMobileInfoOpen(false); select(null); }}
-          height="50vh"
+          onClose={() => { setMobileInfoOpen(false); setMobileInfoExpanded(false); select(null); }}
+          height={mobileInfoExpanded ? "85vh" : "50vh"}
         >
           {/* Zone geselecteerd */}
           {selectedZoneData && (
@@ -751,14 +754,122 @@ function TuinContent() {
                 </div>
               </div>
 
-              {/* Plant details compact */}
-              <PlantInfo plant={selectedZoneData.plantData} onClose={() => {}} compact />
+              {/* Uitklap-knop */}
+              <button
+                onClick={() => setMobileInfoExpanded(!mobileInfoExpanded)}
+                className="w-full flex items-center justify-center gap-1.5 py-1.5 text-xs font-medium text-muted-foreground hover:text-foreground border rounded-lg hover:bg-accent transition-colors"
+              >
+                <ChevronUp className={`h-3.5 w-3.5 transition-transform ${mobileInfoExpanded ? "rotate-180" : ""}`} />
+                {mobileInfoExpanded ? "Minder tonen" : "Bewerken & details"}
+              </button>
 
-              {/* Companion alerts */}
-              <CompanionAlert checks={companionChecks} />
+              {/* Uitgebreide bewerkingsview */}
+              {mobileInfoExpanded && (
+                <div className="space-y-4">
+                  {/* Bed afmetingen aanpassen */}
+                  <div className="space-y-2">
+                    <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide">Bed</p>
+                    <div className="grid grid-cols-3 gap-2">
+                      <div>
+                        <p className="text-xs text-muted-foreground mb-1">Breedte (cm)</p>
+                        <Input
+                          type="number" min={10} step={10}
+                          value={selectedZoneData.zone.widthCm}
+                          onChange={(e) => {
+                            if (!selectedId) return;
+                            const val = Math.max(10, Number(e.target.value));
+                            transformZone(selectedId, selectedZoneData.zone.x, selectedZoneData.zone.y, val, selectedZoneData.zone.heightCm, selectedZoneData.zone.rotation);
+                          }}
+                        />
+                      </div>
+                      <div>
+                        <p className="text-xs text-muted-foreground mb-1">Hoogte (cm)</p>
+                        <Input
+                          type="number" min={10} step={10}
+                          value={selectedZoneData.zone.heightCm}
+                          onChange={(e) => {
+                            if (!selectedId) return;
+                            const val = Math.max(10, Number(e.target.value));
+                            transformZone(selectedId, selectedZoneData.zone.x, selectedZoneData.zone.y, selectedZoneData.zone.widthCm, val, selectedZoneData.zone.rotation);
+                          }}
+                        />
+                      </div>
+                      <div>
+                        <p className="text-xs text-muted-foreground mb-1">Rotatie (°)</p>
+                        <Input
+                          type="number" step={1}
+                          value={Math.round(selectedZoneData.zone.rotation)}
+                          onChange={(e) => {
+                            if (!selectedId) return;
+                            const val = Number(e.target.value);
+                            transformZone(selectedId, selectedZoneData.zone.x, selectedZoneData.zone.y, selectedZoneData.zone.widthCm, selectedZoneData.zone.heightCm, val);
+                          }}
+                        />
+                      </div>
+                    </div>
+                    <p className="text-sm text-muted-foreground">
+                      {selectedZoneData.plantCount} planten
+                      {selectedZoneData.zone.locked && " — Vergrendeld"}
+                    </p>
+                  </div>
 
-              {selectedZoneData.zone.notes && (
-                <p className="text-xs text-muted-foreground italic">{selectedZoneData.zone.notes}</p>
+                  {/* Verfijning en opmerkingen */}
+                  <div className="space-y-2">
+                    <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide">Notities</p>
+                    <div>
+                      <p className="text-xs text-muted-foreground mb-1">Verfijning (soort)</p>
+                      <Input
+                        placeholder={`Type ${selectedZoneData.plantData.name.toLowerCase()}`}
+                        value={selectedZoneData.zone.label || ""}
+                        onChange={(e) => {
+                          if (!selectedId) return;
+                          updateZoneInfo(selectedId, e.target.value, selectedZoneData.zone.notes || "");
+                        }}
+                      />
+                    </div>
+                    <div>
+                      <p className="text-xs text-muted-foreground mb-1">Opmerkingen</p>
+                      <textarea
+                        placeholder="bijv. Stekje van de buren, test nieuwe soort..."
+                        value={selectedZoneData.zone.notes || ""}
+                        onChange={(e) => {
+                          if (!selectedId) return;
+                          updateZoneInfo(selectedId, selectedZoneData.zone.label || "", e.target.value);
+                        }}
+                        className="w-full text-sm border rounded-md px-3 py-2 min-h-[60px] resize-y bg-background"
+                      />
+                    </div>
+                  </div>
+
+                  <div className="h-px bg-border" />
+
+                  {/* Plant details */}
+                  <PlantInfo plant={selectedZoneData.plantData} onClose={() => {}} compact />
+
+                  <div className="h-px bg-border" />
+
+                  {/* Companion alerts */}
+                  <CompanionAlert checks={companionChecks} />
+
+                  <Button
+                    variant="ghost" size="sm"
+                    className="w-full text-destructive hover:text-destructive"
+                    onClick={() => { if (selectedId) { removeZone(selectedId); setMobileInfoOpen(false); } }}
+                  >
+                    Bed verwijderen
+                  </Button>
+                </div>
+              )}
+
+              {/* Compacte plant info als NIET expanded */}
+              {!mobileInfoExpanded && (
+                <>
+                  <PlantInfo plant={selectedZoneData.plantData} onClose={() => {}} compact />
+                  <CompanionAlert checks={companionChecks} />
+                  {selectedZoneData.zone.notes && (
+                    <p className="text-xs text-muted-foreground italic">{selectedZoneData.zone.notes}</p>
+                  )}
+                </>
               )}
             </div>
           )}
@@ -802,7 +913,76 @@ function TuinContent() {
                 </div>
               </div>
 
-              {selectedStruct.locked && (
+              {/* Uitklap-knop */}
+              <button
+                onClick={() => setMobileInfoExpanded(!mobileInfoExpanded)}
+                className="w-full flex items-center justify-center gap-1.5 py-1.5 text-xs font-medium text-muted-foreground hover:text-foreground border rounded-lg hover:bg-accent transition-colors"
+              >
+                <ChevronUp className={`h-3.5 w-3.5 transition-transform ${mobileInfoExpanded ? "rotate-180" : ""}`} />
+                {mobileInfoExpanded ? "Minder tonen" : "Bewerken & details"}
+              </button>
+
+              {/* Uitgebreide bewerkingsview voor structuren */}
+              {mobileInfoExpanded && (
+                <div className="space-y-4">
+                  <div className="space-y-2">
+                    <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide">Afmetingen</p>
+                    <div className="grid grid-cols-3 gap-2">
+                      <div>
+                        <p className="text-xs text-muted-foreground mb-1">Breedte (cm)</p>
+                        <Input
+                          type="number" min={10} step={10}
+                          value={selectedStruct.widthCm}
+                          onChange={(e) => {
+                            if (!selectedId) return;
+                            const val = Math.max(10, Number(e.target.value));
+                            transformStructure(selectedId, selectedStruct.x, selectedStruct.y, val, selectedStruct.heightCm, selectedStruct.rotation);
+                          }}
+                        />
+                      </div>
+                      <div>
+                        <p className="text-xs text-muted-foreground mb-1">Hoogte (cm)</p>
+                        <Input
+                          type="number" min={10} step={10}
+                          value={selectedStruct.heightCm}
+                          onChange={(e) => {
+                            if (!selectedId) return;
+                            const val = Math.max(10, Number(e.target.value));
+                            transformStructure(selectedId, selectedStruct.x, selectedStruct.y, selectedStruct.widthCm, val, selectedStruct.rotation);
+                          }}
+                        />
+                      </div>
+                      <div>
+                        <p className="text-xs text-muted-foreground mb-1">Rotatie (°)</p>
+                        <Input
+                          type="number" step={1}
+                          value={Math.round(selectedStruct.rotation)}
+                          onChange={(e) => {
+                            if (!selectedId) return;
+                            const val = Number(e.target.value);
+                            transformStructure(selectedId, selectedStruct.x, selectedStruct.y, selectedStruct.widthCm, selectedStruct.heightCm, val);
+                          }}
+                        />
+                      </div>
+                    </div>
+                  </div>
+
+                  {selectedStruct.locked && (
+                    <p className="text-sm text-muted-foreground">Vergrendeld</p>
+                  )}
+
+                  <Button
+                    variant="ghost" size="sm"
+                    className="w-full text-destructive hover:text-destructive"
+                    onClick={() => { if (selectedId) { removeStructure(selectedId); setMobileInfoOpen(false); } }}
+                  >
+                    Structuur verwijderen
+                  </Button>
+                </div>
+              )}
+
+              {/* Compacte locked indicator als NIET expanded */}
+              {!mobileInfoExpanded && selectedStruct.locked && (
                 <p className="text-xs text-muted-foreground">Vergrendeld</p>
               )}
             </div>
