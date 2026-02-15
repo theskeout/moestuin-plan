@@ -21,7 +21,7 @@ import { findNearbyZones, calculatePlantPositions } from "@/lib/garden/helpers";
 import { PlantData } from "@/lib/plants/types";
 import { createRectangleCorners, generateId } from "@/lib/garden/helpers";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { ArrowLeft, Move, Lock, Unlock, Check, Download, Upload, Pencil, Search, X, Plus, ZoomIn, ZoomOut, Grid3X3, Trash2, ChevronUp } from "lucide-react";
+import { ArrowLeft, Move, Lock, Unlock, Check, Download, Upload, Pencil, Search, X, Plus, ZoomIn, ZoomOut, Grid3X3, Trash2 } from "lucide-react";
 
 const GardenCanvas = dynamic(
   () => import("@/components/canvas/GardenCanvas"),
@@ -32,35 +32,112 @@ const STRUCTURE_LABELS: Record<string, string> = {
   kas: "Kas", grondbak: "Grondbak", pad: "Pad", schuur: "Schuur", hek: "Hek", boom: "Boom",
 };
 
-/* ---------- Mobiel: Bottom Sheet component ---------- */
+/* ---------- Mobiel: Bottom Sheet met swipe gestures ---------- */
 function MobileBottomSheet({
   open,
   onClose,
   title,
   children,
   height = "60vh",
+  expandable,
+  expanded,
+  onExpandChange,
 }: {
   open: boolean;
   onClose: () => void;
   title?: string;
   children: React.ReactNode;
   height?: string;
+  expandable?: boolean;
+  expanded?: boolean;
+  onExpandChange?: (expanded: boolean) => void;
 }) {
-  // Sluit bij klik op backdrop
+  const sheetRef = useRef<HTMLDivElement>(null);
+  const dragRef = useRef<{ startY: number; startHeight: number; dragging: boolean }>({
+    startY: 0, startHeight: 0, dragging: false,
+  });
+  const [dragOffset, setDragOffset] = useState(0);
+  const [isDragging, setIsDragging] = useState(false);
+
+  // Reset drag state als open/expanded wijzigt
+  useEffect(() => {
+    setDragOffset(0);
+    setIsDragging(false);
+  }, [open, expanded]);
+
+  const handleTouchStart = useCallback((e: React.TouchEvent) => {
+    const sheet = sheetRef.current;
+    if (!sheet) return;
+    // Alleen starten op de handle area (bovenste ~40px)
+    const touch = e.touches[0];
+    const rect = sheet.getBoundingClientRect();
+    if (touch.clientY - rect.top > 44) return;
+    dragRef.current = {
+      startY: touch.clientY,
+      startHeight: sheet.offsetHeight,
+      dragging: true,
+    };
+    setIsDragging(true);
+  }, []);
+
+  const handleTouchMove = useCallback((e: React.TouchEvent) => {
+    if (!dragRef.current.dragging) return;
+    const dy = e.touches[0].clientY - dragRef.current.startY;
+    setDragOffset(dy);
+  }, []);
+
+  const handleTouchEnd = useCallback(() => {
+    if (!dragRef.current.dragging) return;
+    dragRef.current.dragging = false;
+    setIsDragging(false);
+    const dy = dragOffset;
+    setDragOffset(0);
+
+    const threshold = 60;
+
+    if (dy > threshold) {
+      // Naar beneden gesleept
+      if (expandable && expanded) {
+        // Expanded → compact
+        onExpandChange?.(false);
+      } else {
+        // Compact → sluiten
+        onClose();
+      }
+    } else if (dy < -threshold) {
+      // Naar boven gesleept
+      if (expandable && !expanded) {
+        // Compact → expanded
+        onExpandChange?.(true);
+      }
+    }
+  }, [dragOffset, expandable, expanded, onExpandChange, onClose]);
+
   if (!open) return null;
+
+  const expandedHeight = "85vh";
+  const currentHeight = expanded ? expandedHeight : height;
+
   return (
     <div className="fixed inset-0 z-50 md:hidden">
       <div className="absolute inset-0 bg-black/40" onClick={onClose} />
       <div
-        className="absolute bottom-0 left-0 right-0 bg-white rounded-t-2xl shadow-2xl flex flex-col animate-in slide-in-from-bottom duration-200"
-        style={{ maxHeight: height }}
+        ref={sheetRef}
+        className={`absolute bottom-0 left-0 right-0 bg-white rounded-t-2xl shadow-2xl flex flex-col ${!isDragging ? "transition-all duration-200" : ""}`}
+        style={{
+          maxHeight: currentHeight,
+          transform: isDragging && dragOffset > 0 ? `translateY(${dragOffset}px)` : undefined,
+        }}
+        onTouchStart={handleTouchStart}
+        onTouchMove={handleTouchMove}
+        onTouchEnd={handleTouchEnd}
       >
         {/* Drag handle */}
-        <div className="flex justify-center pt-2 pb-1">
-          <div className="w-10 h-1 rounded-full bg-gray-300" />
+        <div className="flex justify-center pt-2 pb-1 cursor-grab shrink-0">
+          <div className="w-10 h-1.5 rounded-full bg-gray-300" />
         </div>
         {title && (
-          <div className="flex items-center justify-between px-4 pb-2">
+          <div className="flex items-center justify-between px-4 pb-2 shrink-0">
             <h3 className="font-semibold text-sm">{title}</h3>
             <button onClick={onClose} className="p-1 rounded-full hover:bg-accent">
               <X className="h-4 w-4" />
@@ -708,11 +785,15 @@ function TuinContent() {
         <MobileBottomSheet
           open={mobileInfoOpen && !mobileAddOpen && (!!selectedZoneData || !!selectedStruct)}
           onClose={() => { setMobileInfoOpen(false); setMobileInfoExpanded(false); select(null); }}
-          height={mobileInfoExpanded ? "85vh" : "50vh"}
+          height="50vh"
+          expandable
+          expanded={mobileInfoExpanded}
+          onExpandChange={setMobileInfoExpanded}
         >
           {/* Zone geselecteerd */}
           {selectedZoneData && (
             <div className="space-y-3">
+              {/* Header: altijd zichtbaar */}
               <div className="flex items-center justify-between">
                 <h3 className="font-semibold flex items-center gap-2">
                   <span className="text-xl">{selectedZoneData.plantData.icon}</span>
@@ -738,7 +819,7 @@ function TuinContent() {
                 </div>
               </div>
 
-              {/* Compacte info */}
+              {/* Compacte stats: altijd zichtbaar */}
               <div className="grid grid-cols-3 gap-2 text-xs text-muted-foreground">
                 <div>
                   <span className="block font-medium text-foreground">{selectedZoneData.zone.widthCm} x {selectedZoneData.zone.heightCm}cm</span>
@@ -754,21 +835,25 @@ function TuinContent() {
                 </div>
               </div>
 
-              {/* Uitklap-knop */}
-              <button
-                onClick={() => setMobileInfoExpanded(!mobileInfoExpanded)}
-                className="w-full flex items-center justify-center gap-1.5 py-1.5 text-xs font-medium text-muted-foreground hover:text-foreground border rounded-lg hover:bg-accent transition-colors"
-              >
-                <ChevronUp className={`h-3.5 w-3.5 transition-transform ${mobileInfoExpanded ? "rotate-180" : ""}`} />
-                {mobileInfoExpanded ? "Minder tonen" : "Bewerken & details"}
-              </button>
+              {!mobileInfoExpanded && (
+                <>
+                  {selectedZoneData.zone.notes && (
+                    <p className="text-xs text-muted-foreground italic">{selectedZoneData.zone.notes}</p>
+                  )}
+                  {companionChecks.length > 0 && <CompanionAlert checks={companionChecks} />}
+                  {/* Swipe hint */}
+                  <p className="text-[11px] text-center text-muted-foreground/60">
+                    Sleep omhoog voor details en bewerken
+                  </p>
+                </>
+              )}
 
-              {/* Uitgebreide bewerkingsview */}
+              {/* Uitgebreide view: zichtbaar na omhoog slepen */}
               {mobileInfoExpanded && (
                 <div className="space-y-4">
                   {/* Bed afmetingen aanpassen */}
                   <div className="space-y-2">
-                    <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide">Bed</p>
+                    <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide">Bed aanpassen</p>
                     <div className="grid grid-cols-3 gap-2">
                       <div>
                         <p className="text-xs text-muted-foreground mb-1">Breedte (cm)</p>
@@ -807,10 +892,6 @@ function TuinContent() {
                         />
                       </div>
                     </div>
-                    <p className="text-sm text-muted-foreground">
-                      {selectedZoneData.plantCount} planten
-                      {selectedZoneData.zone.locked && " — Vergrendeld"}
-                    </p>
                   </div>
 
                   {/* Verfijning en opmerkingen */}
@@ -860,17 +941,6 @@ function TuinContent() {
                   </Button>
                 </div>
               )}
-
-              {/* Compacte plant info als NIET expanded */}
-              {!mobileInfoExpanded && (
-                <>
-                  <PlantInfo plant={selectedZoneData.plantData} onClose={() => {}} compact />
-                  <CompanionAlert checks={companionChecks} />
-                  {selectedZoneData.zone.notes && (
-                    <p className="text-xs text-muted-foreground italic">{selectedZoneData.zone.notes}</p>
-                  )}
-                </>
-              )}
             </div>
           )}
 
@@ -913,20 +983,22 @@ function TuinContent() {
                 </div>
               </div>
 
-              {/* Uitklap-knop */}
-              <button
-                onClick={() => setMobileInfoExpanded(!mobileInfoExpanded)}
-                className="w-full flex items-center justify-center gap-1.5 py-1.5 text-xs font-medium text-muted-foreground hover:text-foreground border rounded-lg hover:bg-accent transition-colors"
-              >
-                <ChevronUp className={`h-3.5 w-3.5 transition-transform ${mobileInfoExpanded ? "rotate-180" : ""}`} />
-                {mobileInfoExpanded ? "Minder tonen" : "Bewerken & details"}
-              </button>
+              {!mobileInfoExpanded && (
+                <>
+                  {selectedStruct.locked && (
+                    <p className="text-xs text-muted-foreground">Vergrendeld</p>
+                  )}
+                  <p className="text-[11px] text-center text-muted-foreground/60">
+                    Sleep omhoog voor details en bewerken
+                  </p>
+                </>
+              )}
 
               {/* Uitgebreide bewerkingsview voor structuren */}
               {mobileInfoExpanded && (
                 <div className="space-y-4">
                   <div className="space-y-2">
-                    <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide">Afmetingen</p>
+                    <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide">Afmetingen aanpassen</p>
                     <div className="grid grid-cols-3 gap-2">
                       <div>
                         <p className="text-xs text-muted-foreground mb-1">Breedte (cm)</p>
@@ -979,11 +1051,6 @@ function TuinContent() {
                     Structuur verwijderen
                   </Button>
                 </div>
-              )}
-
-              {/* Compacte locked indicator als NIET expanded */}
-              {!mobileInfoExpanded && selectedStruct.locked && (
-                <p className="text-xs text-muted-foreground">Vergrendeld</p>
               )}
             </div>
           )}

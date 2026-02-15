@@ -58,15 +58,18 @@ const ICON_GROUPS: { label: string; icons: string[] }[] = [
 
 const ALL_ICONS = ICON_GROUPS.flatMap((g) => g.icons);
 
+const isTouchDevice = () => typeof window !== "undefined" && "ontouchstart" in window;
+
 function StructureCard({ type, icon, label, onTap }: { type: StructureType; icon: string; label: string; onTap?: (type: StructureType) => void }) {
+  const touch = isTouchDevice();
   return (
     <div
-      draggable
+      draggable={!touch}
       onDragStart={(e) => {
         e.dataTransfer.setData("structureType", type);
       }}
       onClick={() => onTap?.(type)}
-      className="flex flex-col items-center justify-center p-2 rounded-lg hover:bg-accent cursor-grab active:cursor-grabbing transition-colors border border-dashed border-border hover:border-foreground/30"
+      className={`flex flex-col items-center justify-center p-2 rounded-lg hover:bg-accent transition-colors border border-dashed border-border hover:border-foreground/30 ${touch ? "cursor-pointer active:bg-accent" : "cursor-grab active:cursor-grabbing"}`}
     >
       <span className="text-lg">{icon}</span>
       <span className="text-xs text-muted-foreground">{label}</span>
@@ -83,14 +86,15 @@ function PlantCard({
   onSelect: (plant: PlantData) => void;
   onEdit?: (plant: PlantData) => void;
 }) {
+  const touch = isTouchDevice();
   return (
     <div
-      draggable
+      draggable={!touch}
       onDragStart={(e) => {
         e.dataTransfer.setData("plantId", plant.id);
       }}
       onClick={() => onSelect(plant)}
-      className="flex items-center gap-2 p-2 rounded-lg hover:bg-accent cursor-grab active:cursor-grabbing transition-colors border border-transparent hover:border-border group"
+      className={`flex items-center gap-2 p-2 rounded-lg hover:bg-accent transition-colors border border-transparent hover:border-border group ${touch ? "cursor-pointer active:bg-accent" : "cursor-grab active:cursor-grabbing"}`}
     >
       <span
         className="w-8 h-8 rounded-full flex items-center justify-center text-lg shrink-0"
