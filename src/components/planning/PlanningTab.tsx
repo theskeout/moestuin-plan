@@ -1,14 +1,36 @@
 "use client";
 
 import { MonthlyTask, RotationWarning } from "@/lib/planning/types";
+import { CropZone, ZoneStatus } from "@/lib/garden/types";
+import { getPlant } from "@/lib/plants/catalog";
 import { AlertTriangle, CheckCircle2, Scissors, Sprout, Bug, Calendar } from "lucide-react";
 
 const MONTH_NAMES = ["", "Jan", "Feb", "Mrt", "Apr", "Mei", "Jun", "Jul", "Aug", "Sep", "Okt", "Nov", "Dec"];
 
+const STATUS_LABELS: Record<ZoneStatus, string> = {
+  planned: "Gepland",
+  "sown-indoor": "Voorgezaaid",
+  "sown-outdoor": "Buiten gezaaid",
+  transplanted: "Uitgeplant",
+  growing: "Groeit",
+  harvesting: "Oogsten",
+  done: "Klaar",
+};
+
+const STATUS_COLORS: Record<ZoneStatus, string> = {
+  planned: "bg-gray-300",
+  "sown-indoor": "bg-purple-400",
+  "sown-outdoor": "bg-green-400",
+  transplanted: "bg-cyan-400",
+  growing: "bg-emerald-500",
+  harvesting: "bg-orange-400",
+  done: "bg-gray-400",
+};
+
 function TaskIcon({ type }: { type: MonthlyTask["type"] }) {
   switch (type) {
-    case "sow-indoor": return <Sprout className="h-3.5 w-3.5 text-green-600" />;
-    case "sow-outdoor": return <Sprout className="h-3.5 w-3.5 text-emerald-500" />;
+    case "sow-indoor": return <Sprout className="h-3.5 w-3.5 text-purple-600" />;
+    case "sow-outdoor": return <Sprout className="h-3.5 w-3.5 text-green-600" />;
     case "harvest": return <CheckCircle2 className="h-3.5 w-3.5 text-orange-500" />;
     case "maintenance": return <Scissors className="h-3.5 w-3.5 text-blue-500" />;
     case "warning": return <Bug className="h-3.5 w-3.5 text-red-500" />;
@@ -19,6 +41,7 @@ interface PlanningTabProps {
   currentTasks: MonthlyTask[];
   upcomingTasks: MonthlyTask[];
   rotationWarnings: RotationWarning[];
+  zones: CropZone[];
   onCompleteTask: (zoneId: string, taskId: string) => void;
   onOpenFullView: () => void;
 }
@@ -27,6 +50,7 @@ export default function PlanningTab({
   currentTasks,
   upcomingTasks,
   rotationWarnings,
+  zones,
   onCompleteTask,
   onOpenFullView,
 }: PlanningTabProps) {
@@ -168,6 +192,33 @@ export default function PlanningTab({
                 <span className="truncate">{task.task.name}</span>
               </div>
             ))}
+          </div>
+        </div>
+      )}
+
+      {/* Zone-overzicht */}
+      {zones.length > 0 && (
+        <div>
+          <h4 className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-2">
+            Gewassen in je tuin
+          </h4>
+          <div className="space-y-1">
+            {zones.map((zone) => {
+              const plant = getPlant(zone.plantId);
+              if (!plant) return null;
+              const status = zone.status || "planned";
+              return (
+                <div
+                  key={zone.id}
+                  className="flex items-center gap-2 px-2 py-1 text-xs"
+                >
+                  <div className={`w-2 h-2 rounded-full shrink-0 ${STATUS_COLORS[status]}`} />
+                  <span>{plant.icon}</span>
+                  <span className="truncate flex-1">{zone.label || plant.name}</span>
+                  <span className="text-muted-foreground shrink-0">{STATUS_LABELS[status]}</span>
+                </div>
+              );
+            })}
           </div>
         </div>
       )}

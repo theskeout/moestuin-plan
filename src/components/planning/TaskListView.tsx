@@ -10,8 +10,8 @@ type Filter = "alles" | "zaai" | "onderhoud" | "oogst" | "waarschuwing";
 
 function TaskIcon({ type }: { type: MonthlyTask["type"] }) {
   switch (type) {
-    case "sow-indoor": return <Sprout className="h-4 w-4 text-green-600" />;
-    case "sow-outdoor": return <Sprout className="h-4 w-4 text-emerald-500" />;
+    case "sow-indoor": return <Sprout className="h-4 w-4 text-purple-600" />;
+    case "sow-outdoor": return <Sprout className="h-4 w-4 text-green-600" />;
     case "harvest": return <CheckCircle2 className="h-4 w-4 text-orange-500" />;
     case "maintenance": return <Scissors className="h-4 w-4 text-blue-500" />;
     case "warning": return <Bug className="h-4 w-4 text-red-500" />;
@@ -56,11 +56,17 @@ export default function TaskListView({ currentTasks, onCompleteTask }: TaskListV
     { key: "waarschuwing", label: "Waarsch." },
   ];
 
+  const openCount = filtered.filter((t) => !t.completed && t.type !== "warning").length;
+  const doneCount = filtered.filter((t) => t.completed).length;
+
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between">
         <h3 className="text-sm font-semibold">{MONTH_NAMES[currentMonth]}</h3>
-        <span className="text-xs text-muted-foreground">{filtered.length} taken</span>
+        <div className="flex items-center gap-3 text-xs text-muted-foreground">
+          <span>{openCount} open</span>
+          {doneCount > 0 && <span className="text-green-600">{doneCount} afgerond</span>}
+        </div>
       </div>
 
       {/* Filters */}

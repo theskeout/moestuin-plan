@@ -804,6 +804,7 @@ function TuinContent() {
                   currentTasks={planning.currentTasks}
                   upcomingTasks={planning.upcomingTasks}
                   rotationWarnings={planning.rotationWarnings}
+                  zones={garden.zones}
                   onCompleteTask={planning.completeTask}
                   onOpenFullView={() => setPlanningViewOpen(true)}
                 />

@@ -137,10 +137,10 @@ export default function DiscoverCalendar({ settings, onAddPlant }: DiscoverCalen
                     const isCurrent = month === currentMonth;
 
                     let bg = "";
-                    if (isSI && isH) bg = "bg-gradient-to-r from-green-200 to-orange-200";
-                    else if (isSO && isH) bg = "bg-gradient-to-r from-emerald-200 to-orange-200";
-                    else if (isSI) bg = "bg-green-200";
-                    else if (isSO) bg = "bg-emerald-200";
+                    if (isSI && isH) bg = "bg-gradient-to-r from-purple-200 to-orange-200";
+                    else if (isSO && isH) bg = "bg-gradient-to-r from-green-200 to-orange-200";
+                    else if (isSI) bg = "bg-purple-200";
+                    else if (isSO) bg = "bg-green-200";
                     else if (isH) bg = "bg-orange-200";
 
                     return (
@@ -171,11 +171,11 @@ export default function DiscoverCalendar({ settings, onAddPlant }: DiscoverCalen
       {/* Legenda */}
       <div className="flex items-center gap-4 text-xs text-muted-foreground px-2">
         <div className="flex items-center gap-1">
-          <div className="w-3 h-3 rounded bg-green-200" />
+          <div className="w-3 h-3 rounded bg-purple-200" />
           <span>Binnen zaaien</span>
         </div>
         <div className="flex items-center gap-1">
-          <div className="w-3 h-3 rounded bg-emerald-200" />
+          <div className="w-3 h-3 rounded bg-green-200" />
           <span>Buiten zaaien</span>
         </div>
         <div className="flex items-center gap-1">

@@ -52,12 +52,12 @@ export default function PlantInfo({ plant, onClose, compact }: PlantInfoProps) {
 
       <div className="space-y-1 text-sm">
         <div className="flex items-center gap-1.5">
-          <Calendar className="h-3.5 w-3.5 text-green-600 shrink-0" />
+          <Calendar className="h-3.5 w-3.5 text-purple-600 shrink-0" />
           <span className="text-muted-foreground">Binnen zaaien:</span>
           <span>{formatMonthRange(plant.sowIndoor)}</span>
         </div>
         <div className="flex items-center gap-1.5">
-          <Calendar className="h-3.5 w-3.5 text-green-700 shrink-0" />
+          <Calendar className="h-3.5 w-3.5 text-green-600 shrink-0" />
           <span className="text-muted-foreground">Buiten zaaien:</span>
           <span>{formatMonthRange(plant.sowOutdoor)}</span>
         </div>

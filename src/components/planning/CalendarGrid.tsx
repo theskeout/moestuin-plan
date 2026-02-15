@@ -102,16 +102,16 @@ export default function CalendarGrid({ garden, settings, onSelectZone }: Calenda
                 let bg = "";
                 let label = "";
                 if (isSowIndoor && isHarvest) {
-                  bg = "bg-gradient-to-r from-green-200 to-orange-200";
+                  bg = "bg-gradient-to-r from-purple-200 to-orange-200";
                   label = "Z/O";
                 } else if (isSowOutdoor && isHarvest) {
-                  bg = "bg-gradient-to-r from-emerald-200 to-orange-200";
+                  bg = "bg-gradient-to-r from-green-200 to-orange-200";
                   label = "Z/O";
                 } else if (isSowIndoor) {
-                  bg = "bg-green-200";
+                  bg = "bg-purple-200";
                   label = "Bin";
                 } else if (isSowOutdoor) {
-                  bg = "bg-emerald-200";
+                  bg = "bg-green-200";
                   label = "Bui";
                 } else if (isHarvest) {
                   bg = "bg-orange-200";
@@ -139,11 +139,11 @@ export default function CalendarGrid({ garden, settings, onSelectZone }: Calenda
       {/* Legenda */}
       <div className="flex items-center gap-4 mt-3 text-xs text-muted-foreground px-2">
         <div className="flex items-center gap-1">
-          <div className="w-3 h-3 rounded bg-green-200" />
+          <div className="w-3 h-3 rounded bg-purple-200" />
           <span>Binnen zaaien</span>
         </div>
         <div className="flex items-center gap-1">
-          <div className="w-3 h-3 rounded bg-emerald-200" />
+          <div className="w-3 h-3 rounded bg-green-200" />
           <span>Buiten zaaien</span>
         </div>
         <div className="flex items-center gap-1">

@@ -8,9 +8,9 @@ import { useMemo } from "react";
 
 const STATUS_COLORS: Record<ZoneStatus, string> = {
   "planned": "#9ca3af",
-  "sown-indoor": "#22c55e",
-  "sown-outdoor": "#10b981",
-  "transplanted": "#3b82f6",
+  "sown-indoor": "#9333ea",
+  "sown-outdoor": "#22c55e",
+  "transplanted": "#06b6d4",
   "growing": "#16a34a",
   "harvesting": "#f97316",
   "done": "#6b7280",
