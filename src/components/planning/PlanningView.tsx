@@ -55,11 +55,11 @@ export default function PlanningView({
         </div>
 
         {/* Tabs */}
-        <Tabs defaultValue="kalender" className="flex-1 flex flex-col overflow-hidden">
+        <Tabs defaultValue="taken" className="flex-1 flex flex-col overflow-hidden">
           <div className="px-4 pt-2 shrink-0">
             <TabsList>
-              <TabsTrigger value="kalender">Kalender</TabsTrigger>
               <TabsTrigger value="taken">Taken</TabsTrigger>
+              <TabsTrigger value="kalender">Kalender</TabsTrigger>
               <TabsTrigger value="ontdek">Ontdek</TabsTrigger>
               <TabsTrigger value="rotatie">Rotatie</TabsTrigger>
               <TabsTrigger value="instellingen">Regio</TabsTrigger>

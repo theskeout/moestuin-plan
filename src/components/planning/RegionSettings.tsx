@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useCallback } from "react";
+import { useState, useCallback, useEffect } from "react";
 import { UserSettings } from "@/lib/planning/types";
 import { getAllStations, getStationByPostcode, getLastFrostDate, getFirstFrostDate, getRegionDescription } from "@/lib/planning/frost";
 import { Input } from "@/components/ui/input";
@@ -22,6 +22,14 @@ export default function RegionSettings({ settings, onSave }: RegionSettingsProps
   const [postcode, setPostcode] = useState(settings.postcode || "");
   const [stationCode, setStationCode] = useState(settings.knmiStationCode || "");
   const [offset, setOffset] = useState(settings.frostOffsetDays ?? 0);
+  const [saved, setSaved] = useState(false);
+
+  // Sync lokale state als settings van buitenaf wijzigen (bijv. na async laden)
+  useEffect(() => {
+    setPostcode(settings.postcode || "");
+    setStationCode(settings.knmiStationCode || "");
+    setOffset(settings.frostOffsetDays ?? 0);
+  }, [settings.postcode, settings.knmiStationCode, settings.frostOffsetDays]);
 
   const stations = getAllStations().filter((s) => s.code !== "550"); // Filter duplicaat De Bilt
 
@@ -42,6 +50,8 @@ export default function RegionSettings({ settings, onSave }: RegionSettingsProps
       knmiStationCode: stationCode || undefined,
       frostOffsetDays: offset,
     });
+    setSaved(true);
+    setTimeout(() => setSaved(false), 2000);
   }, [postcode, stationCode, offset, onSave]);
 
   // Bereken vorstdata voor geselecteerd station
@@ -134,8 +144,8 @@ export default function RegionSettings({ settings, onSave }: RegionSettingsProps
       </div>
 
       {/* Opslaan */}
-      <Button onClick={handleSave} size="sm">
-        Opslaan
+      <Button onClick={handleSave} size="sm" variant={saved ? "secondary" : "default"}>
+        {saved ? "Opgeslagen!" : "Opslaan"}
       </Button>
     </div>
   );
