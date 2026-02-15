@@ -21,7 +21,8 @@ import { findNearbyZones, calculatePlantPositions } from "@/lib/garden/helpers";
 import { PlantData } from "@/lib/plants/types";
 import { createRectangleCorners, generateId } from "@/lib/garden/helpers";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { ArrowLeft, Move, Lock, Unlock, Check, Download, Upload, Pencil, Search, X, Plus, ZoomIn, ZoomOut, Grid3X3, Trash2, SquarePen } from "lucide-react";
+import MemberManager from "@/components/garden/MemberManager";
+import { ArrowLeft, Move, Lock, Unlock, Check, Download, Upload, Pencil, Search, X, Plus, ZoomIn, ZoomOut, Grid3X3, Trash2, SquarePen, Users } from "lucide-react";
 
 const GardenCanvas = dynamic(
   () => import("@/components/canvas/GardenCanvas"),
@@ -190,6 +191,7 @@ function TuinContent() {
   const [mobileInfoOpen, setMobileInfoOpen] = useState(false);
   const [mobileInfoExpanded, setMobileInfoExpanded] = useState(false);
   const [mobileEditing, setMobileEditing] = useState(false);
+  const [memberManagerOpen, setMemberManagerOpen] = useState(false);
   const initRef = useRef(false);
   const newGardenIdRef = useRef(generateId());
 
@@ -405,6 +407,22 @@ function TuinContent() {
           )}
         </div>
         <div className="flex items-center gap-1 md:gap-2 shrink-0">
+          {user && (
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={() => setMemberManagerOpen(true)}
+              title="Leden beheren"
+              className="relative"
+            >
+              <Users className="h-4 w-4" />
+              {garden.memberCount && garden.memberCount > 1 && (
+                <span className="absolute -top-0.5 -right-0.5 bg-blue-500 text-white text-[10px] leading-none rounded-full h-4 w-4 flex items-center justify-center">
+                  {garden.memberCount}
+                </span>
+              )}
+            </Button>
+          )}
           <UserMenu />
           <div className="w-px h-6 bg-border hidden md:block" />
           <Button
@@ -1040,6 +1058,18 @@ function TuinContent() {
           )}
         </MobileBottomSheet>
       </div>
+
+      {/* Member manager dialog */}
+      {user && (
+        <MemberManager
+          gardenId={garden.id}
+          gardenName={garden.name}
+          open={memberManagerOpen}
+          onOpenChange={setMemberManagerOpen}
+          currentRole={garden.role || "owner"}
+          onLeave={() => router.push("/")}
+        />
+      )}
     </div>
   );
 }

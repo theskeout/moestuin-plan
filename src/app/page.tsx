@@ -11,15 +11,18 @@ import { setStorageBackend } from "@/lib/storage";
 import { useAuth } from "@/components/auth/AuthProvider";
 import UserMenu from "@/components/auth/UserMenu";
 import MigrationDialog from "@/components/auth/MigrationDialog";
-import { Garden } from "@/lib/garden/types";
-import { Trash2 } from "lucide-react";
+import { Garden, InviteInfo } from "@/lib/garden/types";
+import { loadMyInvites, acceptInviteByToken } from "@/lib/storage/members";
+import { Trash2, Users } from "lucide-react";
 
 export default function Home() {
   const router = useRouter();
   const { user, loading: authLoading } = useAuth();
   const [gardens, setGardens] = useState<Garden[]>([]);
+  const [invites, setInvites] = useState<InviteInfo[]>([]);
   const [showSetup, setShowSetup] = useState(false);
   const [loading, setLoading] = useState(true);
+  const [acceptingInvite, setAcceptingInvite] = useState<string | null>(null);
 
   const loadData = useCallback(async () => {
     setLoading(true);
@@ -31,6 +34,14 @@ export default function Home() {
     await refreshPlantCache();
     const data = await loadGardensAsync();
     setGardens(data);
+    if (user) {
+      try {
+        const myInvites = await loadMyInvites();
+        setInvites(myInvites);
+      } catch {
+        setInvites([]);
+      }
+    }
     setLoading(false);
   }, [user]);
 
@@ -56,6 +67,16 @@ export default function Home() {
     await deleteGardenAsync(id);
     const data = await loadGardensAsync();
     setGardens(data);
+  };
+
+  const handleAcceptInvite = async (token: string) => {
+    setAcceptingInvite(token);
+    try {
+      const gardenId = await acceptInviteByToken(token);
+      router.push(`/tuin?id=${gardenId}`);
+    } catch {
+      setAcceptingInvite(null);
+    }
   };
 
   return (
@@ -89,41 +110,90 @@ export default function Home() {
 
             {loading ? (
               <p className="text-sm text-muted-foreground text-center">Tuinen laden...</p>
-            ) : gardens.length > 0 ? (
-              <Card>
-                <CardHeader>
-                  <CardTitle className="text-lg">Opgeslagen tuinen</CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-2">
-                  {gardens.map((g) => (
-                    <div
-                      key={g.id}
-                      className="flex items-center justify-between p-3 rounded-lg hover:bg-accent transition-colors"
-                    >
-                      <button
-                        onClick={() => handleLoad(g)}
-                        className="flex-1 text-left"
-                      >
-                        <p className="font-medium">{g.name}</p>
-                        <p className="text-sm text-muted-foreground">
-                          {(g.widthCm / 100).toFixed(1)} x{" "}
-                          {(g.heightCm / 100).toFixed(1)}m — {(g.zones || []).length}{" "}
-                          zones
-                        </p>
-                      </button>
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        onClick={() => handleDelete(g.id)}
-                        className="text-muted-foreground hover:text-destructive"
-                      >
-                        <Trash2 className="h-4 w-4" />
-                      </Button>
-                    </div>
-                  ))}
-                </CardContent>
-              </Card>
-            ) : null}
+            ) : (
+              <>
+                {invites.length > 0 && (
+                  <Card className="border-green-200 bg-green-50/50">
+                    <CardHeader>
+                      <CardTitle className="text-lg">Uitnodigingen</CardTitle>
+                    </CardHeader>
+                    <CardContent className="space-y-2">
+                      {invites.map((inv) => (
+                        <div
+                          key={inv.id}
+                          className="flex items-center justify-between p-3 rounded-lg bg-white"
+                        >
+                          <div className="flex-1 min-w-0">
+                            <p className="font-medium truncate">{inv.gardenName || "Tuin"}</p>
+                            <p className="text-sm text-muted-foreground">
+                              Uitgenodigd als lid
+                            </p>
+                          </div>
+                          <Button
+                            size="sm"
+                            onClick={() => handleAcceptInvite(inv.token)}
+                            disabled={acceptingInvite === inv.token}
+                          >
+                            {acceptingInvite === inv.token ? "Bezig..." : "Accepteren"}
+                          </Button>
+                        </div>
+                      ))}
+                    </CardContent>
+                  </Card>
+                )}
+
+                {gardens.length > 0 ? (
+                  <Card>
+                    <CardHeader>
+                      <CardTitle className="text-lg">Opgeslagen tuinen</CardTitle>
+                    </CardHeader>
+                    <CardContent className="space-y-2">
+                      {gardens.map((g) => (
+                        <div
+                          key={g.id}
+                          className="flex items-center justify-between p-3 rounded-lg hover:bg-accent transition-colors"
+                        >
+                          <button
+                            onClick={() => handleLoad(g)}
+                            className="flex-1 text-left"
+                          >
+                            <div className="flex items-center gap-2">
+                              <p className="font-medium">{g.name}</p>
+                              {g.role === "member" && (
+                                <span className="text-xs bg-blue-100 text-blue-700 px-1.5 py-0.5 rounded">
+                                  Gedeeld
+                                </span>
+                              )}
+                              {g.memberCount && g.memberCount > 1 && (
+                                <span className="flex items-center gap-0.5 text-xs text-muted-foreground">
+                                  <Users className="h-3 w-3" />
+                                  {g.memberCount}
+                                </span>
+                              )}
+                            </div>
+                            <p className="text-sm text-muted-foreground">
+                              {(g.widthCm / 100).toFixed(1)} x{" "}
+                              {(g.heightCm / 100).toFixed(1)}m — {(g.zones || []).length}{" "}
+                              zones
+                            </p>
+                          </button>
+                          {g.role !== "member" && (
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              onClick={() => handleDelete(g.id)}
+                              className="text-muted-foreground hover:text-destructive"
+                            >
+                              <Trash2 className="h-4 w-4" />
+                            </Button>
+                          )}
+                        </div>
+                      ))}
+                    </CardContent>
+                  </Card>
+                ) : null}
+              </>
+            )}
           </div>
         )}
 

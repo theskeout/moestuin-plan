@@ -42,8 +42,7 @@ export interface CropZone {
   // TODO: plantedAt?: string (ISO datum) — wanneer geplant, voor reminders/oogst-notificaties
 }
 
-// TODO: Tuin delen — uitnodigingen per email zodat familieleden de moestuin ook kunnen bewerken
-// Vereist: Supabase RLS policies voor gedeelde tuinen, invite tabel, UI voor uitnodigen
+// Tuin delen — geïmplementeerd via garden_members en garden_invites tabellen
 
 // TODO: Tuin verwijderen — bevestigingsdialoog toevoegen, gaat nu te makkelijk per ongeluk
 
@@ -62,4 +61,24 @@ export interface Garden {
   structures: Structure[];
   createdAt: string;
   updatedAt: string;
+  role?: "owner" | "member";       // niet opgeslagen, bijgevuld bij laden
+  memberCount?: number;            // niet opgeslagen, bijgevuld bij laden
+}
+
+export interface MemberInfo {
+  id: string;
+  userId: string;
+  email: string;
+  role: "owner" | "member";
+  createdAt: string;
+}
+
+export interface InviteInfo {
+  id: string;
+  gardenId: string;
+  gardenName?: string;
+  email: string;
+  token: string;
+  status: "pending" | "accepted";
+  createdAt: string;
 }

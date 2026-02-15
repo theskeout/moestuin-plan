@@ -16,9 +16,12 @@ interface GardenRow {
   plants: Garden["plants"];
   created_at: string;
   updated_at: string;
+  garden_members?: { role: string; user_id: string }[];
 }
 
-function rowToGarden(row: GardenRow): Garden {
+function rowToGarden(row: GardenRow, currentUserId: string): Garden {
+  const members = row.garden_members || [];
+  const myMembership = members.find((m) => m.user_id === currentUserId);
   return {
     id: row.id,
     name: row.name,
@@ -30,10 +33,12 @@ function rowToGarden(row: GardenRow): Garden {
     plants: row.plants || [],
     createdAt: row.created_at,
     updatedAt: row.updated_at,
+    role: (myMembership?.role as "owner" | "member") || "owner",
+    memberCount: members.length,
   };
 }
 
-function gardenToRow(garden: Garden, userId: string): Omit<GardenRow, "created_at"> {
+function gardenToRow(garden: Garden, userId: string): Omit<GardenRow, "created_at" | "garden_members"> {
   return {
     id: garden.id,
     user_id: userId,
@@ -57,29 +62,46 @@ export class SupabaseGardenStorage implements GardenStorage {
   async loadGardens(): Promise<Garden[]> {
     const { data, error } = await this.supabase
       .from("gardens")
-      .select("*")
-      .eq("user_id", this.userId)
+      .select("*, garden_members(role, user_id)")
       .order("updated_at", { ascending: false });
 
     if (error) throw error;
-    return (data || []).map(rowToGarden);
+    return (data || []).map((row) => rowToGarden(row as GardenRow, this.userId));
   }
 
   async saveGarden(garden: Garden): Promise<void> {
-    const row = gardenToRow(garden, this.userId);
-    const { error } = await this.supabase
+    // Check of tuin al bestaat (update) of nieuw is (insert met user_id)
+    const { data: existing } = await this.supabase
       .from("gardens")
-      .upsert(row, { onConflict: "id" });
+      .select("id")
+      .eq("id", garden.id)
+      .maybeSingle();
 
-    if (error) throw error;
+    if (existing) {
+      // Update — user_id niet meesturen (voorkomt overschrijven eigenaar)
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
+      const { user_id, ...row } = gardenToRow(garden, this.userId);
+      const { error } = await this.supabase
+        .from("gardens")
+        .update(row)
+        .eq("id", garden.id);
+      if (error) throw error;
+    } else {
+      // Insert — user_id is nodig voor owner trigger
+      const row = gardenToRow(garden, this.userId);
+      const { error } = await this.supabase
+        .from("gardens")
+        .insert(row);
+      if (error) throw error;
+    }
   }
 
   async deleteGarden(id: string): Promise<void> {
+    // RLS owner-policy regelt autorisatie
     const { error } = await this.supabase
       .from("gardens")
       .delete()
-      .eq("id", id)
-      .eq("user_id", this.userId);
+      .eq("id", id);
 
     if (error) throw error;
   }
