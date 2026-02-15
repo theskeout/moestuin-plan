@@ -123,7 +123,7 @@ export default function UitnodigingPage() {
               Je bent uitgenodigd om samen te werken aan deze tuin. Log in of maak een account aan om de uitnodiging te accepteren.
             </p>
             <Button className="w-full" onClick={() => router.push(`/login?redirect=/uitnodiging/${token}`)}>
-              Inloggen
+              Inloggen of registreren
             </Button>
           </CardContent>
         </Card>

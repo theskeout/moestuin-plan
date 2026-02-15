@@ -62,8 +62,8 @@ export default function MemberManager({
       ]);
       setMembers(m);
       setInvites(i);
-    } catch {
-      // silently fail
+    } catch (err) {
+      console.error("MemberManager loadData error:", err);
     }
     setLoading(false);
   }, [gardenId, currentRole]);

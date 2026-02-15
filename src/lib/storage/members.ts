@@ -69,7 +69,7 @@ export async function inviteMember(gardenId: string, email: string): Promise<Inv
 
   if (error) {
     if (error.code === "23505") throw new Error("Deze persoon is al uitgenodigd");
-    throw error;
+    throw new Error(error.message || "Kon niet uitnodigen");
   }
 
   return {
