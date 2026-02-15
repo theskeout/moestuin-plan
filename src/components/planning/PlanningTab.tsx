@@ -1,10 +1,12 @@
 "use client";
 
-import { MonthlyTask, RotationWarning, StatusHint } from "@/lib/planning/types";
-import { CropZone, ZoneStatus } from "@/lib/garden/types";
+import { useState, useMemo } from "react";
+import { MonthlyTask, RotationWarning, StatusHint, UserSettings } from "@/lib/planning/types";
+import { CropZone, ZoneStatus, Garden } from "@/lib/garden/types";
 import { getPlant } from "@/lib/plants/catalog";
-import { formatWeekLabel } from "@/lib/planning/weeks";
-import { AlertTriangle, CheckCircle2, Scissors, Sprout, Bug, Calendar, ArrowRight } from "lucide-react";
+import { formatWeekLabel, getISOWeek } from "@/lib/planning/weeks";
+import { getWeeklyTasks } from "@/lib/planning/calendar";
+import { AlertTriangle, CheckCircle2, Scissors, Sprout, Bug, Calendar, ArrowRight, ChevronLeft, ChevronRight } from "lucide-react";
 
 
 const STATUS_LABELS: Record<ZoneStatus, string> = {
@@ -43,6 +45,8 @@ interface PlanningTabProps {
   rotationWarnings: RotationWarning[];
   zones: CropZone[];
   currentWeek: number;
+  garden?: Garden;
+  settings?: UserSettings;
   statusHints?: StatusHint[];
   onCompleteTask: (zoneId: string, taskId: string) => void;
   onUpdateZoneStatus?: (zoneId: string, status: ZoneStatus) => void;
@@ -55,20 +59,40 @@ export default function PlanningTab({
   rotationWarnings,
   zones,
   currentWeek,
+  garden,
+  settings,
   statusHints = [],
   onCompleteTask,
   onUpdateZoneStatus,
   onOpenFullView,
 }: PlanningTabProps) {
-  const currentYear = new Date().getFullYear();
-  const nextWeek = currentWeek >= 53 ? 1 : currentWeek + 1;
+  const now = new Date();
+  const currentYear = now.getFullYear();
+  const initialWeek = currentWeek || getISOWeek(now);
+  const [selectedWeek, setSelectedWeek] = useState(initialWeek);
 
-  const groupedUpcoming = groupByZone(upcomingTasks);
+  const isCurrentWeek = selectedWeek === initialWeek;
+  const nextWeek = selectedWeek >= 53 ? 1 : selectedWeek + 1;
+
+  // Taken: voor huidige week gebruiken we de prop, voor andere weken berekenen we ze
+  const activeTasks = useMemo(() => {
+    if (isCurrentWeek) return currentTasks;
+    if (!garden) return [];
+    return getWeeklyTasks(garden, selectedWeek, currentYear, settings);
+  }, [isCurrentWeek, currentTasks, garden, selectedWeek, currentYear, settings]);
+
+  const activeUpcomingTasks = useMemo(() => {
+    if (isCurrentWeek) return upcomingTasks;
+    if (!garden) return [];
+    return getWeeklyTasks(garden, nextWeek, currentYear, settings);
+  }, [isCurrentWeek, upcomingTasks, garden, nextWeek, currentYear, settings]);
+
+  const groupedUpcoming = groupByZone(activeUpcomingTasks);
 
   // Split in open taken, afgeronde taken, en waarschuwingen
-  const todoTasks = currentTasks.filter((t) => !t.completed && t.type !== "warning");
-  const doneTasks = currentTasks.filter((t) => t.completed && t.type !== "warning");
-  const warningTasks = currentTasks.filter((t) => t.type === "warning");
+  const todoTasks = activeTasks.filter((t) => !t.completed && t.type !== "warning");
+  const doneTasks = activeTasks.filter((t) => t.completed && t.type !== "warning");
+  const warningTasks = activeTasks.filter((t) => t.type === "warning");
 
   return (
     <div className="space-y-4">
@@ -106,11 +130,35 @@ export default function PlanningTab({
         </div>
       )}
 
-      {/* Deze week */}
+      {/* Week navigatie */}
       <div>
-        <h4 className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-2">
-          Deze week — {formatWeekLabel(currentWeek, currentYear)}
-        </h4>
+        <div className="flex items-center gap-1 mb-2">
+          <button
+            onClick={() => setSelectedWeek((w) => w <= 1 ? 53 : w - 1)}
+            className="p-0.5 rounded hover:bg-accent transition-colors"
+            title="Vorige week"
+          >
+            <ChevronLeft className="h-3.5 w-3.5" />
+          </button>
+          <h4 className="text-xs font-semibold text-muted-foreground uppercase tracking-wide flex-1 text-center">
+            {isCurrentWeek ? "Deze week" : formatWeekLabel(selectedWeek, currentYear)}
+          </h4>
+          <button
+            onClick={() => setSelectedWeek((w) => w >= 53 ? 1 : w + 1)}
+            className="p-0.5 rounded hover:bg-accent transition-colors"
+            title="Volgende week"
+          >
+            <ChevronRight className="h-3.5 w-3.5" />
+          </button>
+          {!isCurrentWeek && (
+            <button
+              onClick={() => setSelectedWeek(initialWeek)}
+              className="ml-1 px-2 py-0.5 rounded-full text-[10px] font-medium bg-accent hover:bg-accent/80 transition-colors"
+            >
+              Nu
+            </button>
+          )}
+        </div>
         {todoTasks.length === 0 && doneTasks.length === 0 ? (
           <p className="text-sm text-muted-foreground">Geen taken deze week</p>
         ) : todoTasks.length === 0 ? (
@@ -219,7 +267,7 @@ export default function PlanningTab({
       {groupedUpcoming.length > 0 && (
         <div>
           <h4 className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-2">
-            Volgende week — {formatWeekLabel(nextWeek, currentYear)}
+            Week erna — {formatWeekLabel(nextWeek, currentYear)}
           </h4>
           <div className="space-y-1">
             {upcomingTasks.filter((t) => t.type !== "warning").slice(0, 8).map((task, i) => (

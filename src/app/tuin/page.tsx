@@ -34,7 +34,7 @@ const GardenCanvas = dynamic(
 );
 
 const STRUCTURE_LABELS: Record<string, string> = {
-  kas: "Kas", grondbak: "Grondbak", pad: "Pad", schuur: "Schuur", hek: "Hek", boom: "Boom", compostbak: "Compostbak",
+  kas: "Kas", grondbak: "Grondbak", pad: "Pad", schuur: "Schuur", hek: "Hek", boom: "Boom", compostbak: "Compostbak", custom: "Structuur",
 };
 
 /* ---------- Mobiel: Bottom Sheet met swipe gestures ---------- */
@@ -674,8 +674,9 @@ function TuinContent() {
             {selectedStruct && (
               <>
                 <div className="flex items-center justify-between">
-                  <h3 className="font-semibold">
-                    {STRUCTURE_LABELS[selectedStruct.type] || selectedStruct.type}
+                  <h3 className="font-semibold flex items-center gap-2">
+                    {selectedStruct.customIcon && <span className="text-xl">{selectedStruct.customIcon}</span>}
+                    {selectedStruct.type === "custom" ? (selectedStruct.customLabel || "Structuur") : (STRUCTURE_LABELS[selectedStruct.type] || selectedStruct.type)}
                   </h3>
                   <div className="flex items-center gap-1">
                     <Button
@@ -796,7 +797,12 @@ function TuinContent() {
                 <p className="text-xs text-muted-foreground">
                   Sleep naar het canvas
                 </p>
-                <PlantPicker onSelectPlant={(plant) => setSidebarPlant(plant)} />
+                <PlantPicker
+                  onSelectPlant={(plant) => setSidebarPlant(plant)}
+                  onTapStructure={(type, customLabel, customIcon) => {
+                    addStructure(type, garden.widthCm / 2, garden.heightCm / 2, customLabel, customIcon);
+                  }}
+                />
               </div>
               {sidebarPlant && (
                 <div className="border-t bg-white p-3 max-h-[40%] overflow-y-auto shrink-0">
@@ -812,6 +818,8 @@ function TuinContent() {
                   rotationWarnings={planning.rotationWarnings}
                   zones={garden.zones}
                   currentWeek={planning.currentWeek}
+                  garden={garden}
+                  settings={planning.settings}
                   statusHints={planning.statusHints}
                   onCompleteTask={planning.completeTask}
                   onUpdateZoneStatus={planning.updateZoneStatus}
@@ -888,8 +896,8 @@ function TuinContent() {
               </p>
               <PlantPicker
                 onSelectPlant={(plant) => setSidebarPlant(plant)}
-                onTapStructure={(type) => {
-                  addStructure(type, garden.widthCm / 2, garden.heightCm / 2);
+                onTapStructure={(type, customLabel, customIcon) => {
+                  addStructure(type, garden.widthCm / 2, garden.heightCm / 2, customLabel, customIcon);
                   setMobileAddOpen(false);
                 }}
               />
@@ -1067,7 +1075,10 @@ function TuinContent() {
           {selectedStruct && (
             <div className="space-y-3">
               <div className="flex items-center justify-between">
-                <h3 className="font-semibold">{STRUCTURE_LABELS[selectedStruct.type] || selectedStruct.type}</h3>
+                <h3 className="font-semibold flex items-center gap-2">
+                  {selectedStruct.customIcon && <span>{selectedStruct.customIcon}</span>}
+                  {selectedStruct.type === "custom" ? (selectedStruct.customLabel || "Structuur") : (STRUCTURE_LABELS[selectedStruct.type] || selectedStruct.type)}
+                </h3>
                 <div className="flex items-center gap-0.5">
                   <Button
                     variant="ghost" size="icon" className="h-8 w-8"

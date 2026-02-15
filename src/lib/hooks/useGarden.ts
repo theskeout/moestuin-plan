@@ -159,7 +159,7 @@ export function useGarden(initialGarden?: Garden) {
   // --- Structures CRUD ---
 
   const addStructure = useCallback(
-    (type: StructureType, x: number, y: number) => {
+    (type: StructureType, x: number, y: number, customLabel?: string, customIcon?: string) => {
       const size = getStructureDefaults(type);
       const newStruct: Structure = {
         id: generateId(),
@@ -170,6 +170,8 @@ export function useGarden(initialGarden?: Garden) {
         heightCm: size.heightCm,
         rotation: 0,
         locked: false,
+        ...(customLabel ? { customLabel } : {}),
+        ...(customIcon ? { customIcon } : {}),
       };
       setGarden((prev) => ({
         ...prev,

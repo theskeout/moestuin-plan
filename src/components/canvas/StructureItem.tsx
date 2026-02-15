@@ -13,7 +13,7 @@ interface StructureItemProps {
 }
 
 const STRUCTURE_STYLES: Record<
-  Structure["type"],
+  string,
   { fill: string; stroke: string; label: string; icon: string; dash?: number[] }
 > = {
   kas: { fill: "rgba(147, 197, 253, 0.3)", stroke: "#3b82f6", label: "Kas", icon: "🏠", dash: [8, 4] },
@@ -25,6 +25,8 @@ const STRUCTURE_STYLES: Record<
   compostbak: { fill: "rgba(120, 85, 40, 0.3)", stroke: "#5d4037", label: "Compostbak", icon: "♻️" },
 };
 
+const CUSTOM_DEFAULT_STYLE = { fill: "rgba(180, 180, 180, 0.3)", stroke: "#6b7280", label: "Structuur", icon: "📌" };
+
 export default function StructureItem({
   structure,
   scale,
@@ -32,7 +34,10 @@ export default function StructureItem({
   onSelect,
   onDragEnd,
 }: StructureItemProps) {
-  const style = STRUCTURE_STYLES[structure.type];
+  const baseStyle = STRUCTURE_STYLES[structure.type] || CUSTOM_DEFAULT_STYLE;
+  const style = structure.type === "custom"
+    ? { ...baseStyle, label: structure.customLabel || "Structuur", icon: structure.customIcon || "📌" }
+    : baseStyle;
   const w = structure.widthCm * scale;
   const h = structure.heightCm * scale;
   const locked = structure.locked;

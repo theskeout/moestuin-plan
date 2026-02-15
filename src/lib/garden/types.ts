@@ -15,7 +15,7 @@ export interface PlacedPlant {
   rotation: number; // graden
 }
 
-export type StructureType = "kas" | "grondbak" | "pad" | "schuur" | "hek" | "boom" | "compostbak";
+export type StructureType = "kas" | "grondbak" | "pad" | "schuur" | "hek" | "boom" | "compostbak" | "custom";
 
 export interface Structure {
   id: string;
@@ -26,6 +26,8 @@ export interface Structure {
   heightCm: number;
   rotation: number;
   locked: boolean;
+  customLabel?: string;  // naam voor custom structuren
+  customIcon?: string;   // emoji voor custom structuren
 }
 
 export type ZoneStatus =

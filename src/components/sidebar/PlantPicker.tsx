@@ -14,7 +14,7 @@ import { Search, ChevronDown, ChevronRight, Plus, Pencil } from "lucide-react";
 
 interface PlantPickerProps {
   onSelectPlant: (plant: PlantData) => void;
-  onTapStructure?: (type: StructureType) => void;
+  onTapStructure?: (type: StructureType, customLabel?: string, customIcon?: string) => void;
 }
 
 const STRUCTURES: { type: StructureType; icon: string; label: string }[] = [
@@ -59,6 +59,12 @@ const ICON_GROUPS: { label: string; icons: string[] }[] = [
 
 const ALL_ICONS = ICON_GROUPS.flatMap((g) => g.icons);
 
+const STRUCTURE_ICONS = [
+  "🏠", "📦", "🚶", "🏚️", "🪵", "🌳", "♻️",
+  "🪴", "🧱", "⛲", "🪨", "🏗️", "🛖", "🪣",
+  "🚿", "💧", "🪑", "🏕️", "🌿", "🔧", "📌",
+];
+
 const isTouchDevice = () => typeof window !== "undefined" && "ontouchstart" in window;
 
 function StructureCard({ type, icon, label, onTap }: { type: StructureType; icon: string; label: string; onTap?: (type: StructureType) => void }) {
@@ -74,6 +80,47 @@ function StructureCard({ type, icon, label, onTap }: { type: StructureType; icon
     >
       <span className="text-lg">{icon}</span>
       <span className="text-xs text-muted-foreground">{label}</span>
+    </div>
+  );
+}
+
+function CustomStructureForm({ onDone, onCancel }: { onDone: (label: string, icon: string) => void; onCancel: () => void }) {
+  const [label, setLabel] = useState("");
+  const [selectedIcon, setSelectedIcon] = useState("📌");
+
+  return (
+    <div className="space-y-3 p-2 border rounded-lg bg-accent/30">
+      <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide">Eigen structuur</p>
+      <Input
+        placeholder="Naam (bijv. Regenton)"
+        value={label}
+        onChange={(e) => setLabel(e.target.value)}
+        className="h-8 text-sm"
+      />
+      <div>
+        <p className="text-xs text-muted-foreground mb-1">Pictogram</p>
+        <div className="flex flex-wrap gap-1">
+          {STRUCTURE_ICONS.map((icon, i) => (
+            <button
+              key={`${icon}-${i}`}
+              onClick={() => setSelectedIcon(icon)}
+              className={`w-7 h-7 rounded flex items-center justify-center text-base transition-colors ${
+                selectedIcon === icon ? "bg-accent ring-2 ring-foreground/20" : "hover:bg-accent"
+              }`}
+            >
+              {icon}
+            </button>
+          ))}
+        </div>
+      </div>
+      <div className="flex gap-2">
+        <Button size="sm" onClick={() => { if (label.trim()) onDone(label.trim(), selectedIcon); }} disabled={!label.trim()} className="flex-1">
+          Toevoegen
+        </Button>
+        <Button size="sm" variant="ghost" onClick={onCancel}>
+          Annuleer
+        </Button>
+      </div>
     </div>
   );
 }
@@ -357,6 +404,7 @@ export default function PlantPicker({ onSelectPlant, onTapStructure }: PlantPick
   const [structuresOpen, setStructuresOpen] = useState(false);
   const [gewassenOpen, setGewassenOpen] = useState(true);
   const [showAddForm, setShowAddForm] = useState(false);
+  const [showCustomStructureForm, setShowCustomStructureForm] = useState(false);
   const [editingPlant, setEditingPlant] = useState<PlantData | null>(null);
   const [refreshKey, setRefreshKey] = useState(0);
 
@@ -398,10 +446,28 @@ export default function PlantPicker({ onSelectPlant, onTapStructure }: PlantPick
           Structuren
         </button>
         {structuresOpen && (
-          <div className="grid grid-cols-3 gap-2 mt-1.5">
-            {STRUCTURES.map((s) => (
-              <StructureCard key={s.type} {...s} onTap={onTapStructure} />
-            ))}
+          <div className="space-y-2 mt-1.5">
+            <div className="grid grid-cols-3 gap-2">
+              {STRUCTURES.map((s) => (
+                <StructureCard key={s.type} {...s} onTap={onTapStructure} />
+              ))}
+              <button
+                onClick={() => setShowCustomStructureForm(!showCustomStructureForm)}
+                className="flex flex-col items-center justify-center p-2 rounded-lg hover:bg-accent transition-colors border border-dashed border-border hover:border-foreground/30 cursor-pointer"
+              >
+                <Plus className="h-4 w-4 text-muted-foreground" />
+                <span className="text-xs text-muted-foreground">Eigen</span>
+              </button>
+            </div>
+            {showCustomStructureForm && (
+              <CustomStructureForm
+                onDone={(label, icon) => {
+                  onTapStructure?.("custom" as StructureType, label, icon);
+                  setShowCustomStructureForm(false);
+                }}
+                onCancel={() => setShowCustomStructureForm(false)}
+              />
+            )}
           </div>
         )}
       </div>
