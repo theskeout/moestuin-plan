@@ -557,25 +557,29 @@ function TuinContent() {
                     <div>
                       <p className="text-xs text-muted-foreground mb-1">Breedte (cm)</p>
                       <Input
-                        type="number" min={10} step={10}
-                        value={selectedZoneData.zone.widthCm}
-                        onChange={(e) => {
+                        type="number" step={10}
+                        defaultValue={selectedZoneData.zone.widthCm}
+                        key={`w-${selectedId}-${selectedZoneData.zone.widthCm}`}
+                        onBlur={(e) => {
                           if (!selectedId) return;
-                          const val = Math.max(10, Number(e.target.value));
+                          const val = Math.max(10, Number(e.target.value) || 10);
                           transformZone(selectedId, selectedZoneData.zone.x, selectedZoneData.zone.y, val, selectedZoneData.zone.heightCm, selectedZoneData.zone.rotation);
                         }}
+                        onKeyDown={(e) => { if (e.key === "Enter") (e.target as HTMLInputElement).blur(); }}
                       />
                     </div>
                     <div>
                       <p className="text-xs text-muted-foreground mb-1">Hoogte (cm)</p>
                       <Input
-                        type="number" min={10} step={10}
-                        value={selectedZoneData.zone.heightCm}
-                        onChange={(e) => {
+                        type="number" step={10}
+                        defaultValue={selectedZoneData.zone.heightCm}
+                        key={`h-${selectedId}-${selectedZoneData.zone.heightCm}`}
+                        onBlur={(e) => {
                           if (!selectedId) return;
-                          const val = Math.max(10, Number(e.target.value));
+                          const val = Math.max(10, Number(e.target.value) || 10);
                           transformZone(selectedId, selectedZoneData.zone.x, selectedZoneData.zone.y, selectedZoneData.zone.widthCm, val, selectedZoneData.zone.rotation);
                         }}
+                        onKeyDown={(e) => { if (e.key === "Enter") (e.target as HTMLInputElement).blur(); }}
                       />
                     </div>
                   </div>
@@ -583,12 +587,14 @@ function TuinContent() {
                     <p className="text-xs text-muted-foreground mb-1">Rotatie (graden)</p>
                     <Input
                       type="number" step={1}
-                      value={Math.round(selectedZoneData.zone.rotation)}
-                      onChange={(e) => {
+                      defaultValue={Math.round(selectedZoneData.zone.rotation)}
+                      key={`r-${selectedId}-${Math.round(selectedZoneData.zone.rotation)}`}
+                      onBlur={(e) => {
                         if (!selectedId) return;
-                        const val = Number(e.target.value);
+                        const val = Number(e.target.value) || 0;
                         transformZone(selectedId, selectedZoneData.zone.x, selectedZoneData.zone.y, selectedZoneData.zone.widthCm, selectedZoneData.zone.heightCm, val);
                       }}
+                      onKeyDown={(e) => { if (e.key === "Enter") (e.target as HTMLInputElement).blur(); }}
                     />
                   </div>
                   <p className="text-sm text-muted-foreground">
@@ -636,7 +642,7 @@ function TuinContent() {
                     }}
                     className="w-full h-9 rounded-md border border-input bg-background px-3 text-sm"
                   >
-                    <option value="planned">Gepland</option>
+                    <option value="planned">Ingetekend</option>
                     <option value="sown-indoor">Voorgezaaid (binnen)</option>
                     <option value="sown-outdoor">Gezaaid (buiten)</option>
                     <option value="transplanted">Uitgeplant</option>
@@ -984,34 +990,43 @@ function TuinContent() {
                       <div>
                         <p className="text-xs text-muted-foreground mb-1">Breedte</p>
                         <Input
-                          type="number" min={10} step={10}
-                          value={selectedZoneData.zone.widthCm}
-                          onChange={(e) => {
+                          type="number" step={10}
+                          defaultValue={selectedZoneData.zone.widthCm}
+                          key={`mw-${selectedId}-${selectedZoneData.zone.widthCm}`}
+                          onBlur={(e) => {
                             if (!selectedId) return;
-                            transformZone(selectedId, selectedZoneData.zone.x, selectedZoneData.zone.y, Math.max(10, Number(e.target.value)), selectedZoneData.zone.heightCm, selectedZoneData.zone.rotation);
+                            const val = Math.max(10, Number(e.target.value) || 10);
+                            transformZone(selectedId, selectedZoneData.zone.x, selectedZoneData.zone.y, val, selectedZoneData.zone.heightCm, selectedZoneData.zone.rotation);
                           }}
+                          onKeyDown={(e) => { if (e.key === "Enter") (e.target as HTMLInputElement).blur(); }}
                         />
                       </div>
                       <div>
                         <p className="text-xs text-muted-foreground mb-1">Hoogte</p>
                         <Input
-                          type="number" min={10} step={10}
-                          value={selectedZoneData.zone.heightCm}
-                          onChange={(e) => {
+                          type="number" step={10}
+                          defaultValue={selectedZoneData.zone.heightCm}
+                          key={`mh-${selectedId}-${selectedZoneData.zone.heightCm}`}
+                          onBlur={(e) => {
                             if (!selectedId) return;
-                            transformZone(selectedId, selectedZoneData.zone.x, selectedZoneData.zone.y, selectedZoneData.zone.widthCm, Math.max(10, Number(e.target.value)), selectedZoneData.zone.rotation);
+                            const val = Math.max(10, Number(e.target.value) || 10);
+                            transformZone(selectedId, selectedZoneData.zone.x, selectedZoneData.zone.y, selectedZoneData.zone.widthCm, val, selectedZoneData.zone.rotation);
                           }}
+                          onKeyDown={(e) => { if (e.key === "Enter") (e.target as HTMLInputElement).blur(); }}
                         />
                       </div>
                       <div>
                         <p className="text-xs text-muted-foreground mb-1">Rotatie</p>
                         <Input
                           type="number" step={1}
-                          value={Math.round(selectedZoneData.zone.rotation)}
-                          onChange={(e) => {
+                          defaultValue={Math.round(selectedZoneData.zone.rotation)}
+                          key={`mr-${selectedId}-${Math.round(selectedZoneData.zone.rotation)}`}
+                          onBlur={(e) => {
                             if (!selectedId) return;
-                            transformZone(selectedId, selectedZoneData.zone.x, selectedZoneData.zone.y, selectedZoneData.zone.widthCm, selectedZoneData.zone.heightCm, Number(e.target.value));
+                            const val = Number(e.target.value) || 0;
+                            transformZone(selectedId, selectedZoneData.zone.x, selectedZoneData.zone.y, selectedZoneData.zone.widthCm, selectedZoneData.zone.heightCm, val);
                           }}
+                          onKeyDown={(e) => { if (e.key === "Enter") (e.target as HTMLInputElement).blur(); }}
                         />
                       </div>
                     </div>

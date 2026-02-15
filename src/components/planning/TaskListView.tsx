@@ -3,7 +3,7 @@
 import { useState, useMemo } from "react";
 import { MonthlyTask, UserSettings } from "@/lib/planning/types";
 import { Garden } from "@/lib/garden/types";
-import { Sprout, CheckCircle2, Scissors, Bug, Check, ChevronLeft, ChevronRight } from "lucide-react";
+import { Sprout, CheckCircle2, Scissors, Bug, Check, ChevronLeft, ChevronRight, AlertCircle } from "lucide-react";
 import { getISOWeek, formatWeekLabel } from "@/lib/planning/weeks";
 import { getWeeklyTasks } from "@/lib/planning/calendar";
 
@@ -43,7 +43,36 @@ export default function TaskListView({ currentTasks, currentWeek, garden, settin
     return getWeeklyTasks(garden, selectedWeek, year, settings);
   }, [isCurrentWeek, currentTasks, garden, selectedWeek, year, settings]);
 
-  const filtered = activeTasks.filter((t) => {
+  // Overdue taken: niet-afgevinkte taken uit vorige weken (alleen tonen bij huidige week of later)
+  const overdueTasks = useMemo(() => {
+    if (!garden || selectedWeek < initialWeek) return [];
+    const overdue: (MonthlyTask & { _overdue: true })[] = [];
+    // Check de 4 voorgaande weken
+    for (let w = Math.max(1, selectedWeek - 4); w < selectedWeek; w++) {
+      const weekTasks = w === initialWeek
+        ? currentTasks
+        : getWeeklyTasks(garden, w, year, settings);
+      for (const t of weekTasks) {
+        if (!t.completed && t.type !== "warning") {
+          overdue.push({ ...t, _overdue: true as const });
+        }
+      }
+    }
+    // Dedup: zelfde task id + zone id
+    const seen = new Set<string>();
+    return overdue.filter((t) => {
+      const key = `${t.zoneId}-${t.task.id}`;
+      if (seen.has(key)) return false;
+      // Skip als deze taak al in de huidige week zit
+      if (activeTasks.some((at) => at.zoneId === t.zoneId && at.task.id === t.task.id)) return false;
+      seen.add(key);
+      return true;
+    });
+  }, [garden, selectedWeek, initialWeek, currentTasks, activeTasks, year, settings]);
+
+  const allTasks = useMemo(() => [...overdueTasks, ...activeTasks], [overdueTasks, activeTasks]);
+
+  const filtered = allTasks.filter((t) => {
     switch (filter) {
       case "zaai": return t.type === "sow-indoor" || t.type === "sow-outdoor";
       case "onderhoud": return t.type === "maintenance";
@@ -86,7 +115,7 @@ export default function TaskListView({ currentTasks, currentWeek, garden, settin
           >
             <ChevronLeft className="h-4 w-4" />
           </button>
-          <h3 className="text-sm font-semibold min-w-0">
+          <h3 className="text-sm font-semibold w-44 text-center">
             {formatWeekLabel(selectedWeek, year)}
           </h3>
           <button
@@ -141,43 +170,55 @@ export default function TaskListView({ currentTasks, currentWeek, garden, settin
                 <span className="text-base">{plantIcon}</span>
                 <span className="text-sm font-medium">{plantName}</span>
               </div>
-              {tasks.map((task, i) => (
-                <div
-                  key={`${task.task.id}-${i}`}
-                  className={`flex items-start gap-2 px-3 py-2 rounded-md text-sm ${
-                    task.type === "warning"
-                      ? "bg-red-50"
-                      : task.completed
-                      ? "bg-green-50 opacity-60"
-                      : "bg-accent/50"
-                  }`}
-                >
-                  <TaskIcon type={task.type} />
-                  <div className="flex-1 min-w-0">
-                    <p className={`text-sm ${task.completed ? "line-through text-muted-foreground" : ""}`}>
-                      {task.task.name}
-                    </p>
-                    {task.task.description && (
-                      <p className="text-xs text-muted-foreground mt-0.5">
-                        {task.task.description}
+              {tasks.map((task, i) => {
+                const isOverdue = "_overdue" in task;
+                return (
+                  <div
+                    key={`${task.task.id}-${i}${isOverdue ? "-od" : ""}`}
+                    className={`flex items-start gap-2 px-3 py-2 rounded-md text-sm ${
+                      task.type === "warning"
+                        ? "bg-red-50"
+                        : task.completed
+                        ? "bg-green-50"
+                        : isOverdue
+                        ? "bg-amber-50 border border-amber-200"
+                        : "bg-accent/50"
+                    }`}
+                  >
+                    {isOverdue ? (
+                      <AlertCircle className="h-4 w-4 text-amber-500 shrink-0 mt-0.5" />
+                    ) : task.completed ? (
+                      <CheckCircle2 className="h-4 w-4 text-green-500 shrink-0 mt-0.5" />
+                    ) : (
+                      <TaskIcon type={task.type} />
+                    )}
+                    <div className="flex-1 min-w-0">
+                      <p className={`text-sm ${task.completed ? "line-through text-muted-foreground" : ""}`}>
+                        {task.task.name}
+                        {isOverdue && <span className="text-amber-600 text-xs ml-1">(achterstallig)</span>}
                       </p>
+                      {task.task.description && (
+                        <p className="text-xs text-muted-foreground mt-0.5">
+                          {task.task.description}
+                        </p>
+                      )}
+                    </div>
+                    {task.type !== "warning" && (
+                      <button
+                        onClick={() => onCompleteTask(task.zoneId, task.task.id)}
+                        className={`shrink-0 p-1 rounded transition-colors ${
+                          task.completed
+                            ? "text-green-600 hover:text-red-500 hover:bg-red-50"
+                            : "text-muted-foreground hover:text-foreground hover:bg-accent"
+                        }`}
+                        title={task.completed ? "Klik om ongedaan te maken" : "Markeer als klaar"}
+                      >
+                        <Check className="h-4 w-4" />
+                      </button>
                     )}
                   </div>
-                  {task.type !== "warning" && (
-                    <button
-                      onClick={() => onCompleteTask(task.zoneId, task.task.id)}
-                      className={`shrink-0 p-1 rounded transition-colors ${
-                        task.completed
-                          ? "text-green-600 hover:text-red-500 hover:bg-red-50"
-                          : "text-muted-foreground hover:text-foreground hover:bg-accent"
-                      }`}
-                      title={task.completed ? "Klik om ongedaan te maken" : "Markeer als klaar"}
-                    >
-                      <Check className="h-4 w-4" />
-                    </button>
-                  )}
-                </div>
-              ))}
+                );
+              })}
             </div>
           ))}
         </div>

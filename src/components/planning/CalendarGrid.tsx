@@ -62,7 +62,24 @@ export default function CalendarGrid({ garden, settings, onSelectZone }: Calenda
   }
 
   return (
-    <div className="overflow-x-auto">
+    <div className="space-y-3">
+      {/* Legenda */}
+      <div className="flex items-center gap-4 text-xs text-muted-foreground px-2">
+        <div className="flex items-center gap-1">
+          <div className="w-3 h-3 rounded bg-purple-200" />
+          <span>Binnen zaaien</span>
+        </div>
+        <div className="flex items-center gap-1">
+          <div className="w-3 h-3 rounded bg-green-200" />
+          <span>Buiten zaaien</span>
+        </div>
+        <div className="flex items-center gap-1">
+          <div className="w-3 h-3 rounded bg-orange-200" />
+          <span>Oogsten</span>
+        </div>
+      </div>
+
+      <div className="overflow-x-auto">
       <table className="w-full min-w-[700px] text-xs border-collapse">
         <thead>
           <tr>
@@ -136,20 +153,6 @@ export default function CalendarGrid({ garden, settings, onSelectZone }: Calenda
         </tbody>
       </table>
 
-      {/* Legenda */}
-      <div className="flex items-center gap-4 mt-3 text-xs text-muted-foreground px-2">
-        <div className="flex items-center gap-1">
-          <div className="w-3 h-3 rounded bg-purple-200" />
-          <span>Binnen zaaien</span>
-        </div>
-        <div className="flex items-center gap-1">
-          <div className="w-3 h-3 rounded bg-green-200" />
-          <span>Buiten zaaien</span>
-        </div>
-        <div className="flex items-center gap-1">
-          <div className="w-3 h-3 rounded bg-orange-200" />
-          <span>Oogsten</span>
-        </div>
       </div>
     </div>
   );

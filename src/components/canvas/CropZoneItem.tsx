@@ -64,12 +64,9 @@ export default function CropZoneItem({
 
   return (
     <Group
-      id={zone.id}
       x={zone.x * scale}
       y={zone.y * scale}
       rotation={zone.rotation}
-      width={w}
-      height={h}
       draggable={!locked}
       onClick={() => onSelect(zone.id)}
       onTap={() => onSelect(zone.id)}
@@ -81,6 +78,14 @@ export default function CropZoneItem({
         onDragEnd(zone.id, newX, newY);
       }}
     >
+    {/* Invisible rect met id zodat Transformer alleen dit vak pakt */}
+    <Rect
+      id={zone.id}
+      width={w}
+      height={h}
+      fill="transparent"
+      listening={false}
+    />
       {isTree ? (
         <>
           {/* Fruitboom: ronde zone net als Boom-structuur */}

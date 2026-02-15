@@ -8,7 +8,7 @@ import { AlertTriangle, CheckCircle2, Scissors, Sprout, Bug, Calendar, ArrowRigh
 
 
 const STATUS_LABELS: Record<ZoneStatus, string> = {
-  planned: "Gepland",
+  planned: "Ingetekend",
   "sown-indoor": "Voorgezaaid",
   "sown-outdoor": "Buiten gezaaid",
   transplanted: "Uitgeplant",
@@ -243,9 +243,11 @@ export default function PlanningTab({
             Gewassen in je tuin
           </h4>
           <div className="space-y-1">
-            {zones.map((zone) => {
-              const plant = getPlant(zone.plantId);
-              if (!plant) return null;
+            {[...zones]
+              .map((zone) => ({ zone, plant: getPlant(zone.plantId) }))
+              .filter((r): r is { zone: CropZone; plant: NonNullable<ReturnType<typeof getPlant>> } => r.plant !== null)
+              .sort((a, b) => a.plant.name.localeCompare(b.plant.name))
+              .map(({ zone, plant }) => {
               const status = zone.status || "planned";
               return (
                 <div

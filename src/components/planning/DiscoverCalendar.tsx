@@ -57,6 +57,22 @@ export default function DiscoverCalendar({ settings, onAddPlant }: DiscoverCalen
 
   return (
     <div className="space-y-4">
+      {/* Legenda */}
+      <div className="flex items-center gap-4 text-xs text-muted-foreground px-2">
+        <div className="flex items-center gap-1">
+          <div className="w-3 h-3 rounded bg-purple-200" />
+          <span>Binnen zaaien</span>
+        </div>
+        <div className="flex items-center gap-1">
+          <div className="w-3 h-3 rounded bg-green-200" />
+          <span>Buiten zaaien</span>
+        </div>
+        <div className="flex items-center gap-1">
+          <div className="w-3 h-3 rounded bg-orange-200" />
+          <span>Oogsten</span>
+        </div>
+      </div>
+
       {/* Zoek en filter */}
       <div className="flex gap-2">
         <div className="relative flex-1">
@@ -168,21 +184,6 @@ export default function DiscoverCalendar({ settings, onAddPlant }: DiscoverCalen
         </table>
       </div>
 
-      {/* Legenda */}
-      <div className="flex items-center gap-4 text-xs text-muted-foreground px-2">
-        <div className="flex items-center gap-1">
-          <div className="w-3 h-3 rounded bg-purple-200" />
-          <span>Binnen zaaien</span>
-        </div>
-        <div className="flex items-center gap-1">
-          <div className="w-3 h-3 rounded bg-green-200" />
-          <span>Buiten zaaien</span>
-        </div>
-        <div className="flex items-center gap-1">
-          <div className="w-3 h-3 rounded bg-orange-200" />
-          <span>Oogsten</span>
-        </div>
-      </div>
     </div>
   );
 }
