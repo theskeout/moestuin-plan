@@ -72,6 +72,15 @@ export default function PlanningTab({
 
   return (
     <div className="space-y-4">
+      {/* Volledige planning knop bovenaan */}
+      <button
+        onClick={onOpenFullView}
+        className="w-full flex items-center justify-center gap-2 px-3 py-2 rounded-md border text-sm font-medium hover:bg-accent transition-colors"
+      >
+        <Calendar className="h-4 w-4" />
+        Volledige planning
+      </button>
+
       {/* Status-suggesties */}
       {statusHints.length > 0 && (
         <div>
@@ -103,7 +112,7 @@ export default function PlanningTab({
           Deze week — {formatWeekLabel(currentWeek, currentYear)}
         </h4>
         {todoTasks.length === 0 && doneTasks.length === 0 ? (
-          <p className="text-sm text-muted-foreground">Geen taken deze maand</p>
+          <p className="text-sm text-muted-foreground">Geen taken deze week</p>
         ) : todoTasks.length === 0 ? (
           <p className="text-sm text-green-600">Alles afgerond!</p>
         ) : (
@@ -254,14 +263,6 @@ export default function PlanningTab({
         </div>
       )}
 
-      {/* Volledig overzicht knop */}
-      <button
-        onClick={onOpenFullView}
-        className="w-full flex items-center justify-center gap-2 px-3 py-2 rounded-md border text-sm font-medium hover:bg-accent transition-colors"
-      >
-        <Calendar className="h-4 w-4" />
-        Volledig overzicht
-      </button>
     </div>
   );
 }

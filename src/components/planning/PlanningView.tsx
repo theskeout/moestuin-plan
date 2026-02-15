@@ -5,7 +5,8 @@ import { Garden } from "@/lib/garden/types";
 import { MonthlyTask, RotationWarning, SeasonArchive, UserSettings } from "@/lib/planning/types";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { X } from "lucide-react";
+
+
 import CalendarGrid from "./CalendarGrid";
 import TaskListView from "./TaskListView";
 import DiscoverCalendar from "./DiscoverCalendar";
@@ -49,11 +50,8 @@ export default function PlanningView({
     <Dialog open={open} onOpenChange={(v) => !v && onClose()}>
       <DialogContent className="max-w-5xl w-[95vw] h-[90vh] flex flex-col p-0 gap-0">
         {/* Header */}
-        <div className="flex items-center justify-between px-4 py-3 border-b shrink-0">
+        <div className="flex items-center justify-between px-4 py-3 border-b shrink-0 pr-12">
           <h2 className="text-base font-semibold">Planning — {garden.name}</h2>
-          <button onClick={onClose} className="p-1 rounded-md hover:bg-accent transition-colors">
-            <X className="h-4 w-4" />
-          </button>
         </div>
 
         {/* Tabs */}
@@ -81,6 +79,8 @@ export default function PlanningView({
               <TaskListView
                 currentTasks={currentTasks}
                 currentWeek={currentWeek}
+                garden={garden}
+                settings={settings}
                 onCompleteTask={onCompleteTask}
               />
             </TabsContent>

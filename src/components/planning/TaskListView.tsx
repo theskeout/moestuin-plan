@@ -1,9 +1,11 @@
 "use client";
 
-import { useState } from "react";
-import { MonthlyTask } from "@/lib/planning/types";
-import { Sprout, CheckCircle2, Scissors, Bug, Check } from "lucide-react";
+import { useState, useMemo } from "react";
+import { MonthlyTask, UserSettings } from "@/lib/planning/types";
+import { Garden } from "@/lib/garden/types";
+import { Sprout, CheckCircle2, Scissors, Bug, Check, ChevronLeft, ChevronRight } from "lucide-react";
 import { getISOWeek, formatWeekLabel } from "@/lib/planning/weeks";
+import { getWeeklyTasks } from "@/lib/planning/calendar";
 
 type Filter = "alles" | "zaai" | "onderhoud" | "oogst" | "waarschuwing";
 
@@ -20,16 +22,28 @@ function TaskIcon({ type }: { type: MonthlyTask["type"] }) {
 interface TaskListViewProps {
   currentTasks: MonthlyTask[];
   currentWeek?: number;
+  garden?: Garden;
+  settings?: UserSettings;
   onCompleteTask: (zoneId: string, taskId: string) => void;
 }
 
-export default function TaskListView({ currentTasks, currentWeek, onCompleteTask }: TaskListViewProps) {
+export default function TaskListView({ currentTasks, currentWeek, garden, settings, onCompleteTask }: TaskListViewProps) {
   const [filter, setFilter] = useState<Filter>("alles");
   const now = new Date();
-  const week = currentWeek ?? getISOWeek(now);
+  const initialWeek = currentWeek ?? getISOWeek(now);
   const year = now.getFullYear();
+  const [selectedWeek, setSelectedWeek] = useState(initialWeek);
 
-  const filtered = currentTasks.filter((t) => {
+  const isCurrentWeek = selectedWeek === initialWeek;
+
+  // Taken: voor huidige week gebruiken we de prop, voor andere weken berekenen we ze
+  const activeTasks = useMemo(() => {
+    if (isCurrentWeek) return currentTasks;
+    if (!garden) return [];
+    return getWeeklyTasks(garden, selectedWeek, year, settings);
+  }, [isCurrentWeek, currentTasks, garden, selectedWeek, year, settings]);
+
+  const filtered = activeTasks.filter((t) => {
     switch (filter) {
       case "zaai": return t.type === "sow-indoor" || t.type === "sow-outdoor";
       case "onderhoud": return t.type === "maintenance";
@@ -64,8 +78,34 @@ export default function TaskListView({ currentTasks, currentWeek, onCompleteTask
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between">
-        <h3 className="text-sm font-semibold">{formatWeekLabel(week, year)}</h3>
-        <div className="flex items-center gap-3 text-xs text-muted-foreground">
+        <div className="flex items-center gap-1">
+          <button
+            onClick={() => setSelectedWeek((w) => w <= 1 ? 53 : w - 1)}
+            className="p-1 rounded hover:bg-accent transition-colors"
+            title="Vorige week"
+          >
+            <ChevronLeft className="h-4 w-4" />
+          </button>
+          <h3 className="text-sm font-semibold min-w-0">
+            {formatWeekLabel(selectedWeek, year)}
+          </h3>
+          <button
+            onClick={() => setSelectedWeek((w) => w >= 53 ? 1 : w + 1)}
+            className="p-1 rounded hover:bg-accent transition-colors"
+            title="Volgende week"
+          >
+            <ChevronRight className="h-4 w-4" />
+          </button>
+          {!isCurrentWeek && (
+            <button
+              onClick={() => setSelectedWeek(initialWeek)}
+              className="ml-1 px-2 py-0.5 rounded-full text-xs font-medium bg-accent hover:bg-accent/80 transition-colors"
+            >
+              Vandaag
+            </button>
+          )}
+        </div>
+        <div className="flex items-center gap-3 text-xs text-muted-foreground shrink-0">
           <span>{openCount} open</span>
           {doneCount > 0 && <span className="text-green-600">{doneCount} afgerond</span>}
         </div>
