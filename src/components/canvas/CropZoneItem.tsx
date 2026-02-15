@@ -1,10 +1,30 @@
 "use client";
 
 import { Rect, Text, Group, Circle } from "react-konva";
-import { CropZone } from "@/lib/garden/types";
+import { CropZone, ZoneStatus } from "@/lib/garden/types";
 import { PlantData } from "@/lib/plants/types";
 import { snapToGrid, calculatePlantPositions, isFruitTree } from "@/lib/garden/helpers";
 import { useMemo } from "react";
+
+const STATUS_COLORS: Record<ZoneStatus, string> = {
+  "planned": "#9ca3af",
+  "sown-indoor": "#22c55e",
+  "sown-outdoor": "#10b981",
+  "transplanted": "#3b82f6",
+  "growing": "#16a34a",
+  "harvesting": "#f97316",
+  "done": "#6b7280",
+};
+
+const STATUS_LABELS: Record<ZoneStatus, string> = {
+  "planned": "",
+  "sown-indoor": "Gezaaid",
+  "sown-outdoor": "Gezaaid",
+  "transplanted": "Geplant",
+  "growing": "Groeit",
+  "harvesting": "Oogst",
+  "done": "Klaar",
+};
 
 interface CropZoneItemProps {
   zone: CropZone;
@@ -166,6 +186,29 @@ export default function CropZoneItem({
                 listening={false}
               />
             </>
+          )}
+        </>
+      )}
+
+      {/* Status indicator */}
+      {zone.status && zone.status !== "planned" && STATUS_LABELS[zone.status] && (
+        <>
+          <Circle
+            x={isTree ? w / 2 - Math.min(w, h) / 2 + 6 : 6}
+            y={isTree ? h / 2 - Math.min(w, h) / 2 + 6 : (tooSmall ? -6 : h - 6)}
+            radius={4}
+            fill={STATUS_COLORS[zone.status]}
+            listening={false}
+          />
+          {!tooSmall && !isTree && w > 80 && (
+            <Text
+              text={STATUS_LABELS[zone.status]}
+              x={14}
+              y={h - 10}
+              fontSize={8}
+              fill={STATUS_COLORS[zone.status]}
+              listening={false}
+            />
           )}
         </>
       )}

@@ -1,0 +1,57 @@
+{
+  "solanaceae": {
+    "name": "Nachtschadeachtigen",
+    "rotationYears": 4,
+    "plants": ["tomaat", "paprika", "aubergine", "aardappel"]
+  },
+  "brassicaceae": {
+    "name": "Kruisbloemigen",
+    "rotationYears": 3,
+    "plants": ["kool", "broccoli", "bloemkool", "radijs", "rodekool", "savooiekool", "boerenkool", "spruitjes", "chinesekool", "wittekool", "rucola", "tuinkers", "raapstelen"]
+  },
+  "fabaceae": {
+    "name": "Vlinderbloemigen",
+    "rotationYears": 2,
+    "plants": ["boon", "erwt", "tuinboon", "doperwt", "suikererwt", "sugarsnap"]
+  },
+  "apiaceae": {
+    "name": "Schermbloemigen",
+    "rotationYears": 3,
+    "plants": ["wortel", "selderie", "pastinaak", "knolselderij", "bleekselderij", "venkel", "peterselie", "dille", "koriander", "kervel", "maggiplant"]
+  },
+  "cucurbitaceae": {
+    "name": "Komkommerachtigen",
+    "rotationYears": 3,
+    "plants": ["komkommer", "courgette", "pompoen"]
+  },
+  "alliaceae": {
+    "name": "Lookachtigen",
+    "rotationYears": 2,
+    "plants": ["ui", "prei", "knoflook", "bieslook"]
+  },
+  "asteraceae": {
+    "name": "Composieten",
+    "rotationYears": 2,
+    "plants": ["sla", "andijvie", "schorseneer", "dragon", "dahlia", "zonnebloem"]
+  },
+  "chenopodiaceae": {
+    "name": "Ganzenvoetachtigen",
+    "rotationYears": 3,
+    "plants": ["bieten", "spinazie", "snijbiet", "rodebiet"]
+  },
+  "poaceae": {
+    "name": "Grassen",
+    "rotationYears": 1,
+    "plants": ["mais"]
+  },
+  "rosaceae": {
+    "name": "Rozenfamilie",
+    "rotationYears": 5,
+    "plants": ["aardbei", "framboos", "appelboom", "perenboom", "kersenboom", "pruimenboom", "roos"]
+  },
+  "lamiaceae": {
+    "name": "Lipbloemigen",
+    "rotationYears": 2,
+    "plants": ["basilicum", "tijm", "rozemarijn", "munt", "oregano", "salie", "marjolein", "citroenmelisse", "bonenkruid"]
+  }
+}

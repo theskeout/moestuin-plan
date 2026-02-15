@@ -348,10 +348,12 @@ export function useGarden(initialGarden?: Garden) {
 
   return {
     garden,
+    setGarden,
     selectedId,
     selectedType,
     select,
     hasChanges,
+    setHasChanges,
     addZone,
     moveZone,
     transformZone,

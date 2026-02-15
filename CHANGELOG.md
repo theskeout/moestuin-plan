@@ -1,5 +1,28 @@
 # Changelog — Moestuin Planner
 
+## 2026-02-15
+
+### Planning feature
+- Nieuwe "Planning" tab in rechter sidebar met actuele taken per maand
+- Full-screen planningsweergave met 5 sub-tabs:
+  - Kalender: 12-maanden grid per gewas met zaai/oogst balken
+  - Taken: takenlijst met checkboxes, filters per type
+  - Ontdek: alle 86+ gewassen doorzoekbaar als kalender
+  - Rotatie: gewasrotatie-controle met multi-jaar archief
+  - Regio: KNMI-weerstation instellen via postcode of dropdown
+- Zone status tracking: gepland → gezaaid → groeit → oogst → klaar
+- Status indicator (gekleurde stip) op canvas per zone
+- Onderhoudstaken per gewastype (dieven, bemesten, snoeien, etc.)
+- Ziekte/plaag-waarschuwingen per seizoen (phytophthora, koolwitje, etc.)
+- Gewasrotatie: 11 botanische families met rotatiejaren
+- Seizoen archiveren voor rotatie-controle over meerdere jaren
+- 37 KNMI-weerstations met vorstdata voor regio-correctie zaaitijden
+- Postcode-lookup voor automatische stationselectie
+- Watergift-schema per gewas (laag/gemiddeld/hoog)
+- Mobiel: floating planning-knop opent full-screen weergave
+- Database: user_settings + season_archives tabellen (Supabase)
+- Gasten: planning werkt volledig via localStorage
+
 ## 2026-02-14 (nacht)
 
 ### Canvas zoeken & fruitbomen

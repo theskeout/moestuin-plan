@@ -209,3 +209,37 @@ $$;
 insert into garden_members (garden_id, user_id, role)
 select id, user_id, 'owner' from gardens
 where id not in (select garden_id from garden_members);
+
+-- ============================================================
+-- Planning: regio-instellingen & seizoen-archief
+-- ============================================================
+
+-- Regio-instellingen per gebruiker
+create table user_settings (
+  user_id uuid primary key references auth.users(id) on delete cascade,
+  knmi_station_code text,
+  postcode text,
+  frost_offset_days integer default 0,
+  updated_at timestamptz default now()
+);
+
+alter table user_settings enable row level security;
+
+create policy "Gebruikers beheren eigen instellingen"
+  on user_settings for all using (auth.uid() = user_id);
+
+-- Seizoen-archief voor gewasrotatie
+create table season_archives (
+  id uuid primary key default gen_random_uuid(),
+  garden_id text references gardens(id) on delete cascade not null,
+  season_year integer not null,
+  zones jsonb not null default '[]',
+  created_at timestamptz default now(),
+  unique (garden_id, season_year)
+);
+
+alter table season_archives enable row level security;
+
+create policy "Leden beheren seizoen-archieven"
+  on season_archives for all
+  using (garden_id in (select my_garden_ids()));

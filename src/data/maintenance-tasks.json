@@ -1,0 +1,417 @@
+{
+  "plantTypes": {
+    "tomato-type": {
+      "plants": ["tomaat"],
+      "tasks": [
+        {
+          "id": "dieven",
+          "name": "Dieven verwijderen",
+          "frequency": "weekly",
+          "phase": "growing",
+          "description": "Verwijder zijtakken uit bladoksels voor betere vruchtzetting"
+        },
+        {
+          "id": "tomaat-bemesten",
+          "name": "Bemesten",
+          "frequency": "biweekly",
+          "phase": "growing",
+          "description": "Tomatenmest elke 2 weken tijdens groei en bloei"
+        },
+        {
+          "id": "tomaat-toppen",
+          "name": "Toppen",
+          "frequency": "once",
+          "phase": "growing",
+          "months": [7, 8],
+          "description": "Knip de groeipunt af na 5-6 trossen voor betere rijping"
+        },
+        {
+          "id": "tomaat-opbinden",
+          "name": "Opbinden",
+          "frequency": "weekly",
+          "phase": "growing",
+          "description": "Bind stengels op aan stok of touw"
+        }
+      ],
+      "warnings": [
+        {
+          "id": "phytophthora",
+          "name": "Phytophthora",
+          "months": [7, 8, 9],
+          "description": "Let op bruine vlekken op bladeren en stengels bij vochtig weer. Verwijder aangetaste delen direct."
+        },
+        {
+          "id": "neusrot",
+          "name": "Neusrot",
+          "months": [6, 7, 8],
+          "description": "Zwarte plekken onder de vrucht? Onregelmatig water geven en calciumgebrek. Regel gelijkmatig water."
+        }
+      ]
+    },
+    "potato-type": {
+      "plants": ["aardappel"],
+      "tasks": [
+        {
+          "id": "aanaarden",
+          "name": "Aanaarden",
+          "frequency": "biweekly",
+          "phase": "growing",
+          "description": "Schep aarde op rond de stengels wanneer planten 20cm hoog zijn"
+        },
+        {
+          "id": "aardappel-rooien",
+          "name": "Rooien",
+          "frequency": "once",
+          "phase": "harvesting",
+          "description": "Graaf voorzichtig aardappelen op als loof afsterft"
+        }
+      ],
+      "warnings": [
+        {
+          "id": "aardappelziekte",
+          "name": "Phytophthora (aardappelziekte)",
+          "months": [6, 7, 8, 9],
+          "description": "Bruine vlekken op bladeren bij nat weer. Preventief: niet 's avonds beregenen, aangetast loof verwijderen."
+        },
+        {
+          "id": "coloradokever",
+          "name": "Coloradokever",
+          "months": [5, 6, 7],
+          "description": "Geel-zwart gestreepte kevers en oranje larven op bladeren. Handmatig verwijderen."
+        }
+      ]
+    },
+    "lettuce-type": {
+      "plants": ["sla", "andijvie", "veldsla", "rucola", "winterpostelein", "raapstelen"],
+      "tasks": [
+        {
+          "id": "sla-dunnen",
+          "name": "Uitdunnen",
+          "frequency": "once",
+          "phase": "growing",
+          "description": "Dun zaailingen uit tot juiste plantafstand als ze 3-4cm hoog zijn"
+        },
+        {
+          "id": "sla-water",
+          "name": "Regelmatig water geven",
+          "frequency": "daily",
+          "phase": "growing",
+          "description": "Houd de grond gelijkmatig vochtig om schieten te voorkomen"
+        }
+      ],
+      "warnings": [
+        {
+          "id": "slakken",
+          "name": "Slakken",
+          "months": [4, 5, 6, 7, 8, 9],
+          "description": "Slakken vreten aan bladeren, vooral 's nachts en bij nat weer. Gebruik slakkenkorrels of biervallen."
+        },
+        {
+          "id": "sla-schieten",
+          "name": "Schieten",
+          "months": [6, 7, 8],
+          "description": "Bij hitte en droogte gaat sla schieten (bloeien). Oogst op tijd en zorg voor voldoende water."
+        }
+      ]
+    },
+    "brassica-type": {
+      "plants": ["kool", "broccoli", "bloemkool", "rodekool", "savooiekool", "boerenkool", "spruitjes", "chinesekool", "wittekool"],
+      "tasks": [
+        {
+          "id": "kool-bemesten",
+          "name": "Bijmesten",
+          "frequency": "monthly",
+          "phase": "growing",
+          "description": "Koolgewassen zijn zware feeders — geef maandelijks organische mest"
+        },
+        {
+          "id": "kool-netje",
+          "name": "Insectennet controleren",
+          "frequency": "weekly",
+          "phase": "growing",
+          "description": "Controleer of het insectennet nog goed sluit tegen koolwitjes"
+        }
+      ],
+      "warnings": [
+        {
+          "id": "koolwitje",
+          "name": "Koolwitje",
+          "months": [5, 6, 7, 8, 9],
+          "description": "Witte vlinders leggen eitjes op koolbladeren. Rupsen vreten het blad kaal. Gebruik insectennet."
+        },
+        {
+          "id": "koolvlieg",
+          "name": "Koolvlieg",
+          "months": [4, 5, 6],
+          "description": "Larven vreten aan wortels. Gebruik insectennet of kraag rond de stengel."
+        }
+      ]
+    },
+    "legume-type": {
+      "plants": ["boon", "erwt", "tuinboon", "doperwt", "suikererwt", "sugarsnap"],
+      "tasks": [
+        {
+          "id": "boon-steunen",
+          "name": "Steunmateriaal plaatsen",
+          "frequency": "once",
+          "phase": "growing",
+          "description": "Plaats stokken, gaas of klimrekken als planten 15cm hoog zijn"
+        },
+        {
+          "id": "boon-plukken",
+          "name": "Regelmatig plukken",
+          "frequency": "biweekly",
+          "phase": "harvesting",
+          "description": "Pluk regelmatig om productie te stimuleren. Niet te lang laten hangen."
+        }
+      ],
+      "warnings": [
+        {
+          "id": "bonenvlieg",
+          "name": "Bonenvlieg",
+          "months": [5, 6],
+          "description": "Larven vreten in zaden. Zaai niet te vroeg in koude grond."
+        },
+        {
+          "id": "zwartebonenluis",
+          "name": "Zwarte bonenluis",
+          "months": [5, 6, 7],
+          "description": "Zwarte luizen op toppen van tuinbonen. Knip de top af als planten in bloei staan."
+        }
+      ]
+    },
+    "cucurbit-type": {
+      "plants": ["komkommer", "courgette", "pompoen"],
+      "tasks": [
+        {
+          "id": "cucurbit-bemesten",
+          "name": "Wekelijks bemesten",
+          "frequency": "weekly",
+          "phase": "growing",
+          "description": "Geef wekelijks vloeibare mest tijdens groei en bloei"
+        },
+        {
+          "id": "cucurbit-snoeien",
+          "name": "Ranken leiden",
+          "frequency": "weekly",
+          "phase": "growing",
+          "description": "Lei ranken de goede richting op en snoei dode bladeren weg"
+        },
+        {
+          "id": "cucurbit-oogsten",
+          "name": "Op tijd oogsten",
+          "frequency": "biweekly",
+          "phase": "harvesting",
+          "description": "Oogst courgettes jong (20-25cm), komkommers voor ze geel worden"
+        }
+      ],
+      "warnings": [
+        {
+          "id": "meeldauw",
+          "name": "Echte meeldauw",
+          "months": [7, 8, 9],
+          "description": "Wit poeder op bladeren. Verwijder aangetaste bladeren en zorg voor luchtcirculatie."
+        }
+      ]
+    },
+    "allium-type": {
+      "plants": ["ui", "prei", "knoflook", "bieslook"],
+      "tasks": [
+        {
+          "id": "allium-wieden",
+          "name": "Wieden",
+          "frequency": "weekly",
+          "phase": "growing",
+          "description": "Houd het bed onkruidvrij — uien concurreren slecht met onkruid"
+        },
+        {
+          "id": "prei-aanaarden",
+          "name": "Prei aanaarden",
+          "frequency": "monthly",
+          "phase": "growing",
+          "description": "Aard prei aan voor meer wit (alleen bij prei)"
+        }
+      ],
+      "warnings": [
+        {
+          "id": "preimot",
+          "name": "Preimot",
+          "months": [5, 6, 7, 8, 9, 10],
+          "description": "Larven boren in het hart van de prei. Gebruik insectennet van mei t/m oktober."
+        },
+        {
+          "id": "uienvlieg",
+          "name": "Uienvlieg",
+          "months": [4, 5, 6],
+          "description": "Maden vreten in de bol. Gebruik insectennet of combineer met wortelen."
+        }
+      ]
+    },
+    "root-vegetable-type": {
+      "plants": ["wortel", "bieten", "pastinaak", "schorseneer", "rodebiet", "knolselderij"],
+      "tasks": [
+        {
+          "id": "root-dunnen",
+          "name": "Uitdunnen",
+          "frequency": "once",
+          "phase": "growing",
+          "description": "Dun zaailingen uit tot juiste afstand als ze 5cm hoog zijn"
+        },
+        {
+          "id": "root-wieden",
+          "name": "Wieden en schoffelen",
+          "frequency": "weekly",
+          "phase": "growing",
+          "description": "Houd het bed onkruidvrij door regelmatig te schoffelen"
+        }
+      ],
+      "warnings": [
+        {
+          "id": "wortelvlieg",
+          "name": "Wortelvlieg",
+          "months": [5, 6, 7, 8],
+          "description": "Maden vreten gangen in wortelen. Gebruik insectennet of combineer met uien."
+        }
+      ]
+    },
+    "herb-type": {
+      "plants": ["basilicum", "peterselie", "tijm", "rozemarijn", "munt", "oregano", "salie", "koriander", "dragon", "kervel", "maggiplant", "bonenkruid", "marjolein", "citroenmelisse", "dille"],
+      "tasks": [
+        {
+          "id": "kruid-oogsten",
+          "name": "Regelmatig oogsten/toppen",
+          "frequency": "weekly",
+          "phase": "growing",
+          "description": "Knip regelmatig toppen af om vertakking en nieuwe groei te stimuleren"
+        },
+        {
+          "id": "kruid-bloei",
+          "name": "Bloemen verwijderen",
+          "frequency": "weekly",
+          "phase": "growing",
+          "description": "Verwijder bloemknoppen om bladproductie te behouden (behalve bij sierwaarde)"
+        }
+      ],
+      "warnings": []
+    },
+    "fruit-tree-type": {
+      "plants": ["appelboom", "perenboom", "kersenboom", "pruimenboom", "vijgenboom"],
+      "tasks": [
+        {
+          "id": "boom-snoeien",
+          "name": "Wintersnoeien",
+          "frequency": "yearly",
+          "months": [1, 2, 3],
+          "description": "Snoei in de winter voor een open kroon. Verwijder kruisende en dode takken."
+        },
+        {
+          "id": "boom-zomersnoei",
+          "name": "Zomersnoei",
+          "frequency": "yearly",
+          "months": [6, 7],
+          "description": "Verwijder waterlot en te dicht groeiende scheuten"
+        },
+        {
+          "id": "boom-bemesten",
+          "name": "Bemesten",
+          "frequency": "yearly",
+          "months": [3, 4],
+          "description": "Geef in het voorjaar compost of organische mest rond de stam"
+        }
+      ],
+      "warnings": [
+        {
+          "id": "schurft",
+          "name": "Schurft",
+          "months": [4, 5, 6],
+          "description": "Bruine korsten op vruchten en bladeren. Snoei voor goede luchtcirculatie."
+        },
+        {
+          "id": "fruitmot",
+          "name": "Fruitmot",
+          "months": [6, 7, 8],
+          "description": "Maden in appels en peren. Gebruik feromoonvallen en raap aangetaste vruchten op."
+        }
+      ]
+    },
+    "soft-fruit-type": {
+      "plants": ["aardbei", "framboos", "bosbes", "kruisbes", "rodebes", "zwartebes", "druif", "vijg", "kiwi"],
+      "tasks": [
+        {
+          "id": "kleinfruit-snoeien",
+          "name": "Snoeien na oogst",
+          "frequency": "yearly",
+          "months": [8, 9, 10],
+          "description": "Snoei afgedragen takken weg (frambozen, bessen) na de oogst"
+        },
+        {
+          "id": "kleinfruit-mulchen",
+          "name": "Mulchen",
+          "frequency": "yearly",
+          "months": [3, 4],
+          "description": "Breng mulch aan rond planten voor vochtbehoud en onkruidonderdrukking"
+        },
+        {
+          "id": "aardbei-uitlopers",
+          "name": "Uitlopers verwijderen",
+          "frequency": "monthly",
+          "phase": "growing",
+          "description": "Verwijder uitlopers (slingers) tenzij je wilt vermeerderen"
+        }
+      ],
+      "warnings": [
+        {
+          "id": "vogels",
+          "name": "Vogels",
+          "months": [5, 6, 7, 8],
+          "description": "Vogels pikken rijpe bessen en aardbeien aan. Gebruik een vogelnet."
+        },
+        {
+          "id": "grauwe-schimmel",
+          "name": "Grauwe schimmel (Botrytis)",
+          "months": [5, 6, 7],
+          "description": "Grijze schimmel op aardbeien bij nat weer. Zorg voor luchtcirculatie en verwijder rotte vruchten."
+        }
+      ]
+    },
+    "ornamental-type": {
+      "plants": ["dahlia", "roos", "tulp", "narcis", "krokus", "lavendel", "zonnebloem", "hyacint"],
+      "tasks": [
+        {
+          "id": "sier-deadheaden",
+          "name": "Uitgebloeide bloemen verwijderen",
+          "frequency": "weekly",
+          "phase": "growing",
+          "description": "Knip uitgebloeide bloemen af om herbloei te stimuleren"
+        },
+        {
+          "id": "dahlia-opgraven",
+          "name": "Knollen opgraven (dahlia)",
+          "frequency": "yearly",
+          "months": [10, 11],
+          "description": "Graaf dahliaknollen op na eerste vorst, bewaar vorstvrij"
+        },
+        {
+          "id": "bollen-planten",
+          "name": "Bollen planten",
+          "frequency": "yearly",
+          "months": [9, 10, 11],
+          "description": "Plant tulpen, narcissen, krokussen en hyacinten in het najaar"
+        }
+      ],
+      "warnings": [
+        {
+          "id": "bladluis-rozen",
+          "name": "Bladluis",
+          "months": [4, 5, 6, 7],
+          "description": "Groene of zwarte luizen op jonge scheuten. Spuit af met water of gebruik lieveheersbeestjes."
+        }
+      ]
+    }
+  },
+  "wateringDefaults": {
+    "laag": { "frequencyDays": 7, "description": "1x per week bij droogte" },
+    "gemiddeld": { "frequencyDays": 3, "description": "2-3x per week" },
+    "hoog": { "frequencyDays": 1, "description": "Dagelijks bij warm weer" }
+  }
+}

@@ -12,6 +12,7 @@ import CanvasToolbar from "@/components/canvas/CanvasToolbar";
 import UserMenu from "@/components/auth/UserMenu";
 import { useGarden } from "@/lib/hooks/useGarden";
 import { useAutoSave } from "@/lib/hooks/useAutoSave";
+import { usePlanning } from "@/lib/hooks/usePlanning";
 import { useAuth } from "@/components/auth/AuthProvider";
 import { loadGardensAsync, exportGarden, importGarden } from "@/lib/garden/storage";
 import { getPlant, refreshPlantCache } from "@/lib/plants/catalog";
@@ -19,10 +20,13 @@ import { setStorageBackend } from "@/lib/storage";
 import { checkAllCompanions, CompanionCheck } from "@/lib/plants/companions";
 import { findNearbyZones, calculatePlantPositions } from "@/lib/garden/helpers";
 import { PlantData } from "@/lib/plants/types";
+import { ZoneStatus } from "@/lib/garden/types";
 import { createRectangleCorners, generateId } from "@/lib/garden/helpers";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import MemberManager from "@/components/garden/MemberManager";
-import { ArrowLeft, Move, Lock, Unlock, Check, Download, Upload, Pencil, Search, X, Plus, ZoomIn, ZoomOut, Grid3X3, Trash2, SquarePen, Users, Copy } from "lucide-react";
+import PlanningTab from "@/components/planning/PlanningTab";
+import PlanningView from "@/components/planning/PlanningView";
+import { ArrowLeft, Move, Lock, Unlock, Check, Download, Upload, Pencil, Search, X, Plus, ZoomIn, ZoomOut, Grid3X3, Trash2, SquarePen, Users, Copy, Calendar } from "lucide-react";
 
 const GardenCanvas = dynamic(
   () => import("@/components/canvas/GardenCanvas"),
@@ -196,11 +200,15 @@ function TuinContent() {
   const newGardenIdRef = useRef(generateId());
 
   const {
-    garden, selectedId, selectedType, select, hasChanges,
+    garden, setGarden, selectedId, selectedType, select, hasChanges, setHasChanges,
     addZone, moveZone, transformZone, removeZone, duplicateZone, toggleZoneLock, updateZoneInfo,
     addStructure, moveStructure, transformStructure, removeStructure, duplicateStructure, toggleStructureLock,
     updateShape, updateGardenSize, save, loadGarden,
   } = useGarden();
+
+  const [planningViewOpen, setPlanningViewOpen] = useState(false);
+
+  const planning = usePlanning(garden, setGarden, setHasChanges);
 
   // Async garden loading via storage backend (draait eenmalig na auth)
   useEffect(() => {
@@ -617,6 +625,27 @@ function TuinContent() {
                   </div>
                 </div>
 
+                {/* Zone status */}
+                <div className="space-y-2">
+                  <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide">Status</p>
+                  <select
+                    value={selectedZoneData.zone.status || "planned"}
+                    onChange={(e) => {
+                      if (!selectedId) return;
+                      planning.updateZoneStatus(selectedId, e.target.value as ZoneStatus);
+                    }}
+                    className="w-full h-9 rounded-md border border-input bg-background px-3 text-sm"
+                  >
+                    <option value="planned">Gepland</option>
+                    <option value="sown-indoor">Voorgezaaid (binnen)</option>
+                    <option value="sown-outdoor">Gezaaid (buiten)</option>
+                    <option value="transplanted">Uitgeplant</option>
+                    <option value="growing">Groeit</option>
+                    <option value="harvesting">Oogsten</option>
+                    <option value="done">Klaar</option>
+                  </select>
+                </div>
+
                 <div className="h-px bg-border" />
 
                 <PlantInfo plant={selectedZoneData.plantData} onClose={() => {}} compact />
@@ -753,6 +782,7 @@ function TuinContent() {
             <div className="p-3 pb-0">
               <TabsList className="w-full">
                 <TabsTrigger value="toevoegen" className="flex-1">Toevoegen</TabsTrigger>
+                <TabsTrigger value="planning" className="flex-1">Planning</TabsTrigger>
               </TabsList>
             </div>
             <TabsContent value="toevoegen" className="flex flex-col flex-1 overflow-hidden mt-0">
@@ -767,6 +797,17 @@ function TuinContent() {
                   <PlantInfo plant={sidebarPlant} onClose={() => setSidebarPlant(null)} />
                 </div>
               )}
+            </TabsContent>
+            <TabsContent value="planning" className="flex flex-col flex-1 overflow-hidden mt-0">
+              <div className="flex-1 overflow-y-auto p-4 pt-3">
+                <PlanningTab
+                  currentTasks={planning.currentTasks}
+                  upcomingTasks={planning.upcomingTasks}
+                  rotationWarnings={planning.rotationWarnings}
+                  onCompleteTask={planning.completeTask}
+                  onOpenFullView={() => setPlanningViewOpen(true)}
+                />
+              </div>
             </TabsContent>
           </Tabs>
         </aside>
@@ -797,6 +838,15 @@ function TuinContent() {
           title="Gewas of structuur toevoegen"
         >
           <Plus className="h-5 w-5" />
+        </button>
+
+        {/* Floating planning-knop mobiel */}
+        <button
+          onClick={() => setPlanningViewOpen(true)}
+          className="fixed top-[7.5rem] right-3 z-40 md:hidden w-11 h-11 bg-white text-foreground border rounded-full shadow-lg flex items-center justify-center active:scale-95 transition-transform"
+          title="Planning"
+        >
+          <Calendar className="h-5 w-5" />
         </button>
 
         {/* Mobiel: bottom sheet voor toevoegen */}
@@ -1085,6 +1135,23 @@ function TuinContent() {
           )}
         </MobileBottomSheet>
       </div>
+
+      {/* Planning full-screen view */}
+      <PlanningView
+        open={planningViewOpen}
+        onClose={() => setPlanningViewOpen(false)}
+        garden={garden}
+        currentTasks={planning.currentTasks}
+        rotationWarnings={planning.rotationWarnings}
+        archives={planning.archives}
+        settings={planning.settings}
+        onCompleteTask={planning.completeTask}
+        onArchiveSeason={planning.archiveSeason}
+        onDeleteArchive={planning.deleteArchive}
+        onSaveSettings={planning.updateSettings}
+        onSelectZone={(id) => select(id, "zone")}
+        onAddPlant={(plantId) => addZone(plantId, garden.widthCm / 2, garden.heightCm / 2)}
+      />
 
       {/* Member manager dialog */}
       {user && (

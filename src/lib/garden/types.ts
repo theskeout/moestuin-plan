@@ -28,6 +28,23 @@ export interface Structure {
   locked: boolean;
 }
 
+export type ZoneStatus =
+  | "planned"        // Gepland, nog niet gezaaid
+  | "sown-indoor"    // Voorgezaaid onder glas
+  | "sown-outdoor"   // Buiten gezaaid
+  | "transplanted"   // Uitgeplant
+  | "growing"        // Groeit
+  | "harvesting"     // Aan het oogsten
+  | "done";          // Klaar dit seizoen
+
+export interface ZoneEvent {
+  id: string;
+  type: "sown" | "transplanted" | "harvested" | "task-done" | "note";
+  date: string;      // ISO date
+  taskId?: string;
+  notes?: string;
+}
+
 export interface CropZone {
   id: string;
   plantId: string; // verwijst naar PlantData.id
@@ -39,7 +56,10 @@ export interface CropZone {
   locked: boolean;
   label?: string;  // bijv. "Platte peterselie" als verfijning
   notes?: string;  // vrije opmerkingen
-  // TODO: plantedAt?: string (ISO datum) — wanneer geplant, voor reminders/oogst-notificaties
+  status?: ZoneStatus;         // default "planned"
+  season?: number;             // jaar, bijv. 2026
+  events?: ZoneEvent[];        // lifecycle events
+  completedTasks?: string[];   // task IDs afgerond dit seizoen
 }
 
 // Tuin delen — geïmplementeerd via garden_members en garden_invites tabellen
