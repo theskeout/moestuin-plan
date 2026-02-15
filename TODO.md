@@ -3,10 +3,10 @@
 ## Actief / Korte termijn
 
 ### UX fixes
-- [ ] Tuin verwijderen: bevestigingsdialoog (gaat nu te makkelijk per ongeluk)
+- [x] Tuin verwijderen: bevestigingsdialoog
 - [ ] Geplant-datum per zone (voor reminders en oogst-notificaties)
-- [ ] Compostbak als structuurtype toevoegen
-- [ ] Copy-paste functie voor zones en structuren op canvas
+- [x] Compostbak als structuurtype toevoegen
+- [x] Copy-paste (dupliceer) functie voor zones en structuren
 
 ### Database & Accounts
 - [x] Supabase project opzetten
@@ -41,8 +41,8 @@
 ## Ideeën / Lange termijn
 
 ### Delen & samenwerken
-- [ ] Tuin delen: uitnodigingen per email zodat familieleden kunnen meebeheren
-- [ ] Supabase RLS policies voor gedeelde tuinen, invite tabel
+- [x] Tuin delen: uitnodigingen per email / link
+- [x] Supabase RLS policies voor gedeelde tuinen, invite tabel
 - [ ] Tuin delen via link (read-only)
 - [ ] PDF export van tuinontwerp
 - [ ] Print-vriendelijke weergave

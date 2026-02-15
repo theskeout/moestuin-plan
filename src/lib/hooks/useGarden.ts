@@ -104,6 +104,26 @@ export function useGarden(initialGarden?: Garden) {
     setHasChanges(true);
   }, []);
 
+  const duplicateZone = useCallback((id: string) => {
+    setGarden((prev) => {
+      const zone = prev.zones.find((z) => z.id === id);
+      if (!zone) return prev;
+      const newZone: CropZone = {
+        ...zone,
+        id: generateId(),
+        x: snapToGrid(zone.x + 20),
+        y: snapToGrid(zone.y + 20),
+        locked: false,
+      };
+      return {
+        ...prev,
+        zones: [...prev.zones, newZone],
+        updatedAt: new Date().toISOString(),
+      };
+    });
+    setHasChanges(true);
+  }, []);
+
   const removeZone = useCallback((id: string) => {
     setGarden((prev) => ({
       ...prev,
@@ -197,6 +217,26 @@ export function useGarden(initialGarden?: Garden) {
               }
             : s
         ),
+        updatedAt: new Date().toISOString(),
+      };
+    });
+    setHasChanges(true);
+  }, []);
+
+  const duplicateStructure = useCallback((id: string) => {
+    setGarden((prev) => {
+      const struct = prev.structures.find((s) => s.id === id);
+      if (!struct) return prev;
+      const newStruct: Structure = {
+        ...struct,
+        id: generateId(),
+        x: snapToGrid(struct.x + 20),
+        y: snapToGrid(struct.y + 20),
+        locked: false,
+      };
+      return {
+        ...prev,
+        structures: [...prev.structures, newStruct],
         updatedAt: new Date().toISOString(),
       };
     });
@@ -316,12 +356,14 @@ export function useGarden(initialGarden?: Garden) {
     moveZone,
     transformZone,
     removeZone,
+    duplicateZone,
     toggleZoneLock,
     updateZoneInfo,
     addStructure,
     moveStructure,
     transformStructure,
     removeStructure,
+    duplicateStructure,
     toggleStructureLock,
     updateShape,
     updateGardenInfo,

@@ -23,6 +23,7 @@ export default function Home() {
   const [showSetup, setShowSetup] = useState(false);
   const [loading, setLoading] = useState(true);
   const [acceptingInvite, setAcceptingInvite] = useState<string | null>(null);
+  const [deleteConfirm, setDeleteConfirm] = useState<string | null>(null);
 
   const loadData = useCallback(async () => {
     setLoading(true);
@@ -64,6 +65,11 @@ export default function Home() {
   };
 
   const handleDelete = async (id: string) => {
+    if (deleteConfirm !== id) {
+      setDeleteConfirm(id);
+      return;
+    }
+    setDeleteConfirm(null);
     await deleteGardenAsync(id);
     const data = await loadGardensAsync();
     setGardens(data);
@@ -178,14 +184,35 @@ export default function Home() {
                             </p>
                           </button>
                           {g.role !== "member" && (
-                            <Button
-                              variant="ghost"
-                              size="icon"
-                              onClick={() => handleDelete(g.id)}
-                              className="text-muted-foreground hover:text-destructive"
-                            >
-                              <Trash2 className="h-4 w-4" />
-                            </Button>
+                            deleteConfirm === g.id ? (
+                              <div className="flex items-center gap-1 shrink-0">
+                                <Button
+                                  variant="destructive"
+                                  size="sm"
+                                  onClick={() => handleDelete(g.id)}
+                                  className="text-xs h-7"
+                                >
+                                  Verwijder
+                                </Button>
+                                <Button
+                                  variant="ghost"
+                                  size="sm"
+                                  onClick={() => setDeleteConfirm(null)}
+                                  className="text-xs h-7"
+                                >
+                                  Annuleer
+                                </Button>
+                              </div>
+                            ) : (
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                onClick={() => handleDelete(g.id)}
+                                className="text-muted-foreground hover:text-destructive"
+                              >
+                                <Trash2 className="h-4 w-4" />
+                              </Button>
+                            )
                           )}
                         </div>
                       ))}

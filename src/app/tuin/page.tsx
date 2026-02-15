@@ -22,7 +22,7 @@ import { PlantData } from "@/lib/plants/types";
 import { createRectangleCorners, generateId } from "@/lib/garden/helpers";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import MemberManager from "@/components/garden/MemberManager";
-import { ArrowLeft, Move, Lock, Unlock, Check, Download, Upload, Pencil, Search, X, Plus, ZoomIn, ZoomOut, Grid3X3, Trash2, SquarePen, Users } from "lucide-react";
+import { ArrowLeft, Move, Lock, Unlock, Check, Download, Upload, Pencil, Search, X, Plus, ZoomIn, ZoomOut, Grid3X3, Trash2, SquarePen, Users, Copy } from "lucide-react";
 
 const GardenCanvas = dynamic(
   () => import("@/components/canvas/GardenCanvas"),
@@ -30,7 +30,7 @@ const GardenCanvas = dynamic(
 );
 
 const STRUCTURE_LABELS: Record<string, string> = {
-  kas: "Kas", grondbak: "Grondbak", pad: "Pad", schuur: "Schuur", hek: "Hek", boom: "Boom",
+  kas: "Kas", grondbak: "Grondbak", pad: "Pad", schuur: "Schuur", hek: "Hek", boom: "Boom", compostbak: "Compostbak",
 };
 
 /* ---------- Mobiel: Bottom Sheet met swipe gestures ---------- */
@@ -197,8 +197,8 @@ function TuinContent() {
 
   const {
     garden, selectedId, selectedType, select, hasChanges,
-    addZone, moveZone, transformZone, removeZone, toggleZoneLock, updateZoneInfo,
-    addStructure, moveStructure, transformStructure, removeStructure, toggleStructureLock,
+    addZone, moveZone, transformZone, removeZone, duplicateZone, toggleZoneLock, updateZoneInfo,
+    addStructure, moveStructure, transformStructure, removeStructure, duplicateStructure, toggleStructureLock,
     updateShape, updateGardenSize, save, loadGarden,
   } = useGarden();
 
@@ -375,6 +375,14 @@ function TuinContent() {
                 className="h-8 w-20 text-sm"
               />
               <span className="text-sm text-muted-foreground">cm</span>
+              <Button
+                variant={editingCorners ? "secondary" : "outline"}
+                size="sm"
+                onClick={() => setEditingCorners(!editingCorners)}
+              >
+                <Move className="h-3.5 w-3.5 mr-1.5" />
+                {editingCorners ? "Klaar" : "Hoeken"}
+              </Button>
               <Button size="sm" variant="secondary" onClick={() => {
                 const w = Math.max(50, Number(editWidth) || garden.widthCm);
                 const h = Math.max(50, Number(editHeight) || garden.heightCm);
@@ -425,15 +433,6 @@ function TuinContent() {
           )}
           <UserMenu />
           <div className="w-px h-6 bg-border hidden md:block" />
-          <Button
-            variant={editingCorners ? "secondary" : "outline"}
-            size="sm"
-            onClick={() => setEditingCorners(!editingCorners)}
-            className="hidden md:inline-flex"
-          >
-            <Move className="h-3.5 w-3.5 mr-1.5" />
-            {editingCorners ? "Klaar" : "Hoeken aanpassen"}
-          </Button>
           <Button variant="ghost" size="icon" onClick={handleExport} title="Exporteer JSON" className="hidden md:inline-flex">
             <Download className="h-4 w-4" />
           </Button>
@@ -527,6 +526,13 @@ function TuinContent() {
                     {selectedZoneData.plantData.name}
                   </h3>
                   <div className="flex items-center gap-1">
+                    <Button
+                      variant="ghost" size="icon"
+                      onClick={() => { if (selectedId) duplicateZone(selectedId); }}
+                      title="Dupliceren"
+                    >
+                      <Copy className="h-4 w-4" />
+                    </Button>
                     <Button
                       variant="ghost" size="icon"
                       onClick={() => { if (selectedId) toggleZoneLock(selectedId); }}
@@ -637,6 +643,13 @@ function TuinContent() {
                     {STRUCTURE_LABELS[selectedStruct.type] || selectedStruct.type}
                   </h3>
                   <div className="flex items-center gap-1">
+                    <Button
+                      variant="ghost" size="icon"
+                      onClick={() => { if (selectedId) duplicateStructure(selectedId); }}
+                      title="Dupliceren"
+                    >
+                      <Copy className="h-4 w-4" />
+                    </Button>
                     <Button
                       variant="ghost" size="icon"
                       onClick={() => { if (selectedId) toggleStructureLock(selectedId); }}
@@ -858,6 +871,13 @@ function TuinContent() {
                   </Button>
                   <Button
                     variant="ghost" size="icon" className="h-8 w-8"
+                    onClick={() => { if (selectedId) duplicateZone(selectedId); }}
+                    title="Dupliceren"
+                  >
+                    <Copy className="h-4 w-4 text-muted-foreground" />
+                  </Button>
+                  <Button
+                    variant="ghost" size="icon" className="h-8 w-8"
                     onClick={() => { if (selectedId) toggleZoneLock(selectedId); }}
                   >
                     {selectedZoneData.zone.locked ? <Lock className="h-4 w-4" /> : <Unlock className="h-4 w-4 text-muted-foreground" />}
@@ -985,6 +1005,13 @@ function TuinContent() {
                     onClick={() => { setMobileEditing(!mobileEditing); if (!mobileInfoExpanded) setMobileInfoExpanded(true); }}
                   >
                     <SquarePen className={`h-4 w-4 ${mobileEditing ? "text-foreground" : "text-muted-foreground"}`} />
+                  </Button>
+                  <Button
+                    variant="ghost" size="icon" className="h-8 w-8"
+                    onClick={() => { if (selectedId) duplicateStructure(selectedId); }}
+                    title="Dupliceren"
+                  >
+                    <Copy className="h-4 w-4 text-muted-foreground" />
                   </Button>
                   <Button
                     variant="ghost" size="icon" className="h-8 w-8"
