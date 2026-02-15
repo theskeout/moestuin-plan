@@ -12,6 +12,7 @@ create table gardens (
   zones jsonb not null default '[]',
   structures jsonb not null default '[]',
   plants jsonb not null default '[]',
+  postcode text,
   created_at timestamptz not null default now(),
   updated_at timestamptz not null default now()
 );

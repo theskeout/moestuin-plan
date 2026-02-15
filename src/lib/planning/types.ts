@@ -109,6 +109,8 @@ export interface HistoryEntry {
   familyId?: string;
 }
 
+export type { WeatherData } from "./weather";
+
 export interface PlanningStorage {
   loadUserSettings(): Promise<UserSettings>;
   saveUserSettings(settings: UserSettings): Promise<void>;

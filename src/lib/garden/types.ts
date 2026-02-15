@@ -83,6 +83,7 @@ export interface Garden {
   structures: Structure[];
   createdAt: string;
   updatedAt: string;
+  postcode?: string;                // Postcode voor deze tuin (bepaalt KNMI-station)
   role?: "owner" | "member";       // niet opgeslagen, bijgevuld bij laden
   memberCount?: number;            // niet opgeslagen, bijgevuld bij laden
 }

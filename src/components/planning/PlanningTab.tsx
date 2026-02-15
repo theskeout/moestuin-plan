@@ -1,12 +1,12 @@
 "use client";
 
 import { useState, useMemo } from "react";
-import { MonthlyTask, RotationWarning, StatusHint, UserSettings } from "@/lib/planning/types";
+import { MonthlyTask, RotationWarning, StatusHint, UserSettings, WeatherData } from "@/lib/planning/types";
 import { CropZone, ZoneStatus, Garden } from "@/lib/garden/types";
 import { getPlant } from "@/lib/plants/catalog";
 import { formatWeekLabel, getISOWeek } from "@/lib/planning/weeks";
 import { getWeeklyTasks } from "@/lib/planning/calendar";
-import { AlertTriangle, CheckCircle2, Scissors, Sprout, Bug, Calendar, ArrowRight, ChevronLeft, ChevronRight } from "lucide-react";
+import { AlertTriangle, CheckCircle2, Scissors, Sprout, Bug, Calendar, ArrowRight, ChevronLeft, ChevronRight, Droplets } from "lucide-react";
 
 
 const STATUS_LABELS: Record<ZoneStatus, string> = {
@@ -48,6 +48,8 @@ interface PlanningTabProps {
   garden?: Garden;
   settings?: UserSettings;
   statusHints?: StatusHint[];
+  weather?: WeatherData | null;
+  wateringTasks?: MonthlyTask[];
   onCompleteTask: (zoneId: string, taskId: string) => void;
   onUpdateZoneStatus?: (zoneId: string, status: ZoneStatus) => void;
   onOpenFullView: () => void;
@@ -62,6 +64,8 @@ export default function PlanningTab({
   garden,
   settings,
   statusHints = [],
+  weather,
+  wateringTasks = [],
   onCompleteTask,
   onUpdateZoneStatus,
   onOpenFullView,
@@ -90,8 +94,10 @@ export default function PlanningTab({
   const groupedUpcoming = groupByZone(activeUpcomingTasks);
 
   // Split in open taken, afgeronde taken, en waarschuwingen
-  const todoTasks = activeTasks.filter((t) => !t.completed && t.type !== "warning");
-  const doneTasks = activeTasks.filter((t) => t.completed && t.type !== "warning");
+  // Voeg watertaken toe aan de todo-lijst (alleen voor huidige week)
+  const allTasks = isCurrentWeek ? [...activeTasks, ...wateringTasks.filter((t) => !t.completed)] : activeTasks;
+  const todoTasks = allTasks.filter((t) => !t.completed && t.type !== "warning");
+  const doneTasks = allTasks.filter((t) => t.completed && t.type !== "warning");
   const warningTasks = activeTasks.filter((t) => t.type === "warning");
 
   return (
@@ -104,6 +110,16 @@ export default function PlanningTab({
         <Calendar className="h-4 w-4" />
         Volledige planning
       </button>
+
+      {/* Weer-banner */}
+      {weather && (
+        <div className="flex items-center gap-2 px-2 py-1.5 rounded-md bg-blue-50 text-xs">
+          <Droplets className="h-3.5 w-3.5 text-blue-500 shrink-0" />
+          <span>{weather.precipitationLast7Days.toFixed(0)}mm regen deze week</span>
+          <span className="text-muted-foreground">·</span>
+          <span>{weather.maxTempToday.toFixed(0)}°C vandaag</span>
+        </div>
+      )}
 
       {/* Status-suggesties */}
       {statusHints.length > 0 && (

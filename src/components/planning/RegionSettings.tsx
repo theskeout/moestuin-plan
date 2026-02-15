@@ -2,7 +2,7 @@
 
 import { useState, useCallback, useEffect } from "react";
 import { UserSettings } from "@/lib/planning/types";
-import { getAllStations, getStationByPostcode, getLastFrostDate, getFirstFrostDate, getRegionDescription } from "@/lib/planning/frost";
+import { getStationByPostcode, getLastFrostDate, getFirstFrostDate } from "@/lib/planning/frost";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { MapPin, Thermometer } from "lucide-react";
@@ -20,41 +20,30 @@ interface RegionSettingsProps {
 
 export default function RegionSettings({ settings, onSave }: RegionSettingsProps) {
   const [postcode, setPostcode] = useState(settings.postcode || "");
-  const [stationCode, setStationCode] = useState(settings.knmiStationCode || "");
   const [offset, setOffset] = useState(settings.frostOffsetDays ?? 0);
   const [saved, setSaved] = useState(false);
 
   // Sync lokale state als settings van buitenaf wijzigen (bijv. na async laden)
   useEffect(() => {
     setPostcode(settings.postcode || "");
-    setStationCode(settings.knmiStationCode || "");
     setOffset(settings.frostOffsetDays ?? 0);
-  }, [settings.postcode, settings.knmiStationCode, settings.frostOffsetDays]);
+  }, [settings.postcode, settings.frostOffsetDays]);
 
-  const stations = getAllStations().filter((s) => s.code !== "550"); // Filter duplicaat De Bilt
-
-  const handlePostcodeChange = useCallback((value: string) => {
-    setPostcode(value);
-    const digits = value.replace(/\D/g, "");
-    if (digits.length >= 4) {
-      const station = getStationByPostcode(digits);
-      if (station) {
-        setStationCode(station.code);
-      }
-    }
-  }, []);
+  // Station automatisch afleiden uit postcode
+  const digits = postcode.replace(/\D/g, "");
+  const station = digits.length >= 4 ? getStationByPostcode(digits) : null;
+  const stationCode = station?.code || "";
 
   const handleSave = useCallback(() => {
     onSave({
       postcode: postcode || undefined,
-      knmiStationCode: stationCode || undefined,
       frostOffsetDays: offset,
     });
     setSaved(true);
     setTimeout(() => setSaved(false), 2000);
-  }, [postcode, stationCode, offset, onSave]);
+  }, [postcode, offset, onSave]);
 
-  // Bereken vorstdata voor geselecteerd station
+  // Bereken vorstdata voor afgeleid station
   const year = new Date().getFullYear();
   const lastFrost = stationCode ? getLastFrostDate(stationCode, year) : null;
   const firstFrost = stationCode ? getFirstFrostDate(stationCode, year) : null;
@@ -64,8 +53,8 @@ export default function RegionSettings({ settings, onSave }: RegionSettingsProps
       <div>
         <h3 className="text-sm font-semibold mb-1">Regio-instelling</h3>
         <p className="text-xs text-muted-foreground">
-          Stel je locatie in om zaai- en oogsttijden aan te passen aan je regio.
-          Noordelijke en binnenlandse regio{"'"}s hebben een kortere groeiseizoenen.
+          Stel je postcode in om zaai- en oogsttijden aan te passen aan je regio.
+          Het dichtstbijzijnde KNMI-station wordt automatisch bepaald.
         </p>
       </div>
 
@@ -79,38 +68,19 @@ export default function RegionSettings({ settings, onSave }: RegionSettingsProps
           <Input
             placeholder="bijv. 3511 AB"
             value={postcode}
-            onChange={(e) => handlePostcodeChange(e.target.value)}
+            onChange={(e) => setPostcode(e.target.value)}
             className="pl-8"
             maxLength={7}
           />
         </div>
       </div>
 
-      {/* Weerstation dropdown */}
-      <div className="space-y-2">
-        <label className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
-          KNMI-weerstation
-        </label>
-        <select
-          value={stationCode}
-          onChange={(e) => setStationCode(e.target.value)}
-          className="w-full h-9 rounded-md border border-input bg-background px-3 text-sm"
-        >
-          <option value="">Selecteer station...</option>
-          {stations.map((s) => (
-            <option key={s.code} value={s.code}>
-              {s.name}
-            </option>
-          ))}
-        </select>
-      </div>
-
       {/* Vorstdata weergave */}
-      {lastFrost && firstFrost && (
+      {station && lastFrost && firstFrost ? (
         <div className="bg-accent/50 rounded-md p-3 space-y-2">
           <div className="flex items-center gap-1.5">
             <Thermometer className="h-4 w-4 text-blue-500" />
-            <span className="text-sm font-medium">{getRegionDescription({ knmiStationCode: stationCode })}</span>
+            <span className="text-sm font-medium">{station.name}</span>
           </div>
           <div className="grid grid-cols-2 gap-3 text-xs">
             <div>
@@ -123,6 +93,10 @@ export default function RegionSettings({ settings, onSave }: RegionSettingsProps
             </div>
           </div>
         </div>
+      ) : (
+        <p className="text-xs text-muted-foreground">
+          Geen postcode ingesteld — standaard wordt De Bilt gebruikt.
+        </p>
       )}
 
       {/* Handmatige correctie */}

@@ -51,12 +51,13 @@ export default function Home() {
     loadData();
   }, [authLoading, loadData]);
 
-  const handleCreate = (name: string, widthCm: number, heightCm: number) => {
+  const handleCreate = (name: string, widthCm: number, heightCm: number, postcode: string) => {
     const params = new URLSearchParams({
       name,
       w: String(widthCm),
       h: String(heightCm),
     });
+    if (postcode) params.set("pc", postcode);
     router.push(`/tuin?${params.toString()}`);
   };
 

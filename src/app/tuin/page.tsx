@@ -189,6 +189,7 @@ function TuinContent() {
   const [editName, setEditName] = useState("");
   const [editWidth, setEditWidth] = useState("");
   const [editHeight, setEditHeight] = useState("");
+  const [editPostcode, setEditPostcode] = useState("");
   const [gardenLoading, setGardenLoading] = useState(true);
   const [canvasSearch, setCanvasSearch] = useState("");
   const [mobileAddOpen, setMobileAddOpen] = useState(false);
@@ -234,11 +235,13 @@ function TuinContent() {
         const name = searchParams.get("name") || "Mijn Moestuin";
         const w = Number(searchParams.get("w")) || 300;
         const h = Number(searchParams.get("h")) || 1000;
+        const pc = searchParams.get("pc") || undefined;
         loadGarden({
           id: newGardenIdRef.current, name, widthCm: w, heightCm: h,
           shape: { corners: createRectangleCorners(w, h) },
           plants: [], zones: [], structures: [],
           createdAt: new Date().toISOString(), updatedAt: new Date().toISOString(),
+          postcode: pc,
         });
       }
       setGardenLoading(false);
@@ -383,6 +386,13 @@ function TuinContent() {
                 className="h-8 w-20 text-sm"
               />
               <span className="text-sm text-muted-foreground">cm</span>
+              <Input
+                value={editPostcode}
+                onChange={(e) => setEditPostcode(e.target.value)}
+                className="h-8 w-24 text-sm"
+                placeholder="Postcode"
+                maxLength={7}
+              />
               <Button
                 variant={editingCorners ? "secondary" : "outline"}
                 size="sm"
@@ -396,6 +406,11 @@ function TuinContent() {
                 const h = Math.max(50, Number(editHeight) || garden.heightCm);
                 const n = editName.trim() || garden.name;
                 updateGardenSize(n, w, h);
+                const pc = editPostcode.trim() || undefined;
+                if (pc !== garden.postcode) {
+                  setGarden((prev) => ({ ...prev, postcode: pc, updatedAt: new Date().toISOString() }));
+                  setHasChanges(true);
+                }
                 setEditingHeader(false);
               }}>
                 <Check className="h-3.5 w-3.5" />
@@ -406,12 +421,14 @@ function TuinContent() {
               <h1 className="font-semibold text-sm md:text-base truncate">{garden.name}</h1>
               <span className="text-xs md:text-sm text-muted-foreground whitespace-nowrap hidden sm:inline">
                 {garden.widthCm} x {garden.heightCm}cm
+                {garden.postcode && ` — ${garden.postcode}`}
               </span>
               <button
                 onClick={() => {
                   setEditName(garden.name);
                   setEditWidth(String(garden.widthCm));
                   setEditHeight(String(garden.heightCm));
+                  setEditPostcode(garden.postcode || "");
                   setEditingHeader(true);
                 }}
                 className="p-1 rounded hover:bg-accent transition-colors shrink-0"
@@ -821,6 +838,8 @@ function TuinContent() {
                   garden={garden}
                   settings={planning.settings}
                   statusHints={planning.statusHints}
+                  weather={planning.weather}
+                  wateringTasks={planning.wateringTasks}
                   onCompleteTask={planning.completeTask}
                   onUpdateZoneStatus={planning.updateZoneStatus}
                   onOpenFullView={() => setPlanningViewOpen(true)}

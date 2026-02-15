@@ -64,6 +64,7 @@ export default function CropZoneItem({
 
   return (
     <Group
+      id={zone.id}
       x={zone.x * scale}
       y={zone.y * scale}
       rotation={zone.rotation}

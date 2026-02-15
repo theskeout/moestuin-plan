@@ -14,6 +14,7 @@ interface GardenRow {
   zones: Garden["zones"];
   structures: Garden["structures"];
   plants: Garden["plants"];
+  postcode: string | null;
   created_at: string;
   updated_at: string;
   garden_members?: { role: string; user_id: string }[];
@@ -33,6 +34,7 @@ function rowToGarden(row: GardenRow, currentUserId: string): Garden {
     plants: row.plants || [],
     createdAt: row.created_at,
     updatedAt: row.updated_at,
+    postcode: row.postcode ?? undefined,
     role: (myMembership?.role as "owner" | "member") || "owner",
     memberCount: members.length,
   };
@@ -49,6 +51,7 @@ function gardenToRow(garden: Garden, userId: string): Omit<GardenRow, "created_a
     zones: garden.zones,
     structures: garden.structures,
     plants: garden.plants,
+    postcode: garden.postcode ?? null,
     updated_at: new Date().toISOString(),
   };
 }

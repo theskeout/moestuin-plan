@@ -1,9 +1,10 @@
 import { Garden, CropZone, ZoneStatus } from "@/lib/garden/types";
-import { PlantData, MonthRange } from "@/lib/plants/types";
+import { PlantData, MonthRange, WaterNeed } from "@/lib/plants/types";
 import { getPlant } from "@/lib/plants/catalog";
-import { getWarnings, getTasksForMonth } from "./tasks";
+import { getWarnings, getTasksForMonth, getWateringSchedule } from "./tasks";
 import { adjustSowingMonth, adjustSowingWeek, getStationByCode } from "./frost";
 import { MaintenanceTask, MonthlyTask, WeeklyTask, StatusHint, UserSettings } from "./types";
+import { WeatherData } from "./weather";
 import { monthRangeToWeekRange, isInWeekRange, getWeekDates, frostDateToWeek } from "./weeks";
 import allPlantsJson from "@/data/plants.json";
 
@@ -357,7 +358,14 @@ export function getWeeklyTasks(
 
     // Onderhoud op maand-niveau
     if (filter.maintenance) {
-      const maintenanceTasks = getTasksForMonth(zone.plantId, weekMonth);
+      let maintenanceTasks = getTasksForMonth(zone.plantId, weekMonth);
+
+      // Filter uitdunnen weg als gewas niet direct buiten gezaaid is
+      const wasTransplanted = zone.events?.some((e) => e.type === "transplanted") ?? false;
+      if (wasTransplanted) {
+        maintenanceTasks = maintenanceTasks.filter((t) => !t.id.includes("dunnen"));
+      }
+
       for (const task of maintenanceTasks) {
         tasks.push({
           zoneId: zone.id,
@@ -386,6 +394,88 @@ export function getWeeklyTasks(
           weekNumber,
         });
       }
+    }
+  }
+
+  return tasks;
+}
+
+/** Neerslag-drempels per waterbehoefte (mm/week) */
+const RAIN_THRESHOLDS: Record<WaterNeed, number> = {
+  hoog: 20,
+  gemiddeld: 10,
+  laag: 5,
+};
+
+/** Genereer watergift-taken op basis van weer en waterbehoefte */
+export function getWateringTasks(
+  garden: Garden,
+  weather: WeatherData | null
+): MonthlyTask[] {
+  const tasks: MonthlyTask[] = [];
+
+  for (const zone of garden.zones) {
+    const status: ZoneStatus = zone.status || "planned";
+    // Skip niet-actieve zones
+    if (status === "planned" || status === "done" || status === "sown-indoor") continue;
+
+    const plant = getPlant(zone.plantId);
+    if (!plant) continue;
+
+    const waterNeed = plant.waterNeed;
+    const schedule = getWateringSchedule(waterNeed);
+
+    if (!weather) {
+      // Geen weer-data: generieke herinnering
+      tasks.push({
+        zoneId: zone.id,
+        plantId: plant.id,
+        plantName: plant.name,
+        plantIcon: plant.icon,
+        type: "maintenance",
+        task: {
+          id: `watering-${plant.id}`,
+          name: `${plant.name} water geven`,
+          frequency: "weekly",
+          phase: "growing",
+          description: `Controleer watergift — ${schedule.description}`,
+        },
+        completed: isTaskCompleted(zone.completedTasks, {
+          id: `watering-${plant.id}`,
+          name: "",
+          frequency: "weekly",
+        }),
+      });
+      continue;
+    }
+
+    // Bereken drempel, verlaag met 30% bij hitte (> 25°C)
+    let threshold = RAIN_THRESHOLDS[waterNeed];
+    if (weather.maxTempToday > 25) {
+      threshold *= 0.7;
+    }
+
+    if (weather.precipitationLast7Days < threshold) {
+      const rain = weather.precipitationLast7Days.toFixed(0);
+      tasks.push({
+        zoneId: zone.id,
+        plantId: plant.id,
+        plantName: plant.name,
+        plantIcon: plant.icon,
+        type: "maintenance",
+        task: {
+          id: `watering-${plant.id}`,
+          name: `${plant.name} water geven`,
+          frequency: "weekly",
+          phase: "growing",
+          description: `Slechts ${rain}mm regen deze week — ${schedule.description.toLowerCase()}`,
+        },
+        completed: isTaskCompleted(zone.completedTasks, {
+          id: `watering-${plant.id}`,
+          name: "",
+          frequency: "weekly",
+        }),
+      });
     }
   }
 
