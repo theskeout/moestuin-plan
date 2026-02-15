@@ -50,7 +50,9 @@ export function getPlant(id: string): PlantData | undefined {
 }
 
 export function getPlantsByCategory(category: PlantData["category"]): PlantData[] {
-  return getAllPlants().filter((p) => p.category === category);
+  return getAllPlants()
+    .filter((p) => p.category === category)
+    .sort((a, b) => a.name.localeCompare(b.name));
 }
 
 export function searchPlants(query: string): PlantData[] {
