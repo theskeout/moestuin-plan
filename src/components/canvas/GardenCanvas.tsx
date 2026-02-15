@@ -183,62 +183,90 @@ export default function GardenCanvas({
     [zoom, pos, baseScale, centeredPosition, onZoomChange]
   );
 
-  // Touch pinch-to-zoom voor mobiel
-  const handleTouchStart = useCallback((e: React.TouchEvent) => {
-    if (e.touches.length === 2) {
+  // Touch pinch-to-zoom voor mobiel — via native listener voor performance
+  const pinchZoomRef = useRef(zoom);
+  pinchZoomRef.current = zoom;
+  const pinchPosRef = useRef(pos);
+  pinchPosRef.current = pos;
+
+  useEffect(() => {
+    const container = containerRef.current;
+    if (!container) return;
+
+    const onTouchStart = (e: TouchEvent) => {
+      if (e.touches.length === 2) {
+        // Blokkeer stage drag bij pinch
+        stageRef.current?.draggable(false);
+        const dx = e.touches[0].clientX - e.touches[1].clientX;
+        const dy = e.touches[0].clientY - e.touches[1].clientY;
+        lastPinchDistRef.current = Math.sqrt(dx * dx + dy * dy);
+        lastPinchCenterRef.current = {
+          x: (e.touches[0].clientX + e.touches[1].clientX) / 2,
+          y: (e.touches[0].clientY + e.touches[1].clientY) / 2,
+        };
+      }
+    };
+
+    const onTouchMove = (e: TouchEvent) => {
+      if (e.touches.length !== 2 || lastPinchDistRef.current === null) return;
+      e.preventDefault();
+
       const dx = e.touches[0].clientX - e.touches[1].clientX;
       const dy = e.touches[0].clientY - e.touches[1].clientY;
-      lastPinchDistRef.current = Math.sqrt(dx * dx + dy * dy);
-      lastPinchCenterRef.current = {
-        x: (e.touches[0].clientX + e.touches[1].clientX) / 2,
-        y: (e.touches[0].clientY + e.touches[1].clientY) / 2,
+      const dist = Math.sqrt(dx * dx + dy * dy);
+      const scaleFactor = dist / lastPinchDistRef.current;
+
+      const rect = container.getBoundingClientRect();
+      const cx = (e.touches[0].clientX + e.touches[1].clientX) / 2 - rect.left;
+      const cy = (e.touches[0].clientY + e.touches[1].clientY) / 2 - rect.top;
+
+      const oldZoom = pinchZoomRef.current;
+      const newZoom = Math.min(15, Math.max(0.1, oldZoom * scaleFactor));
+      const curPos = pinchPosRef.current || { x: 0, y: 0 };
+
+      const pointTo = {
+        x: (cx - curPos.x) / (baseScale * oldZoom),
+        y: (cy - curPos.y) / (baseScale * oldZoom),
       };
-    }
-  }, []);
+      const newPos = {
+        x: cx - pointTo.x * baseScale * newZoom,
+        y: cy - pointTo.y * baseScale * newZoom,
+      };
 
-  const handleTouchMove = useCallback((e: React.TouchEvent) => {
-    if (e.touches.length !== 2 || lastPinchDistRef.current === null || lastPinchCenterRef.current === null) return;
-    e.preventDefault();
+      // Manipuleer stage direct voor vloeiendheid
+      const stage = stageRef.current;
+      if (stage) {
+        stage.position(newPos);
+        stage.batchDraw();
+      }
 
-    const dx = e.touches[0].clientX - e.touches[1].clientX;
-    const dy = e.touches[0].clientY - e.touches[1].clientY;
-    const dist = Math.sqrt(dx * dx + dy * dy);
-    const scaleFactor = dist / lastPinchDistRef.current;
-
-    const center = {
-      x: (e.touches[0].clientX + e.touches[1].clientX) / 2,
-      y: (e.touches[0].clientY + e.touches[1].clientY) / 2,
+      pinchZoomRef.current = newZoom;
+      pinchPosRef.current = newPos;
+      lastPinchDistRef.current = dist;
     };
 
-    const rect = containerRef.current?.getBoundingClientRect();
-    if (!rect) return;
-
-    const pointerX = center.x - rect.left;
-    const pointerY = center.y - rect.top;
-
-    const oldZoom = zoom;
-    const newZoom = Math.min(15, Math.max(0.1, oldZoom * scaleFactor));
-
-    const mousePointTo = {
-      x: (pointerX - pos.x) / (baseScale * oldZoom),
-      y: (pointerY - pos.y) / (baseScale * oldZoom),
+    const onTouchEnd = () => {
+      if (lastPinchDistRef.current !== null) {
+        // Sync React state met direct gemanipuleerde waarden
+        internalZoomRef.current = true;
+        onZoomChange(pinchZoomRef.current);
+        setPosition(pinchPosRef.current);
+        stageRef.current?.draggable(true);
+      }
+      lastPinchDistRef.current = null;
+      lastPinchCenterRef.current = null;
     };
 
-    internalZoomRef.current = true;
-    onZoomChange(newZoom);
-    setPosition({
-      x: pointerX - mousePointTo.x * baseScale * newZoom,
-      y: pointerY - mousePointTo.y * baseScale * newZoom,
-    });
-
-    lastPinchDistRef.current = dist;
-    lastPinchCenterRef.current = center;
-  }, [zoom, pos, baseScale, onZoomChange]);
-
-  const handleTouchEnd = useCallback(() => {
-    lastPinchDistRef.current = null;
-    lastPinchCenterRef.current = null;
-  }, []);
+    container.addEventListener("touchstart", onTouchStart, { passive: true });
+    container.addEventListener("touchmove", onTouchMove, { passive: false });
+    container.addEventListener("touchend", onTouchEnd, { passive: true });
+    return () => {
+      container.removeEventListener("touchstart", onTouchStart);
+      container.removeEventListener("touchmove", onTouchMove);
+      container.removeEventListener("touchend", onTouchEnd);
+    };
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [baseScale, onZoomChange]);
 
   // Detecteer externe zoom-wijzigingen (toolbar) en centreer
   const prevZoomRef = useRef(zoom);
@@ -391,12 +419,9 @@ export default function GardenCanvas({
   return (
     <div
       ref={containerRef}
-      className="relative flex-1 bg-stone-50 overflow-hidden touch-none"
+      className="relative flex-1 bg-stone-50 overflow-hidden"
       onDragOver={(e) => e.preventDefault()}
       onDrop={handleDrop}
-      onTouchStart={handleTouchStart}
-      onTouchMove={handleTouchMove}
-      onTouchEnd={handleTouchEnd}
     >
       {/* Scrollbar indicators */}
       {showScrollbars && (

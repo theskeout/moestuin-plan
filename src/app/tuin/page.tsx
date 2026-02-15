@@ -42,6 +42,7 @@ function MobileBottomSheet({
   expandable,
   expanded,
   onExpandChange,
+  modal = true,
 }: {
   open: boolean;
   onClose: () => void;
@@ -51,6 +52,7 @@ function MobileBottomSheet({
   expandable?: boolean;
   expanded?: boolean;
   onExpandChange?: (expanded: boolean) => void;
+  modal?: boolean;
 }) {
   const sheetRef = useRef<HTMLDivElement>(null);
   const dragRef = useRef<{ startY: number; dragging: boolean }>({
@@ -66,7 +68,6 @@ function MobileBottomSheet({
   }, [open, expanded]);
 
   const handleTouchStart = useCallback((e: React.TouchEvent) => {
-    // Start drag op de handle (bovenste strip)
     dragRef.current = {
       startY: e.touches[0].clientY,
       dragging: true,
@@ -91,14 +92,12 @@ function MobileBottomSheet({
     const threshold = 50;
 
     if (dy > threshold) {
-      // Naar beneden gesleept
       if (expandable && expanded) {
         onExpandChange?.(false);
       } else {
         onClose();
       }
     } else if (dy < -threshold) {
-      // Naar boven gesleept
       if (expandable && !expanded) {
         onExpandChange?.(true);
       }
@@ -117,43 +116,57 @@ function MobileBottomSheet({
 
   const expandedHeight = "85vh";
   const currentHeight = expanded ? expandedHeight : height;
-  // Alleen omlaag meebewegen, omhoog tonen we niet als translate
   const translateY = isDragging ? Math.max(0, dragOffset) : 0;
+
+  const sheetElement = (
+    <div
+      ref={sheetRef}
+      className={`absolute bottom-0 left-0 right-0 bg-white rounded-t-2xl shadow-2xl flex flex-col ${!isDragging ? "transition-all duration-200" : ""}`}
+      style={{
+        maxHeight: currentHeight,
+        transform: translateY > 0 ? `translateY(${translateY}px)` : undefined,
+        opacity: translateY > 100 ? 1 - (translateY - 100) / 150 : 1,
+      }}
+    >
+      {/* Drag handle */}
+      <div
+        className="flex justify-center pt-3 pb-2 cursor-grab shrink-0 touch-none"
+        onTouchStart={handleTouchStart}
+        onTouchMove={handleTouchMove}
+        onTouchEnd={handleTouchEnd}
+        onClick={handleHandleClick}
+      >
+        <div className="w-10 h-1.5 rounded-full bg-gray-300" />
+      </div>
+      {title && (
+        <div className="flex items-center justify-between px-4 pb-2 shrink-0">
+          <h3 className="font-semibold text-sm">{title}</h3>
+          <button onClick={onClose} className="p-1 rounded-full hover:bg-accent">
+            <X className="h-4 w-4" />
+          </button>
+        </div>
+      )}
+      <div className="flex-1 overflow-y-auto px-4 pb-4">
+        {children}
+      </div>
+    </div>
+  );
+
+  // Modal: met backdrop. Non-modal: geen backdrop, canvas blijft interactief
+  if (!modal) {
+    return (
+      <div className="fixed bottom-0 left-0 right-0 z-40 md:hidden pointer-events-none">
+        <div className="pointer-events-auto">
+          {sheetElement}
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="fixed inset-0 z-50 md:hidden">
-      <div className="absolute inset-0 bg-black/40" onClick={onClose} />
-      <div
-        ref={sheetRef}
-        className={`absolute bottom-0 left-0 right-0 bg-white rounded-t-2xl shadow-2xl flex flex-col ${!isDragging ? "transition-all duration-200" : ""}`}
-        style={{
-          maxHeight: currentHeight,
-          transform: translateY > 0 ? `translateY(${translateY}px)` : undefined,
-          opacity: translateY > 100 ? 1 - (translateY - 100) / 150 : 1,
-        }}
-      >
-        {/* Drag handle — touch hier start swipe, klik = toggle */}
-        <div
-          className="flex justify-center pt-3 pb-2 cursor-grab shrink-0 touch-none"
-          onTouchStart={handleTouchStart}
-          onTouchMove={handleTouchMove}
-          onTouchEnd={handleTouchEnd}
-          onClick={handleHandleClick}
-        >
-          <div className="w-10 h-1.5 rounded-full bg-gray-300" />
-        </div>
-        {title && (
-          <div className="flex items-center justify-between px-4 pb-2 shrink-0">
-            <h3 className="font-semibold text-sm">{title}</h3>
-            <button onClick={onClose} className="p-1 rounded-full hover:bg-accent">
-              <X className="h-4 w-4" />
-            </button>
-          </div>
-        )}
-        <div className="flex-1 overflow-y-auto px-4 pb-4">
-          {children}
-        </div>
-      </div>
+      <div className="absolute inset-0 bg-black/20" onClick={onClose} />
+      {sheetElement}
     </div>
   );
 }
@@ -793,14 +806,15 @@ function TuinContent() {
           )}
         </MobileBottomSheet>
 
-        {/* Mobiel: bottom sheet voor geselecteerd element info */}
+        {/* Mobiel: bottom sheet voor geselecteerd element info (non-modaal) */}
         <MobileBottomSheet
           open={mobileInfoOpen && !mobileAddOpen && (!!selectedZoneData || !!selectedStruct)}
           onClose={() => { setMobileInfoOpen(false); setMobileInfoExpanded(false); select(null); }}
-          height="50vh"
+          height="40vh"
           expandable
           expanded={mobileInfoExpanded}
           onExpandChange={setMobileInfoExpanded}
+          modal={false}
         >
           {/* Zone geselecteerd */}
           {selectedZoneData && (
