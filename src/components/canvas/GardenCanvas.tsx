@@ -56,6 +56,8 @@ export default function GardenCanvas({
   const [stageSize, setStageSize] = useState({ width: 800, height: 600 });
   const [position, setPosition] = useState<{ x: number; y: number } | null>(null);
   const initializedRef = useRef(false);
+  const lastPinchDistRef = useRef<number | null>(null);
+  const lastPinchCenterRef = useRef<{ x: number; y: number } | null>(null);
 
   // Bereken initiële schaal zodat de tuin in het scherm past
   const baseScale = Math.min(
@@ -180,6 +182,63 @@ export default function GardenCanvas({
     },
     [zoom, pos, baseScale, centeredPosition, onZoomChange]
   );
+
+  // Touch pinch-to-zoom voor mobiel
+  const handleTouchStart = useCallback((e: React.TouchEvent) => {
+    if (e.touches.length === 2) {
+      const dx = e.touches[0].clientX - e.touches[1].clientX;
+      const dy = e.touches[0].clientY - e.touches[1].clientY;
+      lastPinchDistRef.current = Math.sqrt(dx * dx + dy * dy);
+      lastPinchCenterRef.current = {
+        x: (e.touches[0].clientX + e.touches[1].clientX) / 2,
+        y: (e.touches[0].clientY + e.touches[1].clientY) / 2,
+      };
+    }
+  }, []);
+
+  const handleTouchMove = useCallback((e: React.TouchEvent) => {
+    if (e.touches.length !== 2 || lastPinchDistRef.current === null || lastPinchCenterRef.current === null) return;
+    e.preventDefault();
+
+    const dx = e.touches[0].clientX - e.touches[1].clientX;
+    const dy = e.touches[0].clientY - e.touches[1].clientY;
+    const dist = Math.sqrt(dx * dx + dy * dy);
+    const scaleFactor = dist / lastPinchDistRef.current;
+
+    const center = {
+      x: (e.touches[0].clientX + e.touches[1].clientX) / 2,
+      y: (e.touches[0].clientY + e.touches[1].clientY) / 2,
+    };
+
+    const rect = containerRef.current?.getBoundingClientRect();
+    if (!rect) return;
+
+    const pointerX = center.x - rect.left;
+    const pointerY = center.y - rect.top;
+
+    const oldZoom = zoom;
+    const newZoom = Math.min(15, Math.max(0.1, oldZoom * scaleFactor));
+
+    const mousePointTo = {
+      x: (pointerX - pos.x) / (baseScale * oldZoom),
+      y: (pointerY - pos.y) / (baseScale * oldZoom),
+    };
+
+    internalZoomRef.current = true;
+    onZoomChange(newZoom);
+    setPosition({
+      x: pointerX - mousePointTo.x * baseScale * newZoom,
+      y: pointerY - mousePointTo.y * baseScale * newZoom,
+    });
+
+    lastPinchDistRef.current = dist;
+    lastPinchCenterRef.current = center;
+  }, [zoom, pos, baseScale, onZoomChange]);
+
+  const handleTouchEnd = useCallback(() => {
+    lastPinchDistRef.current = null;
+    lastPinchCenterRef.current = null;
+  }, []);
 
   // Detecteer externe zoom-wijzigingen (toolbar) en centreer
   const prevZoomRef = useRef(zoom);
@@ -332,9 +391,12 @@ export default function GardenCanvas({
   return (
     <div
       ref={containerRef}
-      className="relative flex-1 bg-stone-50 overflow-hidden"
+      className="relative flex-1 bg-stone-50 overflow-hidden touch-none"
       onDragOver={(e) => e.preventDefault()}
       onDrop={handleDrop}
+      onTouchStart={handleTouchStart}
+      onTouchMove={handleTouchMove}
+      onTouchEnd={handleTouchEnd}
     >
       {/* Scrollbar indicators */}
       {showScrollbars && (

@@ -21,7 +21,7 @@ import { findNearbyZones, calculatePlantPositions } from "@/lib/garden/helpers";
 import { PlantData } from "@/lib/plants/types";
 import { createRectangleCorners, generateId } from "@/lib/garden/helpers";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { ArrowLeft, Move, Lock, Unlock, Check, Download, Upload, Pencil, Search, X, Plus, ZoomIn, ZoomOut, Grid3X3, Trash2 } from "lucide-react";
+import { ArrowLeft, Move, Lock, Unlock, Check, Download, Upload, Pencil, Search, X, Plus, ZoomIn, ZoomOut, Grid3X3, Trash2, SquarePen } from "lucide-react";
 
 const GardenCanvas = dynamic(
   () => import("@/components/canvas/GardenCanvas"),
@@ -53,8 +53,8 @@ function MobileBottomSheet({
   onExpandChange?: (expanded: boolean) => void;
 }) {
   const sheetRef = useRef<HTMLDivElement>(null);
-  const dragRef = useRef<{ startY: number; startHeight: number; dragging: boolean }>({
-    startY: 0, startHeight: 0, dragging: false,
+  const dragRef = useRef<{ startY: number; dragging: boolean }>({
+    startY: 0, dragging: false,
   });
   const [dragOffset, setDragOffset] = useState(0);
   const [isDragging, setIsDragging] = useState(false);
@@ -66,15 +66,9 @@ function MobileBottomSheet({
   }, [open, expanded]);
 
   const handleTouchStart = useCallback((e: React.TouchEvent) => {
-    const sheet = sheetRef.current;
-    if (!sheet) return;
-    // Alleen starten op de handle area (bovenste ~40px)
-    const touch = e.touches[0];
-    const rect = sheet.getBoundingClientRect();
-    if (touch.clientY - rect.top > 44) return;
+    // Start drag op de handle (bovenste strip)
     dragRef.current = {
-      startY: touch.clientY,
-      startHeight: sheet.offsetHeight,
+      startY: e.touches[0].clientY,
       dragging: true,
     };
     setIsDragging(true);
@@ -82,6 +76,7 @@ function MobileBottomSheet({
 
   const handleTouchMove = useCallback((e: React.TouchEvent) => {
     if (!dragRef.current.dragging) return;
+    e.preventDefault();
     const dy = e.touches[0].clientY - dragRef.current.startY;
     setDragOffset(dy);
   }, []);
@@ -93,30 +88,34 @@ function MobileBottomSheet({
     const dy = dragOffset;
     setDragOffset(0);
 
-    const threshold = 60;
+    const threshold = 50;
 
     if (dy > threshold) {
       // Naar beneden gesleept
       if (expandable && expanded) {
-        // Expanded → compact
         onExpandChange?.(false);
       } else {
-        // Compact → sluiten
         onClose();
       }
     } else if (dy < -threshold) {
       // Naar boven gesleept
       if (expandable && !expanded) {
-        // Compact → expanded
         onExpandChange?.(true);
       }
     }
   }, [dragOffset, expandable, expanded, onExpandChange, onClose]);
 
+  const handleHandleClick = useCallback(() => {
+    if (!expandable) return;
+    onExpandChange?.(!expanded);
+  }, [expandable, expanded, onExpandChange]);
+
   if (!open) return null;
 
   const expandedHeight = "85vh";
   const currentHeight = expanded ? expandedHeight : height;
+  // Alleen omlaag meebewegen, omhoog tonen we niet als translate
+  const translateY = isDragging ? Math.max(0, dragOffset) : 0;
 
   return (
     <div className="fixed inset-0 z-50 md:hidden">
@@ -126,14 +125,18 @@ function MobileBottomSheet({
         className={`absolute bottom-0 left-0 right-0 bg-white rounded-t-2xl shadow-2xl flex flex-col ${!isDragging ? "transition-all duration-200" : ""}`}
         style={{
           maxHeight: currentHeight,
-          transform: isDragging && dragOffset > 0 ? `translateY(${dragOffset}px)` : undefined,
+          transform: translateY > 0 ? `translateY(${translateY}px)` : undefined,
+          opacity: translateY > 100 ? 1 - (translateY - 100) / 150 : 1,
         }}
-        onTouchStart={handleTouchStart}
-        onTouchMove={handleTouchMove}
-        onTouchEnd={handleTouchEnd}
       >
-        {/* Drag handle */}
-        <div className="flex justify-center pt-2 pb-1 cursor-grab shrink-0">
+        {/* Drag handle — touch hier start swipe, klik = toggle */}
+        <div
+          className="flex justify-center pt-3 pb-2 cursor-grab shrink-0 touch-none"
+          onTouchStart={handleTouchStart}
+          onTouchMove={handleTouchMove}
+          onTouchEnd={handleTouchEnd}
+          onClick={handleHandleClick}
+        >
           <div className="w-10 h-1.5 rounded-full bg-gray-300" />
         </div>
         {title && (
@@ -170,6 +173,7 @@ function TuinContent() {
   const [mobileAddOpen, setMobileAddOpen] = useState(false);
   const [mobileInfoOpen, setMobileInfoOpen] = useState(false);
   const [mobileInfoExpanded, setMobileInfoExpanded] = useState(false);
+  const [mobileEditing, setMobileEditing] = useState(false);
   const initRef = useRef(false);
   const newGardenIdRef = useRef(generateId());
 
@@ -304,9 +308,11 @@ function TuinContent() {
     if (selectedId && (selectedZoneData || selectedStruct)) {
       setMobileInfoOpen(true);
       setMobileInfoExpanded(false);
+      setMobileEditing(false);
     } else {
       setMobileInfoOpen(false);
       setMobileInfoExpanded(false);
+      setMobileEditing(false);
     }
   }, [selectedId, selectedZoneData, selectedStruct]);
 
@@ -795,23 +801,31 @@ function TuinContent() {
             <div className="space-y-3">
               {/* Header: altijd zichtbaar */}
               <div className="flex items-center justify-between">
-                <h3 className="font-semibold flex items-center gap-2">
-                  <span className="text-xl">{selectedZoneData.plantData.icon}</span>
-                  {selectedZoneData.plantData.name}
-                  {selectedZoneData.zone.label && (
-                    <span className="text-sm font-normal text-muted-foreground">— {selectedZoneData.zone.label}</span>
-                  )}
-                </h3>
-                <div className="flex items-center gap-1">
+                <div className="flex items-center gap-2 min-w-0">
+                  <span className="text-xl shrink-0">{selectedZoneData.plantData.icon}</span>
+                  <div className="min-w-0">
+                    <h3 className="font-semibold text-sm leading-tight truncate">{selectedZoneData.plantData.name}</h3>
+                    {selectedZoneData.zone.label && (
+                      <p className="text-xs text-muted-foreground truncate">{selectedZoneData.zone.label}</p>
+                    )}
+                  </div>
+                </div>
+                <div className="flex items-center gap-0.5 shrink-0">
                   <Button
-                    variant="ghost" size="icon"
-                    onClick={() => { if (selectedId) toggleZoneLock(selectedId); }}
+                    variant="ghost" size="icon" className="h-8 w-8"
+                    onClick={() => { setMobileEditing(!mobileEditing); if (!mobileInfoExpanded) setMobileInfoExpanded(true); }}
+                    title="Bewerken"
                   >
-                    {selectedZoneData.zone.locked ? <Lock className="h-4 w-4" /> : <Unlock className="h-4 w-4" />}
+                    <SquarePen className={`h-4 w-4 ${mobileEditing ? "text-foreground" : "text-muted-foreground"}`} />
                   </Button>
                   <Button
-                    variant="ghost" size="icon"
-                    className="text-destructive hover:text-destructive"
+                    variant="ghost" size="icon" className="h-8 w-8"
+                    onClick={() => { if (selectedId) toggleZoneLock(selectedId); }}
+                  >
+                    {selectedZoneData.zone.locked ? <Lock className="h-4 w-4" /> : <Unlock className="h-4 w-4 text-muted-foreground" />}
+                  </Button>
+                  <Button
+                    variant="ghost" size="icon" className="h-8 w-8 text-destructive hover:text-destructive"
                     onClick={() => { if (selectedId) { removeZone(selectedId); setMobileInfoOpen(false); } }}
                   >
                     <Trash2 className="h-4 w-4" />
@@ -820,74 +834,71 @@ function TuinContent() {
               </div>
 
               {/* Compacte stats: altijd zichtbaar */}
-              <div className="grid grid-cols-3 gap-2 text-xs text-muted-foreground">
-                <div>
-                  <span className="block font-medium text-foreground">{selectedZoneData.zone.widthCm} x {selectedZoneData.zone.heightCm}cm</span>
-                  Bed
-                </div>
-                <div>
-                  <span className="block font-medium text-foreground">{selectedZoneData.plantCount}</span>
-                  Planten
-                </div>
-                <div>
-                  <span className="block font-medium text-foreground">{Math.round(selectedZoneData.zone.rotation)}°</span>
-                  Rotatie
-                </div>
+              <div className="flex items-center gap-4 text-xs text-muted-foreground">
+                <span><span className="font-medium text-foreground">{selectedZoneData.zone.widthCm}x{selectedZoneData.zone.heightCm}</span>cm</span>
+                <span><span className="font-medium text-foreground">{selectedZoneData.plantCount}</span> planten</span>
+                {selectedZoneData.zone.locked && <span className="text-amber-600">Vergrendeld</span>}
               </div>
 
-              {!mobileInfoExpanded && (
-                <>
+              {/* Companion alerts: altijd compact tonen */}
+              {companionChecks.length > 0 && <CompanionAlert checks={companionChecks} />}
+
+              {/* Expanded: read-only details (zaai-info etc) */}
+              {mobileInfoExpanded && !mobileEditing && (
+                <div className="space-y-3">
+                  <div className="h-px bg-border" />
+                  <PlantInfo plant={selectedZoneData.plantData} onClose={() => {}} compact />
                   {selectedZoneData.zone.notes && (
-                    <p className="text-xs text-muted-foreground italic">{selectedZoneData.zone.notes}</p>
+                    <>
+                      <div className="h-px bg-border" />
+                      <div>
+                        <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide mb-1">Notities</p>
+                        <p className="text-sm">{selectedZoneData.zone.notes}</p>
+                      </div>
+                    </>
                   )}
-                  {companionChecks.length > 0 && <CompanionAlert checks={companionChecks} />}
-                  {/* Swipe hint */}
-                  <p className="text-[11px] text-center text-muted-foreground/60">
-                    Sleep omhoog voor details en bewerken
-                  </p>
-                </>
+                </div>
               )}
 
-              {/* Uitgebreide view: zichtbaar na omhoog slepen */}
-              {mobileInfoExpanded && (
+              {/* Bewerkingsmodus: na klik op pencil */}
+              {mobileEditing && (
                 <div className="space-y-4">
-                  {/* Bed afmetingen aanpassen */}
+                  <div className="h-px bg-border" />
+
+                  {/* Bed afmetingen */}
                   <div className="space-y-2">
                     <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide">Bed aanpassen</p>
                     <div className="grid grid-cols-3 gap-2">
                       <div>
-                        <p className="text-xs text-muted-foreground mb-1">Breedte (cm)</p>
+                        <p className="text-xs text-muted-foreground mb-1">Breedte</p>
                         <Input
                           type="number" min={10} step={10}
                           value={selectedZoneData.zone.widthCm}
                           onChange={(e) => {
                             if (!selectedId) return;
-                            const val = Math.max(10, Number(e.target.value));
-                            transformZone(selectedId, selectedZoneData.zone.x, selectedZoneData.zone.y, val, selectedZoneData.zone.heightCm, selectedZoneData.zone.rotation);
+                            transformZone(selectedId, selectedZoneData.zone.x, selectedZoneData.zone.y, Math.max(10, Number(e.target.value)), selectedZoneData.zone.heightCm, selectedZoneData.zone.rotation);
                           }}
                         />
                       </div>
                       <div>
-                        <p className="text-xs text-muted-foreground mb-1">Hoogte (cm)</p>
+                        <p className="text-xs text-muted-foreground mb-1">Hoogte</p>
                         <Input
                           type="number" min={10} step={10}
                           value={selectedZoneData.zone.heightCm}
                           onChange={(e) => {
                             if (!selectedId) return;
-                            const val = Math.max(10, Number(e.target.value));
-                            transformZone(selectedId, selectedZoneData.zone.x, selectedZoneData.zone.y, selectedZoneData.zone.widthCm, val, selectedZoneData.zone.rotation);
+                            transformZone(selectedId, selectedZoneData.zone.x, selectedZoneData.zone.y, selectedZoneData.zone.widthCm, Math.max(10, Number(e.target.value)), selectedZoneData.zone.rotation);
                           }}
                         />
                       </div>
                       <div>
-                        <p className="text-xs text-muted-foreground mb-1">Rotatie (°)</p>
+                        <p className="text-xs text-muted-foreground mb-1">Rotatie</p>
                         <Input
                           type="number" step={1}
                           value={Math.round(selectedZoneData.zone.rotation)}
                           onChange={(e) => {
                             if (!selectedId) return;
-                            const val = Number(e.target.value);
-                            transformZone(selectedId, selectedZoneData.zone.x, selectedZoneData.zone.y, selectedZoneData.zone.widthCm, selectedZoneData.zone.heightCm, val);
+                            transformZone(selectedId, selectedZoneData.zone.x, selectedZoneData.zone.y, selectedZoneData.zone.widthCm, selectedZoneData.zone.heightCm, Number(e.target.value));
                           }}
                         />
                       </div>
@@ -897,47 +908,28 @@ function TuinContent() {
                   {/* Verfijning en opmerkingen */}
                   <div className="space-y-2">
                     <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide">Notities</p>
-                    <div>
-                      <p className="text-xs text-muted-foreground mb-1">Verfijning (soort)</p>
-                      <Input
-                        placeholder={`Type ${selectedZoneData.plantData.name.toLowerCase()}`}
-                        value={selectedZoneData.zone.label || ""}
-                        onChange={(e) => {
-                          if (!selectedId) return;
-                          updateZoneInfo(selectedId, e.target.value, selectedZoneData.zone.notes || "");
-                        }}
-                      />
-                    </div>
-                    <div>
-                      <p className="text-xs text-muted-foreground mb-1">Opmerkingen</p>
-                      <textarea
-                        placeholder="bijv. Stekje van de buren, test nieuwe soort..."
-                        value={selectedZoneData.zone.notes || ""}
-                        onChange={(e) => {
-                          if (!selectedId) return;
-                          updateZoneInfo(selectedId, selectedZoneData.zone.label || "", e.target.value);
-                        }}
-                        className="w-full text-sm border rounded-md px-3 py-2 min-h-[60px] resize-y bg-background"
-                      />
-                    </div>
+                    <Input
+                      placeholder={`Type ${selectedZoneData.plantData.name.toLowerCase()}`}
+                      value={selectedZoneData.zone.label || ""}
+                      onChange={(e) => {
+                        if (!selectedId) return;
+                        updateZoneInfo(selectedId, e.target.value, selectedZoneData.zone.notes || "");
+                      }}
+                    />
+                    <textarea
+                      placeholder="bijv. Stekje van de buren, test nieuwe soort..."
+                      value={selectedZoneData.zone.notes || ""}
+                      onChange={(e) => {
+                        if (!selectedId) return;
+                        updateZoneInfo(selectedId, selectedZoneData.zone.label || "", e.target.value);
+                      }}
+                      className="w-full text-sm border rounded-md px-3 py-2 min-h-[60px] resize-y bg-background"
+                    />
                   </div>
 
-                  <div className="h-px bg-border" />
-
-                  {/* Plant details */}
-                  <PlantInfo plant={selectedZoneData.plantData} onClose={() => {}} compact />
-
-                  <div className="h-px bg-border" />
-
-                  {/* Companion alerts */}
-                  <CompanionAlert checks={companionChecks} />
-
-                  <Button
-                    variant="ghost" size="sm"
-                    className="w-full text-destructive hover:text-destructive"
-                    onClick={() => { if (selectedId) { removeZone(selectedId); setMobileInfoOpen(false); } }}
-                  >
-                    Bed verwijderen
+                  <Button size="sm" variant="secondary" className="w-full" onClick={() => setMobileEditing(false)}>
+                    <Check className="h-3.5 w-3.5 mr-1.5" />
+                    Klaar
                   </Button>
                 </div>
               )}
@@ -948,19 +940,22 @@ function TuinContent() {
           {selectedStruct && (
             <div className="space-y-3">
               <div className="flex items-center justify-between">
-                <h3 className="font-semibold">
-                  {STRUCTURE_LABELS[selectedStruct.type] || selectedStruct.type}
-                </h3>
-                <div className="flex items-center gap-1">
+                <h3 className="font-semibold">{STRUCTURE_LABELS[selectedStruct.type] || selectedStruct.type}</h3>
+                <div className="flex items-center gap-0.5">
                   <Button
-                    variant="ghost" size="icon"
-                    onClick={() => { if (selectedId) toggleStructureLock(selectedId); }}
+                    variant="ghost" size="icon" className="h-8 w-8"
+                    onClick={() => { setMobileEditing(!mobileEditing); if (!mobileInfoExpanded) setMobileInfoExpanded(true); }}
                   >
-                    {selectedStruct.locked ? <Lock className="h-4 w-4" /> : <Unlock className="h-4 w-4" />}
+                    <SquarePen className={`h-4 w-4 ${mobileEditing ? "text-foreground" : "text-muted-foreground"}`} />
                   </Button>
                   <Button
-                    variant="ghost" size="icon"
-                    className="text-destructive hover:text-destructive"
+                    variant="ghost" size="icon" className="h-8 w-8"
+                    onClick={() => { if (selectedId) toggleStructureLock(selectedId); }}
+                  >
+                    {selectedStruct.locked ? <Lock className="h-4 w-4" /> : <Unlock className="h-4 w-4 text-muted-foreground" />}
+                  </Button>
+                  <Button
+                    variant="ghost" size="icon" className="h-8 w-8 text-destructive hover:text-destructive"
                     onClick={() => { if (selectedId) { removeStructure(selectedId); setMobileInfoOpen(false); } }}
                   >
                     <Trash2 className="h-4 w-4" />
@@ -968,87 +963,56 @@ function TuinContent() {
                 </div>
               </div>
 
-              <div className="grid grid-cols-3 gap-2 text-xs text-muted-foreground">
-                <div>
-                  <span className="block font-medium text-foreground">{selectedStruct.widthCm}cm</span>
-                  Breedte
-                </div>
-                <div>
-                  <span className="block font-medium text-foreground">{selectedStruct.heightCm}cm</span>
-                  Hoogte
-                </div>
-                <div>
-                  <span className="block font-medium text-foreground">{Math.round(selectedStruct.rotation)}°</span>
-                  Rotatie
-                </div>
+              <div className="flex items-center gap-4 text-xs text-muted-foreground">
+                <span><span className="font-medium text-foreground">{selectedStruct.widthCm}x{selectedStruct.heightCm}</span>cm</span>
+                {selectedStruct.locked && <span className="text-amber-600">Vergrendeld</span>}
               </div>
 
-              {!mobileInfoExpanded && (
-                <>
-                  {selectedStruct.locked && (
-                    <p className="text-xs text-muted-foreground">Vergrendeld</p>
-                  )}
-                  <p className="text-[11px] text-center text-muted-foreground/60">
-                    Sleep omhoog voor details en bewerken
-                  </p>
-                </>
-              )}
-
-              {/* Uitgebreide bewerkingsview voor structuren */}
-              {mobileInfoExpanded && (
+              {/* Bewerkingsmodus structuur */}
+              {mobileEditing && (
                 <div className="space-y-4">
+                  <div className="h-px bg-border" />
                   <div className="space-y-2">
                     <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide">Afmetingen aanpassen</p>
                     <div className="grid grid-cols-3 gap-2">
                       <div>
-                        <p className="text-xs text-muted-foreground mb-1">Breedte (cm)</p>
+                        <p className="text-xs text-muted-foreground mb-1">Breedte</p>
                         <Input
                           type="number" min={10} step={10}
                           value={selectedStruct.widthCm}
                           onChange={(e) => {
                             if (!selectedId) return;
-                            const val = Math.max(10, Number(e.target.value));
-                            transformStructure(selectedId, selectedStruct.x, selectedStruct.y, val, selectedStruct.heightCm, selectedStruct.rotation);
+                            transformStructure(selectedId, selectedStruct.x, selectedStruct.y, Math.max(10, Number(e.target.value)), selectedStruct.heightCm, selectedStruct.rotation);
                           }}
                         />
                       </div>
                       <div>
-                        <p className="text-xs text-muted-foreground mb-1">Hoogte (cm)</p>
+                        <p className="text-xs text-muted-foreground mb-1">Hoogte</p>
                         <Input
                           type="number" min={10} step={10}
                           value={selectedStruct.heightCm}
                           onChange={(e) => {
                             if (!selectedId) return;
-                            const val = Math.max(10, Number(e.target.value));
-                            transformStructure(selectedId, selectedStruct.x, selectedStruct.y, selectedStruct.widthCm, val, selectedStruct.rotation);
+                            transformStructure(selectedId, selectedStruct.x, selectedStruct.y, selectedStruct.widthCm, Math.max(10, Number(e.target.value)), selectedStruct.rotation);
                           }}
                         />
                       </div>
                       <div>
-                        <p className="text-xs text-muted-foreground mb-1">Rotatie (°)</p>
+                        <p className="text-xs text-muted-foreground mb-1">Rotatie</p>
                         <Input
                           type="number" step={1}
                           value={Math.round(selectedStruct.rotation)}
                           onChange={(e) => {
                             if (!selectedId) return;
-                            const val = Number(e.target.value);
-                            transformStructure(selectedId, selectedStruct.x, selectedStruct.y, selectedStruct.widthCm, selectedStruct.heightCm, val);
+                            transformStructure(selectedId, selectedStruct.x, selectedStruct.y, selectedStruct.widthCm, selectedStruct.heightCm, Number(e.target.value));
                           }}
                         />
                       </div>
                     </div>
                   </div>
-
-                  {selectedStruct.locked && (
-                    <p className="text-sm text-muted-foreground">Vergrendeld</p>
-                  )}
-
-                  <Button
-                    variant="ghost" size="sm"
-                    className="w-full text-destructive hover:text-destructive"
-                    onClick={() => { if (selectedId) { removeStructure(selectedId); setMobileInfoOpen(false); } }}
-                  >
-                    Structuur verwijderen
+                  <Button size="sm" variant="secondary" className="w-full" onClick={() => setMobileEditing(false)}>
+                    <Check className="h-3.5 w-3.5 mr-1.5" />
+                    Klaar
                   </Button>
                 </div>
               )}
