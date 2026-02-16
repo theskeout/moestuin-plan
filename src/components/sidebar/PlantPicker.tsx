@@ -4,7 +4,7 @@ import { useState, useCallback } from "react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { searchPlants, getPlantsByCategory, addCustomPlant, updateCustomPlant, isBuiltinPlant, savePlantOverride } from "@/lib/plants/catalog";
+import { searchPlants, getPlantsByCategory, addCustomPlant, updateCustomPlant, isBuiltinPlant, savePlantOverride, removeCustomPlant } from "@/lib/plants/catalog";
 import { isLoggedIn } from "@/lib/storage";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { PlantData, PlantCategory, SunNeed, WaterNeed, MonthRange } from "@/lib/plants/types";
@@ -201,10 +201,12 @@ function MonthRangeInput({ label, value, onChange }: { label: string; value: Mon
 function PlantForm({
   onDone,
   onCancel,
+  onDelete,
   editPlant,
 }: {
   onDone: () => void;
   onCancel: () => void;
+  onDelete?: () => void;
   editPlant?: PlantData;
 }) {
   const [name, setName] = useState(editPlant?.name ?? "");
@@ -222,6 +224,7 @@ function PlantForm({
   const [goodCompanions, setGoodCompanions] = useState(editPlant?.companions.good.join(", ") ?? "");
   const [badCompanions, setBadCompanions] = useState(editPlant?.companions.bad.join(", ") ?? "");
   const [iconsExpanded, setIconsExpanded] = useState(false);
+  const [deleteConfirm, setDeleteConfirm] = useState(false);
 
   const isEdit = !!editPlant;
 
@@ -396,6 +399,38 @@ function PlantForm({
           Annuleer
         </Button>
       </div>
+
+      {isEdit && editPlant && !isBuiltinPlant(editPlant.id) && (
+        <div className="pt-2 border-t">
+          {deleteConfirm ? (
+            <div className="flex gap-2">
+              <Button
+                size="sm"
+                variant="destructive"
+                className="flex-1"
+                onClick={async () => {
+                  await removeCustomPlant(editPlant.id);
+                  onDelete?.();
+                }}
+              >
+                Zeker weten?
+              </Button>
+              <Button size="sm" variant="ghost" onClick={() => setDeleteConfirm(false)}>
+                Annuleer
+              </Button>
+            </div>
+          ) : (
+            <Button
+              size="sm"
+              variant="ghost"
+              className="w-full text-destructive hover:text-destructive"
+              onClick={() => setDeleteConfirm(true)}
+            >
+              Gewas verwijderen
+            </Button>
+          )}
+        </div>
+      )}
     </div>
   );
 }
@@ -557,6 +592,7 @@ export default function PlantPicker({ onSelectPlant, onTapStructure }: PlantPick
           <PlantForm
             onDone={handleFormDone}
             onCancel={() => { setShowAddForm(false); setEditingPlant(null); }}
+            onDelete={() => { setEditingPlant(null); setRefreshKey((k) => k + 1); }}
             editPlant={editingPlant ?? undefined}
           />
         </DialogContent>

@@ -5,15 +5,16 @@ import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import GardenSetup from "@/components/setup/GardenSetup";
-import { loadGardensAsync, deleteGardenAsync } from "@/lib/garden/storage";
+import { loadGardensAsync, deleteGardenAsync, saveGardenAsync } from "@/lib/garden/storage";
 import { refreshPlantCache } from "@/lib/plants/catalog";
 import { setStorageBackend } from "@/lib/storage";
 import { useAuth } from "@/components/auth/AuthProvider";
 import UserMenu from "@/components/auth/UserMenu";
 import MigrationDialog from "@/components/auth/MigrationDialog";
 import { Garden, InviteInfo } from "@/lib/garden/types";
+import { generateId } from "@/lib/garden/helpers";
 import { loadMyInvites, acceptInviteByToken } from "@/lib/storage/members";
-import { Trash2, Users } from "lucide-react";
+import { Trash2, Users, Copy } from "lucide-react";
 
 export default function Home() {
   const router = useRouter();
@@ -72,6 +73,22 @@ export default function Home() {
     }
     setDeleteConfirm(null);
     await deleteGardenAsync(id);
+    const data = await loadGardensAsync();
+    setGardens(data);
+  };
+
+  const handleDuplicate = async (garden: Garden) => {
+    const now = new Date().toISOString();
+    const copy: Garden = {
+      ...garden,
+      id: generateId(),
+      name: garden.name + " (kopie)",
+      role: undefined,
+      memberCount: undefined,
+      createdAt: now,
+      updatedAt: now,
+    };
+    await saveGardenAsync(copy);
     const data = await loadGardensAsync();
     setGardens(data);
   };
@@ -205,14 +222,25 @@ export default function Home() {
                                 </Button>
                               </div>
                             ) : (
-                              <Button
-                                variant="ghost"
-                                size="icon"
-                                onClick={() => handleDelete(g.id)}
-                                className="text-muted-foreground hover:text-destructive"
-                              >
-                                <Trash2 className="h-4 w-4" />
-                              </Button>
+                              <div className="flex items-center gap-0.5 shrink-0">
+                                <Button
+                                  variant="ghost"
+                                  size="icon"
+                                  onClick={() => handleDuplicate(g)}
+                                  className="text-muted-foreground hover:text-foreground"
+                                  title="Tuin kopiëren"
+                                >
+                                  <Copy className="h-4 w-4" />
+                                </Button>
+                                <Button
+                                  variant="ghost"
+                                  size="icon"
+                                  onClick={() => handleDelete(g.id)}
+                                  className="text-muted-foreground hover:text-destructive"
+                                >
+                                  <Trash2 className="h-4 w-4" />
+                                </Button>
+                              </div>
                             )
                           )}
                         </div>
