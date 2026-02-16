@@ -34,6 +34,7 @@ interface GardenCanvasProps {
   zoom: number;
   onZoomChange: (zoom: number) => void;
   gridVisible: boolean;
+  labelsVisible: boolean;
 }
 
 export default function GardenCanvas({
@@ -57,6 +58,7 @@ export default function GardenCanvas({
   zoom,
   onZoomChange,
   gridVisible,
+  labelsVisible,
 }: GardenCanvasProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const stageRef = useRef<Konva.Stage>(null);
@@ -657,6 +659,7 @@ export default function GardenCanvas({
               structure={structure}
               scale={scale}
               isSelected={selectedId === structure.id}
+              showLabels={labelsVisible}
               onSelect={(id) => onSelect(id, "structure")}
               onDragEnd={onMoveStructure}
             />
@@ -672,6 +675,7 @@ export default function GardenCanvas({
                 plantData={plantData}
                 scale={scale}
                 isSelected={selectedId === zone.id}
+                showLabels={labelsVisible}
                 onSelect={(id) => onSelect(id, "zone")}
                 onDragEnd={onMoveZone}
               />

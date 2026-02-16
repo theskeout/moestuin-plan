@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { ZoomIn, ZoomOut, Grid3X3 } from "lucide-react";
+import { ZoomIn, ZoomOut, Grid3X3, Tag } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   Tooltip,
@@ -17,6 +17,8 @@ interface CanvasToolbarProps {
   onZoomSet: (zoom: number) => void;
   gridVisible: boolean;
   onToggleGrid: () => void;
+  labelsVisible: boolean;
+  onToggleLabels: () => void;
 }
 
 export default function CanvasToolbar({
@@ -26,6 +28,8 @@ export default function CanvasToolbar({
   onZoomSet,
   gridVisible,
   onToggleGrid,
+  labelsVisible,
+  onToggleLabels,
 }: CanvasToolbarProps) {
   const [editing, setEditing] = useState(false);
   const [editValue, setEditValue] = useState("");
@@ -102,6 +106,19 @@ export default function CanvasToolbar({
             </Button>
           </TooltipTrigger>
           <TooltipContent>Raster {gridVisible ? "verbergen" : "tonen"}</TooltipContent>
+        </Tooltip>
+
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <Button
+              variant={labelsVisible ? "secondary" : "ghost"}
+              size="icon"
+              onClick={onToggleLabels}
+            >
+              <Tag className="h-4 w-4" />
+            </Button>
+          </TooltipTrigger>
+          <TooltipContent>Labels {labelsVisible ? "verbergen" : "tonen"}</TooltipContent>
         </Tooltip>
       </div>
     </TooltipProvider>

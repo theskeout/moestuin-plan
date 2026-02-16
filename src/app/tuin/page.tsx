@@ -26,7 +26,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import MemberManager from "@/components/garden/MemberManager";
 import PlanningTab from "@/components/planning/PlanningTab";
 import PlanningView from "@/components/planning/PlanningView";
-import { ArrowLeft, Move, Lock, Unlock, Check, Download, Upload, Pencil, Search, X, Plus, ZoomIn, ZoomOut, Grid3X3, Trash2, SquarePen, Users, Copy, Calendar } from "lucide-react";
+import { ArrowLeft, Move, Lock, Unlock, Check, Download, Upload, Pencil, Search, X, Plus, ZoomIn, ZoomOut, Grid3X3, Tag, Trash2, SquarePen, Users, Copy, Calendar } from "lucide-react";
 
 const GardenCanvas = dynamic(
   () => import("@/components/canvas/GardenCanvas"),
@@ -43,7 +43,7 @@ function MobileBottomSheet({
   onClose,
   title,
   children,
-  height = "60vh",
+  height = "60dvh",
   expandable,
   expanded,
   onExpandChange,
@@ -65,12 +65,26 @@ function MobileBottomSheet({
   });
   const [dragOffset, setDragOffset] = useState(0);
   const [isDragging, setIsDragging] = useState(false);
+  const [keyboardHeight, setKeyboardHeight] = useState(0);
 
   // Reset drag state als open/expanded wijzigt
   useEffect(() => {
     setDragOffset(0);
     setIsDragging(false);
   }, [open, expanded]);
+
+  // Detecteer mobiel toetsenbord via visualViewport
+  useEffect(() => {
+    if (!open) return;
+    const vv = window.visualViewport;
+    if (!vv) return;
+    const onResize = () => {
+      const diff = window.innerHeight - vv.height;
+      setKeyboardHeight(diff > 50 ? diff : 0);
+    };
+    vv.addEventListener("resize", onResize);
+    return () => vv.removeEventListener("resize", onResize);
+  }, [open]);
 
   const handleTouchStart = useCallback((e: React.TouchEvent) => {
     dragRef.current = {
@@ -119,16 +133,17 @@ function MobileBottomSheet({
 
   if (!open) return null;
 
-  const expandedHeight = "85vh";
+  const expandedHeight = "85dvh";
   const currentHeight = expanded ? expandedHeight : height;
   const translateY = isDragging ? Math.max(0, dragOffset) : 0;
 
   const sheetElement = (
     <div
       ref={sheetRef}
-      className={`absolute bottom-0 left-0 right-0 bg-white rounded-t-2xl shadow-2xl flex flex-col ${!isDragging ? "transition-all duration-200" : ""}`}
+      className={`absolute left-0 right-0 bg-white rounded-t-2xl shadow-2xl flex flex-col ${!isDragging ? "transition-all duration-200" : ""}`}
       style={{
-        maxHeight: currentHeight,
+        bottom: keyboardHeight > 0 ? keyboardHeight : 0,
+        maxHeight: keyboardHeight > 0 ? `calc(100% - ${keyboardHeight}px)` : currentHeight,
         transform: translateY > 0 ? `translateY(${translateY}px)` : undefined,
         opacity: translateY > 100 ? 1 - (translateY - 100) / 150 : 1,
       }}
@@ -185,6 +200,7 @@ function TuinContent() {
   const [saveLabel, setSaveLabel] = useState("Opslaan");
   const [zoom, setZoom] = useState(1);
   const [gridVisible, setGridVisible] = useState(true);
+  const [labelsVisible, setLabelsVisible] = useState(true);
   const [editingHeader, setEditingHeader] = useState(false);
   const [editName, setEditName] = useState("");
   const [editWidth, setEditWidth] = useState("");
@@ -489,6 +505,8 @@ function TuinContent() {
               onZoomSet={setZoom}
               gridVisible={gridVisible}
               onToggleGrid={() => setGridVisible(!gridVisible)}
+              labelsVisible={labelsVisible}
+              onToggleLabels={() => setLabelsVisible(!labelsVisible)}
             />
           </div>
 
@@ -802,6 +820,7 @@ function TuinContent() {
           zoom={zoom}
           onZoomChange={setZoom}
           gridVisible={gridVisible}
+          labelsVisible={labelsVisible}
         />
 
         {/* Rechterpaneel: tabs */}
@@ -871,6 +890,9 @@ function TuinContent() {
           <button onClick={() => setGridVisible(!gridVisible)} className={`p-2 rounded-full ${gridVisible ? "bg-accent" : "hover:bg-accent"}`}>
             <Grid3X3 className="h-4 w-4" />
           </button>
+          <button onClick={() => setLabelsVisible(!labelsVisible)} className={`p-2 rounded-full ${labelsVisible ? "bg-accent" : "hover:bg-accent"}`}>
+            <Tag className="h-4 w-4" />
+          </button>
         </div>
 
         {/* Floating plus-knop rechtsboven canvas om elementen toe te voegen */}
@@ -896,7 +918,7 @@ function TuinContent() {
           open={mobileAddOpen}
           onClose={() => { setMobileAddOpen(false); setSidebarPlant(null); }}
           title="Toevoegen"
-          height="70vh"
+          height="70dvh"
         >
           {sidebarPlant ? (
             <div className="space-y-3">

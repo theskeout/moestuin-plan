@@ -31,6 +31,7 @@ interface CropZoneItemProps {
   plantData: PlantData;
   scale: number;
   isSelected: boolean;
+  showLabels?: boolean;
   onSelect: (id: string) => void;
   onDragEnd: (id: string, x: number, y: number) => void;
 }
@@ -40,6 +41,7 @@ export default function CropZoneItem({
   plantData,
   scale,
   isSelected,
+  showLabels = true,
   onSelect,
   onDragEnd,
 }: CropZoneItemProps) {
@@ -105,26 +107,30 @@ export default function CropZoneItem({
             fontSize={16}
             listening={false}
           />
-          <Text
-            text={plantData.name}
-            x={0}
-            y={h + 3}
-            fontSize={11}
-            fill="#1f2937"
-            width={w}
-            align="center"
-            listening={false}
-          />
-          <Text
-            text={bottomText}
-            x={0}
-            y={h + 16}
-            fontSize={9}
-            fill="#6b7280"
-            width={w}
-            align="center"
-            listening={false}
-          />
+          {showLabels && (
+            <>
+              <Text
+                text={plantData.name}
+                x={-w * 0.5}
+                y={h + 3}
+                fontSize={11}
+                fill="#1f2937"
+                width={w * 2}
+                align="center"
+                listening={false}
+              />
+              <Text
+                text={bottomText}
+                x={-w * 0.5}
+                y={h + 16}
+                fontSize={9}
+                fill="#6b7280"
+                width={w * 2}
+                align="center"
+                listening={false}
+              />
+            </>
+          )}
         </>
       ) : (
         <>
@@ -153,29 +159,31 @@ export default function CropZoneItem({
 
           {tooSmall ? (
             <>
-              {/* Klein bed: labels hangen eraan (onder het bed) */}
+              {/* Klein bed: icoon altijd, naam alleen bij showLabels */}
               <Text
-                text={`${plantData.icon} ${plantData.name}`}
+                text={showLabels ? `${plantData.icon} ${plantData.name}` : plantData.icon}
                 x={0}
                 y={h + 3}
                 fontSize={11}
                 fill="#1f2937"
                 listening={false}
               />
-              <Text
-                text={bottomText}
-                x={0}
-                y={h + 16}
-                fontSize={9}
-                fill="#6b7280"
-                listening={false}
-              />
+              {showLabels && (
+                <Text
+                  text={bottomText}
+                  x={0}
+                  y={h + 16}
+                  fontSize={9}
+                  fill="#6b7280"
+                  listening={false}
+                />
+              )}
             </>
           ) : (
             <>
-              {/* Normaal bed: labels binnenin */}
+              {/* Normaal bed: icoon altijd, naam+afmetingen alleen bij showLabels */}
               <Text
-                text={`${plantData.icon} ${plantData.name}`}
+                text={showLabels ? `${plantData.icon} ${plantData.name}` : plantData.icon}
                 x={4}
                 y={3}
                 fontSize={labelFontSize}
@@ -183,14 +191,16 @@ export default function CropZoneItem({
                 width={w - 8}
                 listening={false}
               />
-              <Text
-                text={bottomText}
-                x={4}
-                y={h - 16}
-                fontSize={10}
-                fill="#6b7280"
-                listening={false}
-              />
+              {showLabels && (
+                <Text
+                  text={bottomText}
+                  x={4}
+                  y={h - 16}
+                  fontSize={10}
+                  fill="#6b7280"
+                  listening={false}
+                />
+              )}
             </>
           )}
         </>

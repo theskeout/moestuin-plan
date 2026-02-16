@@ -8,6 +8,7 @@ interface StructureItemProps {
   structure: Structure;
   scale: number;
   isSelected: boolean;
+  showLabels?: boolean;
   onSelect: (id: string) => void;
   onDragEnd: (id: string, x: number, y: number) => void;
 }
@@ -33,6 +34,7 @@ export default function StructureItem({
   structure,
   scale,
   isSelected,
+  showLabels = true,
   onSelect,
   onDragEnd,
 }: StructureItemProps) {
@@ -88,16 +90,18 @@ export default function StructureItem({
             fontSize={16}
             listening={false}
           />
-          <Text
-            text={style.label}
-            x={0}
-            y={h + 3}
-            fontSize={11}
-            fill="#374151"
-            width={w}
-            align="center"
-            listening={false}
-          />
+          {showLabels && (
+            <Text
+              text={style.label}
+              x={-w * 0.5}
+              y={h + 3}
+              fontSize={11}
+              fill="#374151"
+              width={w * 2}
+              align="center"
+              listening={false}
+            />
+          )}
         </>
       ) : (
         <>
@@ -111,7 +115,7 @@ export default function StructureItem({
             cornerRadius={4}
           />
           <Text
-            text={`${style.icon} ${style.label}`}
+            text={showLabels ? `${style.icon} ${style.label}` : style.icon}
             x={4}
             y={4}
             fontSize={Math.max(12, Math.min(14, w * 0.12))}
@@ -119,7 +123,7 @@ export default function StructureItem({
             width={w - 8}
             listening={false}
           />
-          {structure.type !== "hek" && (
+          {showLabels && structure.type !== "hek" && (
             <Text
               text={`${structure.widthCm}x${structure.heightCm}cm`}
               x={4}
