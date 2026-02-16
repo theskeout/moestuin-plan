@@ -1237,24 +1237,6 @@
     }
   },
   {
-    "id": "vijg",
-    "name": "Vijg",
-    "icon": "🟤",
-    "color": "#5d4037",
-    "category": "fruit",
-    "sowIndoor": null,
-    "sowOutdoor": { "start": 3, "end": 4 },
-    "harvest": { "start": 8, "end": 10 },
-    "spacingCm": 300,
-    "rowSpacingCm": 400,
-    "sunNeed": "vol",
-    "waterNeed": "gemiddeld",
-    "companions": {
-      "good": [],
-      "bad": []
-    }
-  },
-  {
     "id": "kiwi",
     "name": "Kiwi",
     "icon": "🥝",

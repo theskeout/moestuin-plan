@@ -335,7 +335,7 @@
       ]
     },
     "soft-fruit-type": {
-      "plants": ["aardbei", "framboos", "bosbes", "kruisbes", "rodebes", "zwartebes", "druif", "vijg", "kiwi"],
+      "plants": ["aardbei", "framboos", "bosbes", "kruisbes", "rodebes", "zwartebes", "druif", "vijgenboom", "kiwi"],
       "tasks": [
         {
           "id": "kleinfruit-snoeien",

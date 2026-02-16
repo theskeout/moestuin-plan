@@ -14,7 +14,7 @@ import { useGarden } from "@/lib/hooks/useGarden";
 import { useAutoSave } from "@/lib/hooks/useAutoSave";
 import { usePlanning } from "@/lib/hooks/usePlanning";
 import { useAuth } from "@/components/auth/AuthProvider";
-import { loadGardensAsync, exportGarden, importGarden, saveGardenAsync } from "@/lib/garden/storage";
+import { loadGardensAsync, exportGarden, importGarden } from "@/lib/garden/storage";
 import { getPlant, refreshPlantCache } from "@/lib/plants/catalog";
 import { setStorageBackend } from "@/lib/storage";
 import { checkAllCompanions, CompanionCheck } from "@/lib/plants/companions";
@@ -293,21 +293,6 @@ function TuinContent() {
     input.click();
   }, [loadGarden]);
 
-  const handleDuplicate = useCallback(async () => {
-    const now = new Date().toISOString();
-    const copy = {
-      ...garden,
-      id: generateId(),
-      name: garden.name + " (kopie)",
-      role: undefined,
-      memberCount: undefined,
-      createdAt: now,
-      updatedAt: now,
-    };
-    await saveGardenAsync(copy);
-    router.push(`/tuin?id=${copy.id}`);
-  }, [garden, router]);
-
   const handleZoomIn = useCallback(() => {
     setZoom((z) => Math.min(z * 1.2, 15));
   }, []);
@@ -478,9 +463,6 @@ function TuinContent() {
           </Button>
           <Button variant="ghost" size="icon" onClick={handleImport} title="Importeer JSON" className="hidden md:inline-flex">
             <Upload className="h-4 w-4" />
-          </Button>
-          <Button variant="ghost" size="icon" onClick={handleDuplicate} title="Tuin kopiëren" className="hidden md:inline-flex">
-            <Copy className="h-4 w-4" />
           </Button>
           <div className="w-px h-6 bg-border hidden md:block" />
           {hasChanges && (
