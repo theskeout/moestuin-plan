@@ -24,6 +24,7 @@ const STRUCTURE_STYLES: Record<
   boom: { fill: "rgba(76, 175, 80, 0.3)", stroke: "#2e7d32", label: "Boom", icon: "🌳" },
   compostbak: { fill: "rgba(120, 85, 40, 0.3)", stroke: "#5d4037", label: "Compostbak", icon: "♻️" },
   gras: { fill: "rgba(76, 175, 80, 0.2)", stroke: "#66bb6a", label: "Gras", icon: "🌱" },
+  waterton: { fill: "rgba(96, 165, 250, 0.3)", stroke: "#2563eb", label: "Waterton", icon: "💧" },
 };
 
 const CUSTOM_DEFAULT_STYLE = { fill: "rgba(180, 180, 180, 0.3)", stroke: "#6b7280", label: "Structuur", icon: "📌" };
@@ -42,7 +43,7 @@ export default function StructureItem({
   const w = structure.widthCm * scale;
   const h = structure.heightCm * scale;
   const locked = structure.locked;
-  const isBoom = structure.type === "boom";
+  const isCircular = structure.type === "boom" || structure.type === "waterton";
 
   return (
     <Group
@@ -70,7 +71,7 @@ export default function StructureItem({
         fill="transparent"
         listening={false}
       />
-      {isBoom ? (
+      {isCircular ? (
         <>
           <Circle
             x={w / 2}
@@ -133,8 +134,8 @@ export default function StructureItem({
       {locked && (
         <Text
           text="🔒"
-          x={isBoom ? w / 2 + Math.min(w, h) / 2 - 10 : w - 18}
-          y={isBoom ? h / 2 - Math.min(w, h) / 2 : 4}
+          x={isCircular ? w / 2 + Math.min(w, h) / 2 - 10 : w - 18}
+          y={isCircular ? h / 2 - Math.min(w, h) / 2 : 4}
           fontSize={12}
           listening={false}
         />

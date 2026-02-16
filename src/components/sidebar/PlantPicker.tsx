@@ -26,6 +26,7 @@ const STRUCTURES: { type: StructureType; icon: string; label: string }[] = [
   { type: "boom", icon: "\u{1F333}", label: "Boom" },
   { type: "compostbak", icon: "\u{267B}\u{FE0F}", label: "Compostbak" },
   { type: "gras", icon: "\u{1F331}", label: "Gras" },
+  { type: "waterton", icon: "\u{1F4A7}", label: "Waterton" },
 ];
 
 const CATEGORY_COLORS = [
