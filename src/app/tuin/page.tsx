@@ -205,6 +205,7 @@ function TuinContent() {
     addZone, moveZone, transformZone, removeZone, duplicateZone, toggleZoneLock, updateZoneInfo,
     addStructure, moveStructure, transformStructure, removeStructure, duplicateStructure, toggleStructureLock,
     updateShape, updateGardenSize, save, loadGarden,
+    undo, copySelected, pasteClipboard,
   } = useGarden();
 
   const [planningViewOpen, setPlanningViewOpen] = useState(false);
@@ -794,6 +795,9 @@ function TuinContent() {
           onAddStructure={addStructure}
           onRemoveStructure={removeStructure}
           onUpdateShape={updateShape}
+          onUndo={undo}
+          onCopy={copySelected}
+          onPaste={pasteClipboard}
           editingCorners={editingCorners}
           zoom={zoom}
           onZoomChange={setZoom}

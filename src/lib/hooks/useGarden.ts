@@ -28,6 +28,96 @@ export function useGarden(initialGarden?: Garden) {
   const [selectedType, setSelectedType] = useState<SelectedType>("zone");
   const [hasChanges, setHasChanges] = useState(false);
 
+  // --- Undo stack ---
+  const MAX_UNDO = 50;
+  const undoStackRef = useRef<{ zones: CropZone[]; structures: Structure[] }[]>([]);
+
+  /** Wrap setGarden: push snapshot op undo-stack VOOR de mutatie */
+  const setGardenWithUndo = useCallback(
+    (updater: (prev: Garden) => Garden) => {
+      setGarden((prev) => {
+        const next = updater(prev);
+        // Alleen pushen als zones of structures daadwerkelijk veranderen
+        if (next.zones !== prev.zones || next.structures !== prev.structures) {
+          undoStackRef.current.push({
+            zones: prev.zones,
+            structures: prev.structures,
+          });
+          if (undoStackRef.current.length > MAX_UNDO) {
+            undoStackRef.current.shift();
+          }
+        }
+        return next;
+      });
+    },
+    []
+  );
+
+  const undo = useCallback(() => {
+    const snapshot = undoStackRef.current.pop();
+    if (!snapshot) return;
+    setGarden((prev) => ({
+      ...prev,
+      zones: snapshot.zones,
+      structures: snapshot.structures,
+      updatedAt: new Date().toISOString(),
+    }));
+    setHasChanges(true);
+  }, []);
+
+  // --- Clipboard (copy/paste) ---
+  const clipboardRef = useRef<{ type: SelectedType; zone?: CropZone; structure?: Structure } | null>(null);
+
+  const copySelected = useCallback(() => {
+    if (!selectedId) return;
+    if (selectedType === "zone") {
+      const zone = garden.zones.find((z) => z.id === selectedId);
+      if (zone) clipboardRef.current = { type: "zone", zone: { ...zone } };
+    } else {
+      const struct = garden.structures.find((s) => s.id === selectedId);
+      if (struct) clipboardRef.current = { type: "structure", structure: { ...struct } };
+    }
+  }, [selectedId, selectedType, garden.zones, garden.structures]);
+
+  const pasteClipboard = useCallback(() => {
+    const clip = clipboardRef.current;
+    if (!clip) return;
+    if (clip.type === "zone" && clip.zone) {
+      const newZone: CropZone = {
+        ...clip.zone,
+        id: generateId(),
+        x: snapToGrid(clip.zone.x + 20),
+        y: snapToGrid(clip.zone.y + 20),
+        locked: false,
+      };
+      clipboardRef.current = { type: "zone", zone: { ...newZone } };
+      setGardenWithUndo((prev) => ({
+        ...prev,
+        zones: [...prev.zones, newZone],
+        updatedAt: new Date().toISOString(),
+      }));
+      setSelectedId(newZone.id);
+      setSelectedType("zone");
+    } else if (clip.type === "structure" && clip.structure) {
+      const newStruct: Structure = {
+        ...clip.structure,
+        id: generateId(),
+        x: snapToGrid(clip.structure.x + 20),
+        y: snapToGrid(clip.structure.y + 20),
+        locked: false,
+      };
+      clipboardRef.current = { type: "structure", structure: { ...newStruct } };
+      setGardenWithUndo((prev) => ({
+        ...prev,
+        structures: [...prev.structures, newStruct],
+        updatedAt: new Date().toISOString(),
+      }));
+      setSelectedId(newStruct.id);
+      setSelectedType("structure");
+    }
+    setHasChanges(true);
+  }, [setGardenWithUndo]);
+
   const select = useCallback((id: string | null, type: SelectedType = "zone") => {
     setSelectedId(id);
     setSelectedType(type);
@@ -52,7 +142,7 @@ export function useGarden(initialGarden?: Garden) {
         rotation: 0,
         locked: false,
       };
-      setGarden((prev) => ({
+      setGardenWithUndo((prev) => ({
         ...prev,
         zones: [...prev.zones, newZone],
         updatedAt: new Date().toISOString(),
@@ -62,11 +152,11 @@ export function useGarden(initialGarden?: Garden) {
       setHasChanges(true);
       return newZone;
     },
-    []
+    [setGardenWithUndo]
   );
 
   const moveZone = useCallback((id: string, x: number, y: number) => {
-    setGarden((prev) => {
+    setGardenWithUndo((prev) => {
       const zone = prev.zones.find((z) => z.id === id);
       if (zone?.locked) return prev;
       return {
@@ -78,10 +168,10 @@ export function useGarden(initialGarden?: Garden) {
       };
     });
     setHasChanges(true);
-  }, []);
+  }, [setGardenWithUndo]);
 
   const transformZone = useCallback((id: string, x: number, y: number, widthCm: number, heightCm: number, rotation: number) => {
-    setGarden((prev) => {
+    setGardenWithUndo((prev) => {
       const zone = prev.zones.find((z) => z.id === id);
       if (zone?.locked) return prev;
       return {
@@ -102,10 +192,10 @@ export function useGarden(initialGarden?: Garden) {
       };
     });
     setHasChanges(true);
-  }, []);
+  }, [setGardenWithUndo]);
 
   const duplicateZone = useCallback((id: string) => {
-    setGarden((prev) => {
+    setGardenWithUndo((prev) => {
       const zone = prev.zones.find((z) => z.id === id);
       if (!zone) return prev;
       const newZone: CropZone = {
@@ -122,20 +212,20 @@ export function useGarden(initialGarden?: Garden) {
       };
     });
     setHasChanges(true);
-  }, []);
+  }, [setGardenWithUndo]);
 
   const removeZone = useCallback((id: string) => {
-    setGarden((prev) => ({
+    setGardenWithUndo((prev) => ({
       ...prev,
       zones: prev.zones.filter((z) => z.id !== id),
       updatedAt: new Date().toISOString(),
     }));
     setSelectedId((prev) => (prev === id ? null : prev));
     setHasChanges(true);
-  }, []);
+  }, [setGardenWithUndo]);
 
   const toggleZoneLock = useCallback((id: string) => {
-    setGarden((prev) => ({
+    setGardenWithUndo((prev) => ({
       ...prev,
       zones: prev.zones.map((z) =>
         z.id === id ? { ...z, locked: !z.locked } : z
@@ -143,10 +233,10 @@ export function useGarden(initialGarden?: Garden) {
       updatedAt: new Date().toISOString(),
     }));
     setHasChanges(true);
-  }, []);
+  }, [setGardenWithUndo]);
 
   const updateZoneInfo = useCallback((id: string, label: string, notes: string) => {
-    setGarden((prev) => ({
+    setGardenWithUndo((prev) => ({
       ...prev,
       zones: prev.zones.map((z) =>
         z.id === id ? { ...z, label, notes } : z
@@ -154,7 +244,7 @@ export function useGarden(initialGarden?: Garden) {
       updatedAt: new Date().toISOString(),
     }));
     setHasChanges(true);
-  }, []);
+  }, [setGardenWithUndo]);
 
   // --- Structures CRUD ---
 
@@ -173,7 +263,7 @@ export function useGarden(initialGarden?: Garden) {
         ...(customLabel ? { customLabel } : {}),
         ...(customIcon ? { customIcon } : {}),
       };
-      setGarden((prev) => ({
+      setGardenWithUndo((prev) => ({
         ...prev,
         structures: [...prev.structures, newStruct],
         updatedAt: new Date().toISOString(),
@@ -183,11 +273,11 @@ export function useGarden(initialGarden?: Garden) {
       setHasChanges(true);
       return newStruct;
     },
-    []
+    [setGardenWithUndo]
   );
 
   const moveStructure = useCallback((id: string, x: number, y: number) => {
-    setGarden((prev) => {
+    setGardenWithUndo((prev) => {
       const struct = prev.structures.find((s) => s.id === id);
       if (struct?.locked) return prev;
       return {
@@ -199,10 +289,10 @@ export function useGarden(initialGarden?: Garden) {
       };
     });
     setHasChanges(true);
-  }, []);
+  }, [setGardenWithUndo]);
 
   const transformStructure = useCallback((id: string, x: number, y: number, widthCm: number, heightCm: number, rotation: number) => {
-    setGarden((prev) => {
+    setGardenWithUndo((prev) => {
       const struct = prev.structures.find((s) => s.id === id);
       if (struct?.locked) return prev;
       return {
@@ -223,10 +313,10 @@ export function useGarden(initialGarden?: Garden) {
       };
     });
     setHasChanges(true);
-  }, []);
+  }, [setGardenWithUndo]);
 
   const duplicateStructure = useCallback((id: string) => {
-    setGarden((prev) => {
+    setGardenWithUndo((prev) => {
       const struct = prev.structures.find((s) => s.id === id);
       if (!struct) return prev;
       const newStruct: Structure = {
@@ -243,20 +333,20 @@ export function useGarden(initialGarden?: Garden) {
       };
     });
     setHasChanges(true);
-  }, []);
+  }, [setGardenWithUndo]);
 
   const removeStructure = useCallback((id: string) => {
-    setGarden((prev) => ({
+    setGardenWithUndo((prev) => ({
       ...prev,
       structures: prev.structures.filter((s) => s.id !== id),
       updatedAt: new Date().toISOString(),
     }));
     setSelectedId((prev) => (prev === id ? null : prev));
     setHasChanges(true);
-  }, []);
+  }, [setGardenWithUndo]);
 
   const toggleStructureLock = useCallback((id: string) => {
-    setGarden((prev) => ({
+    setGardenWithUndo((prev) => ({
       ...prev,
       structures: prev.structures.map((s) =>
         s.id === id ? { ...s, locked: !s.locked } : s
@@ -264,7 +354,7 @@ export function useGarden(initialGarden?: Garden) {
       updatedAt: new Date().toISOString(),
     }));
     setHasChanges(true);
-  }, []);
+  }, [setGardenWithUndo]);
 
   // --- Overig ---
 
@@ -276,6 +366,7 @@ export function useGarden(initialGarden?: Garden) {
     }));
     setHasChanges(true);
   }, []);
+  // Note: updateShape gebruikt setGarden (geen undo) — contouraanpassingen zijn geen zone/structure mutaties
 
   const updateGardenInfo = useCallback(
     (name: string, widthCm: number, heightCm: number) => {
@@ -374,5 +465,8 @@ export function useGarden(initialGarden?: Garden) {
     updateGardenSize,
     save,
     loadGarden,
+    undo,
+    copySelected,
+    pasteClipboard,
   };
 }

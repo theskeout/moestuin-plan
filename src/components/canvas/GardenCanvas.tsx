@@ -27,6 +27,9 @@ interface GardenCanvasProps {
   onAddStructure: (type: StructureType, x: number, y: number) => void;
   onRemoveStructure: (id: string) => void;
   onUpdateShape: (shape: Garden["shape"]) => void;
+  onUndo: () => void;
+  onCopy: () => void;
+  onPaste: () => void;
   editingCorners: boolean;
   zoom: number;
   onZoomChange: (zoom: number) => void;
@@ -47,6 +50,9 @@ export default function GardenCanvas({
   onAddStructure,
   onRemoveStructure,
   onUpdateShape,
+  onUndo,
+  onCopy,
+  onPaste,
   editingCorners,
   zoom,
   onZoomChange,
@@ -423,13 +429,37 @@ export default function GardenCanvas({
   );
 
 
-  // Keyboard handler: Delete + pijltjestoetsen
+  // Keyboard handler: Ctrl+Z (undo), Ctrl+C (copy), Ctrl+V (paste), Delete, pijltjestoetsen
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
-      if (!selectedId) return;
       // Niet reageren als een input/textarea gefocust is
       const tag = (e.target as HTMLElement).tagName;
       if (tag === "INPUT" || tag === "TEXTAREA") return;
+
+      const ctrl = e.ctrlKey || e.metaKey;
+
+      // Ctrl+Z — undo (werkt altijd, ook zonder selectie)
+      if (ctrl && e.key === "z") {
+        e.preventDefault();
+        onUndo();
+        return;
+      }
+
+      // Ctrl+C — kopieer geselecteerd element
+      if (ctrl && e.key === "c" && selectedId) {
+        e.preventDefault();
+        onCopy();
+        return;
+      }
+
+      // Ctrl+V — plak gekopieerd element
+      if (ctrl && e.key === "v") {
+        e.preventDefault();
+        onPaste();
+        return;
+      }
+
+      if (!selectedId) return;
 
       if (e.key === "Delete" || e.key === "Backspace") {
         e.preventDefault();
@@ -467,7 +497,7 @@ export default function GardenCanvas({
     };
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [selectedId, selectedType, garden.zones, garden.structures, onRemoveZone, onRemoveStructure, onMoveZone, onMoveStructure]);
+  }, [selectedId, selectedType, garden.zones, garden.structures, onRemoveZone, onRemoveStructure, onMoveZone, onMoveStructure, onUndo, onCopy, onPaste]);
 
   // Companion-conflicten berekenen voor canvas-waarschuwingslijnen
   const companionConflicts = useMemo(() => {
