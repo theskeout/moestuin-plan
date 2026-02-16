@@ -323,7 +323,7 @@ export default function PlanningTab({
           <div className="space-y-1">
             {[...zones]
               .map((zone) => ({ zone, plant: getPlant(zone.plantId) }))
-              .filter((r): r is { zone: CropZone; plant: NonNullable<ReturnType<typeof getPlant>> } => r.plant !== null)
+              .filter((r): r is { zone: CropZone; plant: NonNullable<ReturnType<typeof getPlant>> } => r.plant != null)
               .sort((a, b) => a.plant.name.localeCompare(b.plant.name))
               .map(({ zone, plant }) => {
               const status = zone.status || "planned";
