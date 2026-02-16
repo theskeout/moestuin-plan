@@ -36,6 +36,7 @@ interface GardenCanvasProps {
 export default function GardenCanvas({
   garden,
   selectedId,
+  selectedType,
   onSelect,
   onMoveZone,
   onTransformZone,
@@ -422,13 +423,15 @@ export default function GardenCanvas({
   );
 
 
-  // Delete handler via keyboard
+  // Keyboard handler: Delete + pijltjestoetsen
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if (!selectedId) return;
+      // Niet reageren als een input/textarea gefocust is
+      const tag = (e.target as HTMLElement).tagName;
+      if (tag === "INPUT" || tag === "TEXTAREA") return;
+
       if (e.key === "Delete" || e.key === "Backspace") {
-        // Niet verwijderen als een input gefocust is
-        if ((e.target as HTMLElement).tagName === "INPUT") return;
         e.preventDefault();
         const isZone = garden.zones.some((z) => z.id === selectedId);
         if (isZone) {
@@ -436,11 +439,35 @@ export default function GardenCanvas({
         } else {
           onRemoveStructure(selectedId);
         }
+        return;
+      }
+
+      // Pijltjestoetsen: verplaats 10cm (grid), of 1cm met Shift
+      const step = e.shiftKey ? 1 : 10;
+      let dx = 0;
+      let dy = 0;
+      switch (e.key) {
+        case "ArrowLeft":  dx = -step; break;
+        case "ArrowRight": dx = step;  break;
+        case "ArrowUp":    dy = -step; break;
+        case "ArrowDown":  dy = step;  break;
+        default: return;
+      }
+      e.preventDefault();
+
+      if (selectedType === "zone") {
+        const zone = garden.zones.find((z) => z.id === selectedId);
+        if (!zone || zone.locked) return;
+        onMoveZone(selectedId, zone.x + dx, zone.y + dy);
+      } else {
+        const struct = garden.structures.find((s) => s.id === selectedId);
+        if (!struct || struct.locked) return;
+        onMoveStructure(selectedId, struct.x + dx, struct.y + dy);
       }
     };
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [selectedId, garden.zones, onRemoveZone, onRemoveStructure]);
+  }, [selectedId, selectedType, garden.zones, garden.structures, onRemoveZone, onRemoveStructure, onMoveZone, onMoveStructure]);
 
   // Companion-conflicten berekenen voor canvas-waarschuwingslijnen
   const companionConflicts = useMemo(() => {
