@@ -235,7 +235,7 @@ function PlantForm({
       category,
       sowIndoor,
       sowOutdoor,
-      harvest: harvest || { start: 1, end: 12 },
+      harvest,
       spacingCm,
       rowSpacingCm,
       sunNeed,

@@ -35,7 +35,7 @@ export default function CalendarGrid({ garden, settings, onSelectZone }: Calenda
   const rows = useMemo(() => {
     // Deduplicate per plant (toon elke plant maar 1x)
     const seen = new Set<string>();
-    const result: { zoneId: string; plant: PlantData; sowIndoor: MonthRange | null; sowOutdoor: MonthRange | null; harvest: MonthRange }[] = [];
+    const result: { zoneId: string; plant: PlantData; sowIndoor: MonthRange | null; sowOutdoor: MonthRange | null; harvest: MonthRange | null }[] = [];
 
     for (const zone of garden.zones) {
       if (seen.has(zone.plantId)) continue;

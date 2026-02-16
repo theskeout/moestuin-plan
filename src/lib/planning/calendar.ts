@@ -250,7 +250,7 @@ export interface PlantCalendarEntry {
   plant: PlantData;
   sowIndoor: MonthRange | null;
   sowOutdoor: MonthRange | null;
-  harvest: MonthRange;
+  harvest: MonthRange | null;
   adjustedSowIndoor?: MonthRange | null;
   adjustedSowOutdoor?: MonthRange | null;
 }

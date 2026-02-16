@@ -302,6 +302,18 @@ export default function PlanningTab({
         </div>
       )}
 
+      {/* Waarschuwing: gewassen zonder zaai/oogstperiode */}
+      {zones.map((z) => {
+        const p = getPlant(z.plantId);
+        if (!p || p.sowIndoor || p.sowOutdoor || p.harvest) return null;
+        return (
+          <div key={z.id} className="flex items-center gap-2 px-2 py-1.5 rounded-md bg-amber-50 text-xs text-amber-800">
+            <AlertTriangle className="h-3.5 w-3.5 shrink-0" />
+            <span>Voor <strong>{p.name}</strong> is nog geen zaai- of oogstperiode ingevuld</span>
+          </div>
+        );
+      })}
+
       {/* Zone-overzicht */}
       {zones.length > 0 && (
         <div>

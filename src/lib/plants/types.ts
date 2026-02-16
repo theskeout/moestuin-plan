@@ -20,7 +20,7 @@ export interface PlantData {
   category: PlantCategory;
   sowIndoor: MonthRange | null;
   sowOutdoor: MonthRange | null;
-  harvest: MonthRange;
+  harvest: MonthRange | null;
   spacingCm: number;
   rowSpacingCm: number;
   sunNeed: SunNeed;
