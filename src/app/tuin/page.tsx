@@ -834,9 +834,6 @@ function TuinContent() {
             </div>
             <TabsContent value="toevoegen" className="flex flex-col flex-1 min-h-0 mt-0 data-[state=inactive]:hidden">
               <div className="flex-1 overflow-y-auto p-4 pt-3 space-y-4">
-                <p className="text-xs text-muted-foreground">
-                  Sleep naar het canvas
-                </p>
                 <PlantPicker
                   onSelectPlant={(plant) => setSidebarPlant(plant)}
                   onTapStructure={(type, customLabel, customIcon) => {

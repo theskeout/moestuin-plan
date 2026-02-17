@@ -481,6 +481,7 @@ export default function PlantPicker({ onSelectPlant, onTapStructure }: PlantPick
             <ChevronRight className="h-4 w-4" />
           )}
           Structuren
+          <span className="text-xs font-normal text-muted-foreground ml-auto">sleep naar canvas</span>
         </button>
         {structuresOpen && (
           <div className="space-y-2 mt-1.5">
@@ -523,6 +524,7 @@ export default function PlantPicker({ onSelectPlant, onTapStructure }: PlantPick
             <ChevronRight className="h-4 w-4" />
           )}
           Gewassen
+          <span className="text-xs font-normal text-muted-foreground ml-auto">sleep naar canvas</span>
         </button>
       </div>
 
@@ -562,15 +564,17 @@ export default function PlantPicker({ onSelectPlant, onTapStructure }: PlantPick
             </div>
           ) : (
             <Tabs defaultValue="groente">
-              <TabsList className="w-full">
-                {categories.map((c) => (
-                  <TabsTrigger key={c.key} value={c.key} className="flex-1 text-xs px-2">
-                    {c.label}
-                  </TabsTrigger>
-                ))}
-              </TabsList>
+              <div className="sticky top-0 z-10 bg-background pb-1">
+                <TabsList className="w-full">
+                  {categories.map((c) => (
+                    <TabsTrigger key={c.key} value={c.key} className="flex-1 text-xs px-2">
+                      {c.label}
+                    </TabsTrigger>
+                  ))}
+                </TabsList>
+              </div>
               {categories.map((c) => (
-                <TabsContent key={c.key} value={c.key} className="flex flex-col gap-1 mt-2">
+                <TabsContent key={c.key} value={c.key} className="flex flex-col gap-1 mt-1">
                   {getPlantsByCategory(c.key).map((p) => (
                     <PlantCard key={p.id} plant={p} onSelect={onSelectPlant} onEdit={loggedIn ? handleEdit : undefined} />
                   ))}
