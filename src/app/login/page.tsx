@@ -31,7 +31,9 @@ function LoginContent() {
       if (error) {
         setError(error);
       } else {
-        setSuccess("Account aangemaakt! Check je e-mail om je account te bevestigen.");
+        setSuccess("Account aangemaakt! Check je e-mail om je account te bevestigen, en log daarna hieronder in.");
+        setIsRegister(false);
+        setPassword("");
       }
     } else {
       const { error } = await signIn(email, password);
