@@ -1937,5 +1937,41 @@
       "good": ["kool", "druif"],
       "bad": ["radijs"]
     }
+  },
+  {
+    "id": "braam",
+    "name": "Braam",
+    "icon": "🫐",
+    "color": "#4a148c",
+    "category": "fruit",
+    "sowIndoor": null,
+    "sowOutdoor": null,
+    "harvest": { "start": 7, "end": 9 },
+    "spacingCm": 200,
+    "rowSpacingCm": 200,
+    "sunNeed": "vol",
+    "waterNeed": "gemiddeld",
+    "companions": {
+      "good": ["framboos", "aardbei"],
+      "bad": []
+    }
+  },
+  {
+    "id": "snijboon",
+    "name": "Snijboon",
+    "icon": "🫛",
+    "color": "#33691e",
+    "category": "groente",
+    "sowIndoor": { "start": 4, "end": 5 },
+    "sowOutdoor": { "start": 5, "end": 7 },
+    "harvest": { "start": 7, "end": 10 },
+    "spacingCm": 20,
+    "rowSpacingCm": 50,
+    "sunNeed": "vol",
+    "waterNeed": "gemiddeld",
+    "companions": {
+      "good": ["sla", "mais", "pompoen", "courgette", "wortel"],
+      "bad": ["ui", "knoflook", "venkel"]
+    }
   }
 ]
