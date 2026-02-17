@@ -738,11 +738,12 @@ function TuinContent() {
                     <div>
                       <p className="text-xs text-muted-foreground mb-1">Breedte (cm)</p>
                       <Input
-                        type="number" min={10} step={10}
-                        value={selectedStruct.widthCm}
-                        onChange={(e) => {
+                        type="number" min={10} step={1}
+                        defaultValue={selectedStruct.widthCm}
+                        key={`sw-${selectedId}-${selectedStruct.widthCm}`}
+                        onBlur={(e) => {
                           if (!selectedId) return;
-                          const val = Math.max(10, Number(e.target.value));
+                          const val = Math.max(10, Number(e.target.value) || 10);
                           transformStructure(selectedId, selectedStruct.x, selectedStruct.y, val, selectedStruct.heightCm, selectedStruct.rotation);
                         }}
                       />
@@ -750,11 +751,12 @@ function TuinContent() {
                     <div>
                       <p className="text-xs text-muted-foreground mb-1">Hoogte (cm)</p>
                       <Input
-                        type="number" min={10} step={10}
-                        value={selectedStruct.heightCm}
-                        onChange={(e) => {
+                        type="number" min={10} step={1}
+                        defaultValue={selectedStruct.heightCm}
+                        key={`sh-${selectedId}-${selectedStruct.heightCm}`}
+                        onBlur={(e) => {
                           if (!selectedId) return;
-                          const val = Math.max(10, Number(e.target.value));
+                          const val = Math.max(10, Number(e.target.value) || 10);
                           transformStructure(selectedId, selectedStruct.x, selectedStruct.y, selectedStruct.widthCm, val, selectedStruct.rotation);
                         }}
                       />
@@ -1166,22 +1168,24 @@ function TuinContent() {
                       <div>
                         <p className="text-xs text-muted-foreground mb-1">Breedte</p>
                         <Input
-                          type="number" min={10} step={10}
-                          value={selectedStruct.widthCm}
-                          onChange={(e) => {
+                          type="number" min={10} step={1}
+                          defaultValue={selectedStruct.widthCm}
+                          key={`msw-${selectedId}-${selectedStruct.widthCm}`}
+                          onBlur={(e) => {
                             if (!selectedId) return;
-                            transformStructure(selectedId, selectedStruct.x, selectedStruct.y, Math.max(10, Number(e.target.value)), selectedStruct.heightCm, selectedStruct.rotation);
+                            transformStructure(selectedId, selectedStruct.x, selectedStruct.y, Math.max(10, Number(e.target.value) || 10), selectedStruct.heightCm, selectedStruct.rotation);
                           }}
                         />
                       </div>
                       <div>
                         <p className="text-xs text-muted-foreground mb-1">Hoogte</p>
                         <Input
-                          type="number" min={10} step={10}
-                          value={selectedStruct.heightCm}
-                          onChange={(e) => {
+                          type="number" min={10} step={1}
+                          defaultValue={selectedStruct.heightCm}
+                          key={`msh-${selectedId}-${selectedStruct.heightCm}`}
+                          onBlur={(e) => {
                             if (!selectedId) return;
-                            transformStructure(selectedId, selectedStruct.x, selectedStruct.y, selectedStruct.widthCm, Math.max(10, Number(e.target.value)), selectedStruct.rotation);
+                            transformStructure(selectedId, selectedStruct.x, selectedStruct.y, selectedStruct.widthCm, Math.max(10, Number(e.target.value) || 10), selectedStruct.rotation);
                           }}
                         />
                       </div>
